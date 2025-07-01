@@ -6,8 +6,8 @@ import 'package:shweeshaungdaily/services/token_service.dart';
 import '../models/user_model.dart';
 
 class ApiService {
-  static const baseUrl = 'http://192.168.1.196:8080/api/auth';
-  static const secbaseUrl = 'http://192.168.1.196:8080/admin/schedules';
+  static const baseUrl = 'http://192.168.249.109:8080/api/auth';
+  static const secbaseUrl = 'http://192.168.249.109:8080/admin/schedules';
 
   static Future<Map<String, dynamic>?> login(UserModel user) async {
     final response = await http.post(
@@ -133,6 +133,17 @@ class ApiService {
       return response.body == 'true' || response.body == '"true"';
     } else {
       throw Exception('Failed to verify email');
+    }
+  }
+
+  static Future<bool> isTeacher(String email) async {
+    final uri = Uri.parse('$baseUrl/isTeacher?email=$email');
+    final response = await http.get(uri);
+    if (response.statusCode == 200) {
+      // Assuming the backend returns true/false as JSON
+      return response.body == 'true' || response.body == '"true"';
+    } else {
+      throw Exception('Failed to verifyTeacher email');
     }
   }
 }

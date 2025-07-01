@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:provider/provider.dart';
+import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/view_models/auth_viewmodel.dart';
 import 'package:shweeshaungdaily/view_models/reg_viewmodel.dart';
 import 'package:shweeshaungdaily/views/Home.dart';
@@ -85,7 +86,7 @@ class _StudentInfoPageState extends State<StudendInfoPage> {
       onWillPop: () async => false,
       child: Scaffold(
         resizeToAvoidBottomInset: true,
-        backgroundColor: const Color(0xFFD4F7F5),
+        backgroundColor: kBackgroundColor,
         body: SafeArea(
           child: Column(
             children: [
@@ -100,7 +101,7 @@ class _StudentInfoPageState extends State<StudendInfoPage> {
                         const Text(
                           'Start Here',
                           style: TextStyle(
-                            color: Color(0xFF317575),
+                            color: kPrimaryDarkColor,
                             fontSize: 34,
                             fontWeight: FontWeight.bold,
                           ),
@@ -109,7 +110,7 @@ class _StudentInfoPageState extends State<StudendInfoPage> {
                         const Text(
                           'Get ready for learning - enter your details to begin',
                           style: TextStyle(
-                            color: Color(0xFF317575),
+                            color: kPrimaryDarkColor,
                             fontSize: 16,
                           ),
                           textAlign: TextAlign.center,
@@ -130,7 +131,7 @@ class _StudentInfoPageState extends State<StudendInfoPage> {
                                 child: Text(
                                   _semesterError ?? '',
                                   style: const TextStyle(
-                                    color: Colors.redAccent,
+                                    color: kErrorColor,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -141,11 +142,11 @@ class _StudentInfoPageState extends State<StudendInfoPage> {
                             // Inside your build method:
                             Container(
                               decoration: BoxDecoration(
-                                color: const Color(0xFF57C5BE),
+                                color: kAccentColor,
                                 borderRadius: BorderRadius.circular(15),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.4),
+                                    color: kShadowColor.withOpacity(0.4),
                                     blurRadius: 8,
                                     offset: const Offset(0, 4),
                                   ),
@@ -312,7 +313,7 @@ class _StudentInfoPageState extends State<StudendInfoPage> {
                                 child: Text(
                                   _classError ?? '',
                                   style: const TextStyle(
-                                    color: Colors.redAccent,
+                                    color: kErrorColor,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -321,11 +322,11 @@ class _StudentInfoPageState extends State<StudendInfoPage> {
                             ),
                             Container(
                               decoration: BoxDecoration(
-                                color: const Color(0xFF57C5BE),
+                                color: kAccentColor,
                                 borderRadius: BorderRadius.circular(15),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.4),
+                                    color: kShadowColor.withOpacity(0.4),
                                     blurRadius: 8,
                                     offset: const Offset(0, 4),
                                   ),
@@ -480,7 +481,7 @@ class _StudentInfoPageState extends State<StudendInfoPage> {
                                 child: Text(
                                   _majorError ?? '',
                                   style: const TextStyle(
-                                    color: Colors.redAccent,
+                                    color: kErrorColor,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -489,11 +490,11 @@ class _StudentInfoPageState extends State<StudendInfoPage> {
                             ),
                             Container(
                               decoration: BoxDecoration(
-                                color: const Color(0xFF57C5BE),
+                                color: kAccentColor,
                                 borderRadius: BorderRadius.circular(15),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.4),
+                                    color: kShadowColor.withOpacity(0.4),
                                     blurRadius: 8,
                                     offset: const Offset(0, 4),
                                   ),
@@ -638,14 +639,14 @@ class _StudentInfoPageState extends State<StudendInfoPage> {
                         ElevatedButton(
                           onPressed: _onSignIn,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF317575),
-                            foregroundColor: Colors.white,
+                            backgroundColor: kPrimaryDarkColor,
+                            foregroundColor: kWhite,
                             minimumSize: const Size(double.infinity, 55),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
                             ),
                             elevation: 8,
-                            shadowColor: Colors.black.withOpacity(1),
+                            shadowColor: kShadowColor.withOpacity(1),
                           ),
                           child: const Text(
                             'Sign In',
@@ -680,7 +681,7 @@ class _StudentInfoPageState extends State<StudendInfoPage> {
                         TextSpan(
                           text: 'Sign in',
                           style: TextStyle(
-                            color: Color(0xFF4C878B),
+                            color: kPrimaryColor,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
