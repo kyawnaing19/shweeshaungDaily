@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shweeshaungdaily/NoteListPage.dart';
@@ -104,6 +105,24 @@ class _HomePageState extends State<HomePage> {
       viewportFraction: 0.92,
       initialPage: _getCurrentPeriodIndex(),
     );
+    // Add timer to update UI every minute for lunch card and period cards
+    _lunchTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (!mounted) return;
+      final currentPeriod = _getCurrentPeriodIndex();
+      if (_pageController.hasClients && _pageController.page != currentPeriod) {
+        _pageController.jumpToPage(currentPeriod);
+      }
+      setState(() {});
+    });
+  }
+
+  Timer? _lunchTimer;
+
+  @override
+  void dispose() {
+    _lunchTimer?.cancel();
+    _pageController.dispose();
+    super.dispose();
   }
 
   int _getCurrentPeriodIndex() {
@@ -266,87 +285,59 @@ class _HomePageState extends State<HomePage> {
                     child: Builder(
                       builder: (context) {
                         final currentPeriod = _getCurrentPeriodIndex();
-                        if (currentPeriod == -1) {
-                          // Not in any period, show simple UI
-                          return Center(
-                            child: Container(
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.2),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: const Text(
-                                'No class at this time',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                            ),
+                        final periodType = periodTimes[currentPeriod]["type"];
+                        if (periodType == "lunch") {
+                          // Only show lunch break card during lunch period
+                          final now = DateTime.now();
+                          final periodTime =
+                              periodTimes[currentPeriod]["start"] as TimeOfDay;
+                          final periodDateTime = DateTime(
+                            now.year,
+                            now.month,
+                            now.day,
+                            periodTime.hour,
+                            periodTime.minute,
                           );
-                        }
-                        if (currentPeriod == -2) {
-                          // Lunch break
-                          return Center(
-                            child: Container(
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                color: Colors.orange.shade50,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.orange.withOpacity(0.1),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: const Text(
-                                'Lunch Break',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  color: Colors.deepOrange,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
+                          final periodTimeStr = DateFormat(
+                            'hh:mm a',
+                          ).format(periodDateTime);
+                          return _buildLunchBreakCard(
+                            periodDateTime,
+                            periodTimeStr,
                           );
-                        }
-                        return PageView.builder(
-                          controller: _pageController,
-                          itemCount: periodTimes.length,
-                          itemBuilder: (context, index) {
-                            final periodType = periodTimes[index]["type"];
-                            final now = DateTime.now();
-                            final periodTime =
-                                periodTimes[index]["start"] as TimeOfDay;
-                            final periodDateTime = DateTime(
-                              now.year,
-                              now.month,
-                              now.day,
-                              periodTime.hour,
-                              periodTime.minute,
-                            );
-                            final periodTimeStr = DateFormat(
-                              'hh:mm a',
-                            ).format(periodDateTime);
-                            if (periodType == "lunch") {
-                              return _buildLunchBreakCard(
-                                periodDateTime,
-                                periodTimeStr,
+                        } else {
+                          // Show only class periods in PageView
+                          final classPeriodIndices =
+                              List.generate(periodTimes.length, (i) => i)
+                                  .where(
+                                    (i) => periodTimes[i]["type"] == "class",
+                                  )
+                                  .toList();
+                          final initialPage = classPeriodIndices.indexOf(
+                            currentPeriod,
+                          );
+                          return PageView.builder(
+                            controller: PageController(
+                              viewportFraction: 0.92,
+                              initialPage: initialPage < 0 ? 0 : initialPage,
+                            ),
+                            itemCount: classPeriodIndices.length,
+                            itemBuilder: (context, idx) {
+                              final index = classPeriodIndices[idx];
+                              final now = DateTime.now();
+                              final periodTime =
+                                  periodTimes[index]["start"] as TimeOfDay;
+                              final periodDateTime = DateTime(
+                                now.year,
+                                now.month,
+                                now.day,
+                                periodTime.hour,
+                                periodTime.minute,
                               );
-                            } else {
-                              final period =
-                                  index < 3
-                                      ? index + 1
-                                      : index; // Adjust for lunch break at index 3
+                              final periodTimeStr = DateFormat(
+                                'hh:mm a',
+                              ).format(periodDateTime);
+                              final period = index < 3 ? index + 1 : index;
                               final current = classes[period];
                               final next = classes[period + 1];
                               return _buildClassCard(
@@ -366,9 +357,9 @@ class _HomePageState extends State<HomePage> {
                                 upcoming:
                                     next != null ? next['subjectCode'] : "-",
                               );
-                            }
-                          },
-                        );
+                            },
+                          );
+                        }
                       },
                     ),
                   ),
@@ -840,6 +831,21 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildLunchBreakCard(DateTime date, String time) {
+    // Only show the lunch break card if the current period is lunch
+    final now = TimeOfDay.now();
+    final lunchPeriod = periodTimes.indexWhere((p) => p["type"] == "lunch");
+    if (lunchPeriod == -1) return const SizedBox.shrink();
+    final lunchStart = periodTimes[lunchPeriod]["start"] as TimeOfDay;
+    final lunchEnd = periodTimes[lunchPeriod]["end"] as TimeOfDay;
+    final afterStart =
+        now.hour > lunchStart.hour ||
+        (now.hour == lunchStart.hour && now.minute >= lunchStart.minute);
+    final beforeEnd =
+        now.hour < lunchEnd.hour ||
+        (now.hour == lunchEnd.hour && now.minute <= lunchEnd.minute);
+    if (!(afterStart && beforeEnd)) {
+      return const SizedBox.shrink();
+    }
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: BoxDecoration(

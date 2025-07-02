@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shweeshaungdaily/services/api_service.dart';
-import 'package:shweeshaungdaily/view_models/auth_viewmodel.dart';
 import 'package:shweeshaungdaily/view_models/reg_viewmodel.dart';
-import 'package:shweeshaungdaily/views/Home.dart';
 import 'package:shweeshaungdaily/views/signReg/StudentInfo.dart';
 import 'package:shweeshaungdaily/views/signReg/login.dart';
 
@@ -50,7 +47,7 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
     );
   }
 
-  Future<void> _onCreateAccount() async {
+  void _onCreateAccount() {
     final String password = _passwordController.text;
     final String confirmPassword = _conPasswordController.text;
 
@@ -70,43 +67,6 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
       context,
       listen: false,
     ).updatePassword(password);
-
-    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
-
-    final String email =
-        Provider.of<RegistratinViewModel>(context, listen: false).email;
-
-    if (await ApiService.isTeacher(email)) {
-      print(
-        "Teacher account detected, proceeding with teacher registration...",
-      );
-      print("Email: $email, Password: $password");
-
-      final regViewModel = Provider.of<RegistratinViewModel>(
-        context,
-        listen: false,
-      );
-      bool success = false;
-      try {
-        success = await authViewModel.register(regViewModel.user);
-      } catch (e) {
-        success = false;
-      }
-      if (!success) {
-        _showErrorMessage('Registration failed. Please try again.');
-        return;
-      }
-      await authViewModel.login(email, password);
-      print("Login successful, navigating to HomePage...");
-      if (!mounted) return;
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => HomePage()),
-        (Route<dynamic> route) => false, // This removes all previous routes
-      );
-      return; // Prevent navigating to StudentInfoPage for teachers
-    }
-
     // Navigate to the next page (dummy here)
     Navigator.pushReplacement(
       context,
