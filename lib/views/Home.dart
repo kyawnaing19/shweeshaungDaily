@@ -157,6 +157,67 @@ class _HomePageState extends State<HomePage> {
     return days[weekday - 1];
   }
 
+ 
+
+  void _showCustomSnackbar(String message) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry entry;
+
+    entry = OverlayEntry(
+      builder: (context) => Positioned(
+        bottom: MediaQuery.of(context).size.height * 0.10,
+        left: 0,
+        right: 0,
+        child: Material(
+          color: Colors.transparent,
+          child: Center(
+            child: IntrinsicWidth(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 350),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.wifi_off, color: Colors.white, size: 28),
+                    const SizedBox(width: 12),
+                    Flexible(
+                      child: Text(
+                        message,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                        softWrap: true,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(entry);
+
+    Future.delayed(const Duration(seconds: 3), () {
+      entry.remove();
+    });
+  }
+
   Future<void> _fetchTimetable() async {
     setState(() {
       isLoading = true;
@@ -177,6 +238,11 @@ class _HomePageState extends State<HomePage> {
         errorMessage = e.toString();
         isLoading = false;
       });
+      Future.microtask(() {
+        if (mounted) {
+          _showCustomSnackbar("Connection Error");
+        }
+      });
     }
   }
 
@@ -192,16 +258,11 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     if (isLoading && timetableData == null) {
       // Only show loading on first load
-      // return Scaffold(
-      //   backgroundColor: const Color(0xFFE0F7FA),
-      //   body: const Center(child: CircularProgressIndicator()),
-      // );
       return Scaffold(
         body: Container(
-          color: kAccentColor, // The greenish-blue color from your image
+          color: kAccentColor,
           child: const Center(
             child: Column(
-              // Use Column to arrange widgets vertically
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
@@ -209,39 +270,25 @@ class _HomePageState extends State<HomePage> {
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 30,
-                    fontFamily:
-                        'Pacifico', // Ensure this font is added to your pubspec.yaml
+                    fontFamily: 'Pacifico',
                   ),
                 ),
-                SizedBox(
-                  height: 100,
-                ), // Space between "Shwee Shaung Daily" and "Loading..."
+                SizedBox(height: 100),
                 Text(
                   'Loading...',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
-                    // You can also apply a fontFamily here if desired, e.g., fontFamily: 'Pacifico',
                   ),
                 ),
-                SizedBox(
-                  height: 20,
-                ), // Space between "Loading..." and the indicator
+                SizedBox(height: 20),
                 CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Colors.white,
-                  ), // White loading indicator
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               ],
             ),
           ),
         ),
-      );
-    }
-    if (errorMessage != null) {
-      return Scaffold(
-        backgroundColor: const Color(0xFFE0F7FA),
-        body: Center(child: Text('Error: $errorMessage')),
       );
     }
 
@@ -269,64 +316,30 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _handleRefresh,
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    height:
-                        MediaQuery.of(context).size.height *
-                        0.3, // 30% of screen height for responsiveness
-                    child: Builder(
-                      builder: (context) {
-                        final currentPeriod = _getCurrentPeriodIndex();
-                        final periodType = periodTimes[currentPeriod]["type"];
-                        if (periodType == "lunch") {
-                          // Only show lunch break card during lunch period
-                          final now = DateTime.now();
-                          final periodTime =
-                              periodTimes[currentPeriod]["start"] as TimeOfDay;
-                          final periodDateTime = DateTime(
-                            now.year,
-                            now.month,
-                            now.day,
-                            periodTime.hour,
-                            periodTime.minute,
-                          );
-                          final periodTimeStr = DateFormat(
-                            'hh:mm a',
-                          ).format(periodDateTime);
-                          return _buildLunchBreakCard(
-                            periodDateTime,
-                            periodTimeStr,
-                          );
-                        } else {
-                          // Show only class periods in PageView
-                          final classPeriodIndices =
-                              List.generate(periodTimes.length, (i) => i)
-                                  .where(
-                                    (i) => periodTimes[i]["type"] == "class",
-                                  )
-                                  .toList();
-                          final initialPage = classPeriodIndices.indexOf(
-                            currentPeriod,
-                          );
-                          return PageView.builder(
-                            controller: PageController(
-                              viewportFraction: 0.92,
-                              initialPage: initialPage < 0 ? 0 : initialPage,
-                            ),
-                            itemCount: classPeriodIndices.length,
-                            itemBuilder: (context, idx) {
-                              final index = classPeriodIndices[idx];
+      body: Stack(
+        children: [
+          RefreshIndicator(
+            onRefresh: _handleRefresh,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        height:
+                            MediaQuery.of(context).size.height *
+                            0.3, // 30% of screen height for responsiveness
+                        child: Builder(
+                          builder: (context) {
+                            final currentPeriod = _getCurrentPeriodIndex();
+                            final periodType = periodTimes[currentPeriod]["type"];
+                            if (periodType == "lunch") {
+                              // Only show lunch break card during lunch period
                               final now = DateTime.now();
                               final periodTime =
-                                  periodTimes[index]["start"] as TimeOfDay;
+                                  periodTimes[currentPeriod]["start"] as TimeOfDay;
                               final periodDateTime = DateTime(
                                 now.year,
                                 now.month,
@@ -337,80 +350,118 @@ class _HomePageState extends State<HomePage> {
                               final periodTimeStr = DateFormat(
                                 'hh:mm a',
                               ).format(periodDateTime);
-                              final period = index < 3 ? index + 1 : index;
-                              final current = classes[period];
-                              final next = classes[period + 1];
-                              return _buildClassCard(
-                                number: "$period",
-                                date: DateFormat(
-                                  'MMM dd EEE',
-                                ).format(periodDateTime),
-                                code:
-                                    current != null
-                                        ? current['subjectCode']
-                                        : "No Class",
-                                teacher:
-                                    current != null
-                                        ? current['teacherName']
-                                        : "-",
-                                time: periodTimeStr,
-                                upcoming:
-                                    next != null ? next['subjectCode'] : "-",
+                              return _buildLunchBreakCard(
+                                periodDateTime,
+                                periodTimeStr,
                               );
-                            },
-                          );
-                        }
-                      },
-                    ),
+                            } else {
+                              // Show only class periods in PageView
+                              final classPeriodIndices =
+                                  List.generate(periodTimes.length, (i) => i)
+                                      .where(
+                                        (i) => periodTimes[i]["type"] == "class",
+                                      )
+                                      .toList();
+                              final initialPage = classPeriodIndices.indexOf(
+                                currentPeriod,
+                              );
+                              return PageView.builder(
+                                controller: PageController(
+                                  viewportFraction: 0.92,
+                                  initialPage: initialPage < 0 ? 0 : initialPage,
+                                ),
+                                itemCount: classPeriodIndices.length,
+                                itemBuilder: (context, idx) {
+                                  final index = classPeriodIndices[idx];
+                                  final now = DateTime.now();
+                                  final periodTime =
+                                      periodTimes[index]["start"] as TimeOfDay;
+                                  final periodDateTime = DateTime(
+                                    now.year,
+                                    now.month,
+                                    now.day,
+                                    periodTime.hour,
+                                    periodTime.minute,
+                                  );
+                                  final periodTimeStr = DateFormat(
+                                    'hh:mm a',
+                                  ).format(periodDateTime);
+                                  final period = index < 3 ? index + 1 : index;
+                                  final current = classes[period];
+                                  final next = classes[period + 1];
+                                  return _buildClassCard(
+                                    number: "$period",
+                                    date: DateFormat(
+                                      'MMM dd EEE',
+                                    ).format(periodDateTime),
+                                    code:
+                                        current != null
+                                            ? current['subjectCode']
+                                            : "No Class",
+                                    teacher:
+                                        current != null
+                                            ? current['teacherName']
+                                            : "-",
+                                    time: periodTimeStr,
+                                    upcoming:
+                                        next != null ? next['subjectCode'] : "-",
+                                  );
+                                },
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      _buildQuickActionsRow(),
+                      const SizedBox(height: 32),
+                    ],
                   ),
-                  const SizedBox(height: 24),
-                  _buildQuickActionsRow(),
-                  const SizedBox(height: 32),
-                ],
-              ),
-            ),
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _SliverAppBarDelegate(
-                minHeight: 60.0,
-                maxHeight: 60.0,
-                child: Container(
-                  color: const Color(0xFFE0F7FA),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 16,
-                  ),
-                  child: const Text(
-                    "Latest Feed",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF00897B),
-                      letterSpacing: 0.5,
+                ),
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _SliverAppBarDelegate(
+                    minHeight: 60.0,
+                    maxHeight: 60.0,
+                    child: Container(
+                      color: const Color(0xFFE0F7FA),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      child: const Text(
+                        "Latest Feed",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF00897B),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final item = feedItems[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: _buildFeedCard(
+                          user: item['user']!,
+                          timeAgo: item['timeAgo']!,
+                          message: item['message']!,
+                          imageUrl: item['imageUrl'],
+                        ),
+                      );
+                    }, childCount: feedItems.length),
+                  ),
+                ),
+              ],
             ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final item = feedItems[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16.0),
-                    child: _buildFeedCard(
-                      user: item['user']!,
-                      timeAgo: item['timeAgo']!,
-                      message: item['message']!,
-                      imageUrl: item['imageUrl'],
-                    ),
-                  );
-                }, childCount: feedItems.length),
-              ),
-            ),
-          ],
-        ),
+          ),
+            ],
       ),
       bottomNavigationBar: CustomBottomNavBar(
         selectedIndex: _selectedIndex,

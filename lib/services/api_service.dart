@@ -121,7 +121,7 @@ class ApiService {
 
       return timetable;
     } else {
-      throw Exception('Failed to load timetable');
+      return {};
     }
   }
 
