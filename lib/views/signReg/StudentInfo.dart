@@ -253,7 +253,7 @@ class _StudentInfoPageState extends State<StudendInfoPage> {
                                       final value = entry.value;
                                       return DropdownMenuItem<int>(
                                         value: value,
-                                        child: Container(
+                                        child: SizedBox(
                                           width: double.infinity,
                                           child: Column(
                                             crossAxisAlignment:
@@ -423,7 +423,7 @@ class _StudentInfoPageState extends State<StudendInfoPage> {
                                       final value = entry.value;
                                       return DropdownMenuItem<String>(
                                         value: value,
-                                        child: Container(
+                                        child: SizedBox(
                                           width: double.infinity,
                                           child: Column(
                                             crossAxisAlignment:
@@ -591,7 +591,7 @@ class _StudentInfoPageState extends State<StudendInfoPage> {
                                       final value = entry.value;
                                       return DropdownMenuItem<String>(
                                         value: value,
-                                        child: Container(
+                                        child: SizedBox(
                                           width: double.infinity,
                                           child: Column(
                                             crossAxisAlignment:

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert'; // Add this for JSON encoding/decoding
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shweeshaungdaily/NoteListPage.dart';
@@ -6,6 +7,8 @@ import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:intl/intl.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/views/bottomNavBar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shweeshaungdaily/views/timetablepage.dart'; // Add this for SharedPreferences
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -72,7 +75,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _fetchTimetable();
+    _loadTimetableFromPrefs();
     feedItems = [
       {
         "user": "Daw Aye Mya ",
@@ -157,6 +160,37 @@ class _HomePageState extends State<HomePage> {
     return days[weekday - 1];
   }
 
+  Future<void> _loadTimetableFromPrefs() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final timetableJson = prefs.getString('timetableData');
+    if (timetableJson != null) {
+      try {
+        final Map<String, dynamic> decoded = jsonDecode(timetableJson);
+        setState(() {
+          timetableData = decoded.map(
+            (k, v) => MapEntry(
+              k,
+              (v as Map<String, dynamic>).map(
+                (ik, iv) => MapEntry(int.parse(ik), iv),
+              ),
+            ),
+          );
+          print('timetableData loaded from prefs: $timetableData');
+          isLoading = false;
+        });
+      } catch (e) {
+        // If error in decoding, fallback to API
+        await _fetchTimetable();
+      }
+    } else {
+      await _fetchTimetable();
+    }
+  }
+
   Future<void> _fetchTimetable() async {
     setState(() {
       isLoading = true;
@@ -172,6 +206,13 @@ class _HomePageState extends State<HomePage> {
         timetableData = data;
         isLoading = false;
       });
+      // Save to SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      // Convert int keys to string for JSON encoding
+      final dataToSave = data.map(
+        (k, v) => MapEntry(k, v.map((ik, iv) => MapEntry(ik.toString(), iv))),
+      );
+      await prefs.setString('timetableData', jsonEncode(dataToSave));
     } catch (e) {
       setState(() {
         errorMessage = e.toString();
@@ -595,7 +636,7 @@ class _HomePageState extends State<HomePage> {
                   context,
                   MaterialPageRoute(
                     builder: (context) {
-                      return const NoteScreen();
+                      return const TimeTablePage();
                     },
                   ),
                 );
