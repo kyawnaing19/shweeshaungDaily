@@ -19,17 +19,16 @@ class _TimeTablePageState extends State<TimeTablePage> {
   final List<String> days = const ['Mon', 'Tue', 'Wed', 'Thrs', 'Fri'];
   int selectedDay = 0;
 
-  // Define period times for each period number
   final Map<int, String> periodTimes = {
-    1: '08:00 - 08:50',
-    2: '08:50 - 09:40',
-    3: '09:40 - 10:30',
-    5: '10:50 - 11:40',
-    6: '11:40 - 12:30',
-    7: '12:30 - 01:20',
+    1: '08:30 - 09:30',
+    2: '09:30 - 10:30',
+    3: '10:30 - 11:30',
+    4: '12:30 - 1:30',
+    5: '1:30 - 2:30',
+    6: '2:30 - 03:30',
   };
 
-  Map<String, Map<int, dynamic>> timetableData = {}; // day -> period -> info
+  Map<String, Map<int, dynamic>> timetableData = {};
 
   @override
   void initState() {
@@ -51,6 +50,7 @@ class _TimeTablePageState extends State<TimeTablePage> {
             ),
           ),
         );
+        print('timetableData loaded: $timetableData');
       });
     }
   }
@@ -102,7 +102,6 @@ class _TimeTablePageState extends State<TimeTablePage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Timeline
         Column(
           children: [
             Container(
@@ -117,7 +116,6 @@ class _TimeTablePageState extends State<TimeTablePage> {
           ],
         ),
         const SizedBox(width: 12),
-        // Card
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,9 +140,7 @@ class _TimeTablePageState extends State<TimeTablePage> {
     final dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
     final selectedDayName = dayNames[selectedDay];
     final periods = timetableData[selectedDayName] ?? {};
-
-    // Only show periods 1,2,3,5,6,7 (skip 4)
-    final periodNumbers = [1, 2, 3, 5, 6, 7];
+    final periodNumbers = [1, 2, 3, 4, 5, 6];
 
     return Scaffold(
       backgroundColor: kBackgroundColor,
@@ -167,7 +163,6 @@ class _TimeTablePageState extends State<TimeTablePage> {
       body: Column(
         children: [
           const SizedBox(height: 12),
-          // Day selector
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: List.generate(days.length, (index) {
@@ -200,7 +195,6 @@ class _TimeTablePageState extends State<TimeTablePage> {
             }),
           ),
           const SizedBox(height: 16),
-          // Timeline area for selected day
           Expanded(
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -210,16 +204,14 @@ class _TimeTablePageState extends State<TimeTablePage> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: ListView(
-                children:
-                    periodNumbers.map((period) {
-                      final periodData = periods[period.toString()];
-                      return buildTimelineItem(period, periodData);
-                    }).toList(),
+                children: periodNumbers.map((period) {
+                  final periodData = periods[period]; // ✅ fixed line
+                  return buildTimelineItem(period, periodData);
+                }).toList(),
               ),
             ),
           ),
           const SizedBox(height: 16),
-          // Bottom nav bar
           Container(
             height: 64,
             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

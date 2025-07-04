@@ -179,7 +179,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           );
-          print('timetableData loaded from prefs: $timetableData');
           isLoading = false;
         });
       } catch (e) {
