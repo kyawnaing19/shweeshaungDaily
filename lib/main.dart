@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:shweeshaungdaily/view_models/StartupViewModel.dart';
 import 'package:shweeshaungdaily/view_models/auth_viewmodel.dart';
 import 'package:shweeshaungdaily/view_models/reg_viewmodel.dart';
+import 'package:shweeshaungdaily/views/Home.dart';
 import 'package:shweeshaungdaily/views/loading.dart';
+import 'package:shweeshaungdaily/views/timetablepage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +36,12 @@ class MyApp extends StatelessWidget {
                 theme: ThemeData(primarySwatch: Colors.blue),
                 debugShowCheckedModeBanner: false,
                 home: const LoadingPage(),
+                routes: {
+                  '/home': (context) => HomePage(),
+                  '/timetable': (context) => TimeTablePage(),
+                  // '/notes': (context) => NotesPage(),
+                  // '/profile': (context) => ProfilePage(),
+                },
               ),
             ),
           ),

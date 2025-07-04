@@ -33,18 +33,20 @@ class CustomBottomNavBar extends StatelessWidget {
         unselectedItemColor: Colors.grey,
         currentIndex: selectedIndex,
         onTap: (index) {
+          handleNavigation(context, index);
           onItemTapped(index);
-          // Navigation logic can be handled here if you want to centralize it
-          // For now, just call the callback
         },
         type: BottomNavigationBarType.fixed,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_today),
+            label: 'Timetable',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.description),
             label: 'Notes',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.check_box), label: 'Tasks'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
@@ -55,17 +57,17 @@ class CustomBottomNavBar extends StatelessWidget {
   static void handleNavigation(BuildContext context, int index) {
     switch (index) {
       case 0:
-        // Navigate to Home
+        Navigator.pushReplacementNamed(context, '/home');
         break;
       case 1:
-        // Navigate to Notes/Description
+        Navigator.pushReplacementNamed(context, '/timetable');
         break;
-      case 2:
-        // Navigate to Checkbox/Tasks
-        break;
-      case 3:
-        // Navigate to Profile
-        break;
+      // case 2:
+      //   Navigator.pushReplacementNamed(context, '/notes');
+      //   break;
+      // case 3:
+      //   Navigator.pushReplacementNamed(context, '/profile');
+      //   break;
     }
   }
 }
