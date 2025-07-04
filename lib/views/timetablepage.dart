@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:shweeshaungdaily/views/bottomNavBar.dart';
 
 class TimeTablePage extends StatefulWidget {
   final EdgeInsetsGeometry timelinePadding;
@@ -19,6 +20,7 @@ class _TimeTablePageState extends State<TimeTablePage> {
   final List<String> days = const ['Mon', 'Tue', 'Wed', 'Thrs', 'Fri'];
   int selectedDay = 0;
 
+  // Define period times for each period number
   final Map<int, String> periodTimes = {
     1: '08:30 - 09:30',
     2: '09:30 - 10:30',
@@ -28,11 +30,19 @@ class _TimeTablePageState extends State<TimeTablePage> {
     6: '2:30 - 03:30',
   };
 
-  Map<String, Map<int, dynamic>> timetableData = {};
+  Map<String, Map<int, dynamic>> timetableData = {}; // day -> period -> info
 
   @override
   void initState() {
     super.initState();
+    // Set selectedDay based on current weekday
+    final now = DateTime.now();
+    // DateTime.weekday: Monday=1, ..., Friday=5, Saturday=6, Sunday=7
+    if (now.weekday == 6 || now.weekday == 7) {
+      selectedDay = 0; // Mon
+    } else {
+      selectedDay = now.weekday - 1; // Mon=0, Tue=1, ..., Fri=4
+    }
     loadTimetableData();
   }
 
@@ -50,49 +60,54 @@ class _TimeTablePageState extends State<TimeTablePage> {
             ),
           ),
         );
-        print('timetableData loaded: $timetableData');
       });
     }
   }
 
   Widget buildClassCard(dynamic periodData) {
     if (periodData == null) {
-      return Card(
-        elevation: 2,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text('No Class', style: TextStyle(color: kPrimaryDarkColor)),
+      return SizedBox(
+        width: 280, // Set your desired width here
+        child: Card(
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text('No Class', style: TextStyle(color: kPrimaryDarkColor)),
+          ),
         ),
       );
     }
-    return Card(
-      elevation: 4,
-      shadowColor: kShadowColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              periodData['subjectName'] ?? '',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                color: kPrimaryDarkColor,
+    return SizedBox(
+      width: 280, // Set your desired width here
+      child: Card(
+        elevation: 4,
+        shadowColor: kShadowColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                periodData['subjectName'] ?? '',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: kPrimaryDarkColor,
+                ),
               ),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              periodData['subjectCode'] ?? '',
-              style: const TextStyle(color: kPrimaryDarkColor),
-            ),
-            Text(
-              periodData['teacherName'] ?? '',
-              style: const TextStyle(color: kPrimaryDarkColor),
-            ),
-          ],
+              const SizedBox(height: 5),
+              Text(
+                periodData['subjectCode'] ?? '',
+                style: const TextStyle(color: kPrimaryDarkColor),
+              ),
+              Text(
+                periodData['teacherName'] ?? '',
+                style: const TextStyle(color: kPrimaryDarkColor),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -102,6 +117,7 @@ class _TimeTablePageState extends State<TimeTablePage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Timeline
         Column(
           children: [
             Container(
@@ -112,10 +128,11 @@ class _TimeTablePageState extends State<TimeTablePage> {
                 color: kPrimaryDarkColor,
               ),
             ),
-            Container(width: 4, height: 100, color: kPrimaryDarkColor),
+            Container(width: 4, height: 113, color: kPrimaryDarkColor),
           ],
         ),
         const SizedBox(width: 12),
+        // Card
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,6 +157,8 @@ class _TimeTablePageState extends State<TimeTablePage> {
     final dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
     final selectedDayName = dayNames[selectedDay];
     final periods = timetableData[selectedDayName] ?? {};
+
+    // Only show periods 1,2,3,5,6,7 (skip 4)
     final periodNumbers = [1, 2, 3, 4, 5, 6];
 
     return Scaffold(
@@ -163,6 +182,7 @@ class _TimeTablePageState extends State<TimeTablePage> {
       body: Column(
         children: [
           const SizedBox(height: 12),
+          // Day selector
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: List.generate(days.length, (index) {
@@ -195,6 +215,7 @@ class _TimeTablePageState extends State<TimeTablePage> {
             }),
           ),
           const SizedBox(height: 16),
+          // Timeline area for selected day
           Expanded(
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -204,33 +225,32 @@ class _TimeTablePageState extends State<TimeTablePage> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: ListView(
-                children: periodNumbers.map((period) {
-                  final periodData = periods[period]; // ✅ fixed line
-                  return buildTimelineItem(period, periodData);
-                }).toList(),
+                children:
+                    periodNumbers.map((period) {
+                      final periodData = periods[period]; // <-- FIXED HERE
+                      return buildTimelineItem(period, periodData);
+                    }).toList(),
               ),
             ),
           ),
           const SizedBox(height: 16),
-          Container(
-            height: 64,
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: kAccentColor,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: const [
-                Icon(Icons.home, color: Colors.white),
-                Icon(Icons.list, color: Colors.white),
-                Icon(Icons.check_box, color: Colors.white),
-                Icon(Icons.person, color: Colors.white),
-              ],
-            ),
-          ),
+          // Bottom nav bar
         ],
       ),
+      // Add the bottomNavigationBar property here
+      bottomNavigationBar: CustomBottomNavBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
+      ),
     );
+  }
+
+  int _selectedIndex = 1; // 1 for Timetable, 0 for Home, etc.
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    // Navigation is handled in CustomBottomNavBar.handleNavigation
   }
 }
