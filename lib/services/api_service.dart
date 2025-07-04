@@ -6,8 +6,8 @@ import 'package:shweeshaungdaily/services/token_service.dart';
 import '../models/user_model.dart';
 
 class ApiService {
-  static const baseUrl = 'http://192.168.104.109:8080/api/auth';
-  static const secbaseUrl = 'http://192.168.104.109:8080/admin/schedules';
+  static const baseUrl = 'http://192.168.223.109:8080/api/auth';
+  static const secbaseUrl = 'http://192.168.223.109:8080/admin/schedules';
 
   static Future<Map<String, dynamic>?> login(UserModel user) async {
     final response = await http.post(
