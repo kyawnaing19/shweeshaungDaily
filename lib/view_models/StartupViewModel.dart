@@ -25,16 +25,14 @@ class StartupViewModel extends ChangeNotifier {
             response['accessToken'],
             response['refreshToken'],
           );
-          _isLoggedIn = true;
         } else {
           print("❌ Token refresh failed or response invalid");
-          // await TokenService.clearTokens();
-          _isLoggedIn = false;
+          // Optionally handle refresh failure, but still allow access if tokens exist
         }
+        _isLoggedIn = true; // Allow access if tokens exist, even if refresh fails
       } catch (e) {
         print("❌ Exception in refresh logic: $e");
-        //await TokenService.clearTokens();
-        _isLoggedIn = false;
+        _isLoggedIn = true; // Allow access if tokens exist, even if offline/exception
       }
     } else {
       print("❌ No tokens found in SharedPreferences");
