@@ -32,6 +32,13 @@ class _HomePageState extends State<HomePage> {
   bool isLoading = true;
   String? errorMessage;
 
+  final List<String> customMessages = [
+    "Welcome! No classes right now.",
+    "Stay productive! Check your notes.",
+    "Remember to review your schedule.",
+    "Enjoy your free time!",
+  ];
+
   // Period start and end times (lunch break is now a 'period' at index 3)
   final List<Map<String, dynamic>> periodTimes = [
     {
@@ -128,6 +135,23 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
+  // ...existing code...
+  bool isOutsideClassTime() {
+    final now = TimeOfDay.now();
+    final start = const TimeOfDay(hour: 8, minute: 30);
+    final end = const TimeOfDay(hour: 15, minute: 30);
+
+    final afterStart =
+        now.hour > start.hour ||
+        (now.hour == start.hour && now.minute >= start.minute);
+    final beforeEnd =
+        now.hour < end.hour ||
+        (now.hour == end.hour && now.minute <= end.minute);
+
+    return !(afterStart && beforeEnd);
+  }
+  // ...existing code...
+
   int _getCurrentPeriodIndex() {
     final now = TimeOfDay.now();
     for (int i = 0; i < periodTimes.length; i++) {
@@ -158,6 +182,73 @@ class _HomePageState extends State<HomePage> {
       'Sunday',
     ];
     return days[weekday - 1];
+  }
+
+  void _showCustomSnackbar(String message) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry entry;
+
+    entry = OverlayEntry(
+      builder:
+          (context) => Positioned(
+            bottom: MediaQuery.of(context).size.height * 0.10,
+            left: 0,
+            right: 0,
+            child: Material(
+              color: Colors.transparent,
+              child: Center(
+                child: IntrinsicWidth(
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 350),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.wifi_off,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                        const SizedBox(width: 12),
+                        Flexible(
+                          child: Text(
+                            message,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                            softWrap: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+    );
+
+    overlay.insert(entry);
+
+    Future.delayed(const Duration(seconds: 3), () {
+      entry.remove();
+    });
   }
 
   Future<void> _loadTimetableFromPrefs() async {
@@ -216,6 +307,11 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         errorMessage = e.toString();
         isLoading = false;
+      });
+      Future.microtask(() {
+        if (mounted) {
+          _showCustomSnackbar("Connection Error");
+        }
       });
     }
   }
@@ -278,12 +374,12 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     }
-    if (errorMessage != null) {
-      return Scaffold(
-        backgroundColor: const Color(0xFFE0F7FA),
-        body: Center(child: Text('Error: $errorMessage')),
-      );
-    }
+    // if (errorMessage != null) {
+    //   return Scaffold(
+    //     backgroundColor: const Color(0xFFE0F7FA),
+    //     body: Center(child: Text('Error: $errorMessage')),
+    //   );
+    // }
 
     final today = getCurrentDayName();
     final classes = timetableData?[today] ?? {};
@@ -322,12 +418,16 @@ class _HomePageState extends State<HomePage> {
                     height:
                         MediaQuery.of(context).size.height *
                         0.3, // 30% of screen height for responsiveness
+                    // ...existing code...
                     child: Builder(
                       builder: (context) {
+                        if (isOutsideClassTime()) {
+                          return _buildCustomMessageCards();
+                        }
                         final currentPeriod = _getCurrentPeriodIndex();
                         final periodType = periodTimes[currentPeriod]["type"];
                         if (periodType == "lunch") {
-                          // Only show lunch break card during lunch period
+                          // ...existing lunch card code...
                           final now = DateTime.now();
                           final periodTime =
                               periodTimes[currentPeriod]["start"] as TimeOfDay;
@@ -346,7 +446,7 @@ class _HomePageState extends State<HomePage> {
                             periodTimeStr,
                           );
                         } else {
-                          // Show only class periods in PageView
+                          // ...existing class PageView code...
                           final classPeriodIndices =
                               List.generate(periodTimes.length, (i) => i)
                                   .where(
@@ -402,6 +502,7 @@ class _HomePageState extends State<HomePage> {
                         }
                       },
                     ),
+                    // ...existing code...,
                   ),
                   const SizedBox(height: 24),
                   _buildQuickActionsRow(),
@@ -458,6 +559,49 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+  // ...existing code...
+  Widget _buildCustomMessageCards() {
+    return PageView.builder(
+      controller: PageController(viewportFraction: 0.92),
+      itemCount: customMessages.length,
+      itemBuilder: (context, idx) {
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 13),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF4DB6AC), Color(0xFF26A69A)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Text(
+                customMessages[idx],
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+  // ...existing code...
 
   Widget _buildClassCard({
     required String number,
@@ -981,18 +1125,6 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class NoteScreen extends StatelessWidget {
-  const NoteScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Note Page")),
-      body: const Center(child: Text("This is the Note Page!")),
     );
   }
 }

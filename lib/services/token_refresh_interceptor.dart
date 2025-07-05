@@ -27,7 +27,7 @@ class AuthHttpClient extends http.BaseClient {
 
   Future<String?> _refreshAccessToken(String refreshToken) async {
     final response = await http.post(
-      Uri.parse('http://192.168.14.109:8080/auth/refresh-token'),
+      Uri.parse('http://192.168.3.109:8080/auth/refresh-token'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'refreshToken': refreshToken}),
     );
