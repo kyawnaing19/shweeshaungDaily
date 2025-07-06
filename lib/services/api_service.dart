@@ -6,8 +6,8 @@ import 'package:shweeshaungdaily/services/token_service.dart';
 import '../models/user_model.dart';
 
 class ApiService {
-  static const baseUrl = 'http://192.168.3.109:8080/api/auth';
-  static const secbaseUrl = 'http://192.168.3.109:8080/admin/schedules';
+  static const baseUrl = 'http://192.168.1.226:8080/api/auth';
+  static const secbaseUrl = 'http://192.168.1.226:8080/admin/schedules';
 
   static Future<Map<String, dynamic>?> login(UserModel user) async {
     final response = await http.post(
@@ -97,18 +97,15 @@ class ApiService {
   }
 
   //schedule data to fetch
-  static Future<Map<String, Map<int, dynamic>>> fetchTimetable({
-    required String userClass,
-    required String semester,
-    required String major,
-  }) async {
-    final uri = Uri.parse(
-      '$secbaseUrl/timetable?userClass=$userClass&semester=$semester&major=$major',
+  static Future<Map<String, Map<int, dynamic>>> fetchTimetable() async {
+    final uri = Uri.parse('$secbaseUrl/timetableForAll');
+
+    final res = await AuthorizedHttpService.sendAuthorizedRequest(
+      uri,
+      method: 'GET',
     );
 
-    final res = await http.get(uri);
-
-    if (res.statusCode == 200) {
+    if (res != null && res.statusCode == 200) {
       final List<dynamic> data = jsonDecode(res.body);
       Map<String, Map<int, dynamic>> timetable = {};
 

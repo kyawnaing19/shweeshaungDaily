@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shweeshaungdaily/views/Home.dart';
 import 'dart:convert';
 import 'package:shweeshaungdaily/views/bottomNavBar.dart';
+import 'package:shweeshaungdaily/utils/route_transition.dart';
+import 'package:shweeshaungdaily/views/teacherprofile.dart';
 
 class TimeTablePage extends StatefulWidget {
   final EdgeInsetsGeometry timelinePadding;
@@ -247,10 +250,26 @@ class _TimeTablePageState extends State<TimeTablePage> {
 
   int _selectedIndex = 1; // 1 for Timetable, 0 for Home, etc.
 
+  // ...existing code...
+
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    // Navigation is handled in CustomBottomNavBar.handleNavigation
+    if (_selectedIndex == index) return;
+    if (index == 0) {
+      Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
+    }
+    if (index == 2) {
+      Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
+    }
+    if (index == 3) {
+      Navigator.of(
+        context,
+      ).pushReplacement(fadeRoute(const TeacherProfilePage()));
+    } else {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
   }
+
+  // ...existing code...
 }

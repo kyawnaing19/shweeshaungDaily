@@ -13,7 +13,7 @@ class AuthHttpClient extends http.BaseClient {
     request.headers['Authorization'] = 'Bearer ${tokens.accessToken}';
     var response = await _inner.send(request);
 
-    if (response.statusCode == 401) {
+    if (response.statusCode == 403) {
       final newAccessToken = await _refreshAccessToken(tokens.refreshToken);
       if (newAccessToken != null) {
         await TokenService.updateAccessToken(newAccessToken);
@@ -27,7 +27,7 @@ class AuthHttpClient extends http.BaseClient {
 
   Future<String?> _refreshAccessToken(String refreshToken) async {
     final response = await http.post(
-      Uri.parse('http://192.168.3.109:8080/auth/refresh-token'),
+      Uri.parse('http://192.168.1.226:8080/auth/refresh-token'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'refreshToken': refreshToken}),
     );

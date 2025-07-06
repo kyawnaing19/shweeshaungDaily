@@ -5,6 +5,7 @@ import 'package:shweeshaungdaily/view_models/auth_viewmodel.dart';
 import 'package:shweeshaungdaily/view_models/reg_viewmodel.dart';
 import 'package:shweeshaungdaily/views/Home.dart';
 import 'package:shweeshaungdaily/views/loading.dart';
+import 'package:shweeshaungdaily/views/teacherprofile.dart';
 import 'package:shweeshaungdaily/views/timetablepage.dart';
 
 void main() async {
@@ -40,7 +41,7 @@ class MyApp extends StatelessWidget {
                   '/home': (context) => HomePage(),
                   '/timetable': (context) => TimeTablePage(),
                   // '/notes': (context) => NotesPage(),
-                  // '/profile': (context) => ProfilePage(),
+                  '/profile': (context) => TeacherProfilePage(),
                 },
               ),
             ),

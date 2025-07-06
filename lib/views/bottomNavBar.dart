@@ -62,12 +62,12 @@ class CustomBottomNavBar extends StatelessWidget {
       case 1:
         Navigator.pushReplacementNamed(context, '/timetable');
         break;
-      // case 2:
-      //   Navigator.pushReplacementNamed(context, '/notes');
-      //   break;
-      // case 3:
-      //   Navigator.pushReplacementNamed(context, '/profile');
-      //   break;
+      case 2:
+        Navigator.pushReplacementNamed(context, '/timetable');
+        break;
+      case 3:
+        Navigator.pushReplacementNamed(context, '/profile');
+        break;
     }
   }
 }
