@@ -8,7 +8,9 @@ import 'package:intl/intl.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/views/bottomNavBar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shweeshaungdaily/views/teacherprofile.dart';
 import 'package:shweeshaungdaily/views/timetablepage.dart'; // Add this for SharedPreferences
+import 'package:shweeshaungdaily/utils/route_transition.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,10 +23,20 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0; // State for the selected tab in the bottom navigation
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    // Navigation logic can be handled in CustomBottomNavBar.handleNavigation if desired
+    if (_selectedIndex == index) return;
+     if (index == 1) {
+      Navigator.of(context).pushReplacement(fadeRoute(const TimeTablePage()));
+    }
+    if (index == 2) {
+      Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
+    }
+    if (index == 3) {
+      Navigator.of(context).pushReplacement(fadeRoute(const TeacherProfilePage()));
+    } else {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
   }
 
   late List<Map<String, String?>> feedItems;
@@ -32,11 +44,13 @@ class _HomePageState extends State<HomePage> {
   bool isLoading = true;
   String? errorMessage;
 
-  final List<String> customMessages = [
-    "Welcome! No classes right now.",
-    "Stay productive! Check your notes.",
-    "Remember to review your schedule.",
-    "Enjoy your free time!",
+  final List<String> customMessageImages = [
+    'assets/images/poem1.webp',
+    'assets/images/poem2.webp',
+    'assets/images/poem3.webp',
+    'assets/images/poem4.webp',
+    'assets/images/poem5.webp',
+    'assets/images/poem6.webp',
   ];
 
   // Period start and end times (lunch break is now a 'period' at index 3)
@@ -287,11 +301,7 @@ class _HomePageState extends State<HomePage> {
       errorMessage = null;
     });
     try {
-      final data = await ApiService.fetchTimetable(
-        userClass: 'A',
-        semester: '3',
-        major: 'CS',
-      );
+      final data = await ApiService.fetchTimetable();
       setState(() {
         timetableData = data;
         isLoading = false;
@@ -487,7 +497,7 @@ class _HomePageState extends State<HomePage> {
                                 ).format(periodDateTime),
                                 code:
                                     current != null
-                                        ? current['subjectCode']
+                                        ? current['subjectName']
                                         : "No Class",
                                 teacher:
                                     current != null
@@ -504,7 +514,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     // ...existing code...,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 10),
                   _buildQuickActionsRow(),
                   const SizedBox(height: 32),
                 ],
@@ -563,38 +573,17 @@ class _HomePageState extends State<HomePage> {
   // ...existing code...
   Widget _buildCustomMessageCards() {
     return PageView.builder(
-      controller: PageController(viewportFraction: 0.92),
-      itemCount: customMessages.length,
+      controller: PageController(viewportFraction: 0.96),
+      itemCount: customMessageImages.length,
       itemBuilder: (context, idx) {
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 13),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF4DB6AC), Color(0xFF26A69A)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+        return Center(
+          child: ClipRRect(
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.15),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32.0),
-              child: Text(
-                customMessages[idx],
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
+            child: Image.asset(
+              customMessageImages[idx],
+              width: 350, // Set your desired fixed width
+              height: 220, // Set your desired fixed height
+              fit: BoxFit.cover,
             ),
           ),
         );
@@ -674,10 +663,10 @@ class _HomePageState extends State<HomePage> {
                     Text(
                       code,
                       style: GoogleFonts.rowdies(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w400,
                         color: Colors.white,
-                        letterSpacing: 0.5,
+                        letterSpacing: 0.3,
                       ),
                     ),
                     const SizedBox(height: 6),
