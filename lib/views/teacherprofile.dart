@@ -3,23 +3,24 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:shweeshaungdaily/colors.dart';
+import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/views/Home.dart';
 import 'package:shweeshaungdaily/views/bottomNavBar.dart';
 import 'package:shweeshaungdaily/utils/route_transition.dart';
 import 'package:shweeshaungdaily/views/timetablepage.dart';
 import 'package:dotted_border/dotted_border.dart';
 
-final List<String> storyStatusOptions = [
-  'Public',
-  'Sem 1',
-  'Sem 2',
-  'Sem 3',
-  'Sem 4',
-  'Sem 5',
-  'Sem 6',
-  'Sem 7',
-  'Sem 8',
-];
+final Map<String, String> audienceValueMap = {
+  'Public': 'Public',
+  'Sem 1': '1',
+  'Sem 2': '2',
+  'Sem 3': '3',
+  'Sem 4': '4',
+  'Sem 5': '5',
+  'Sem 6': '6',
+  'Sem 7': '7',
+  'Sem 8': '8',
+};
 
 class TeacherProfilePage extends StatefulWidget {
   const TeacherProfilePage({super.key});
@@ -267,6 +268,7 @@ class UploadStoryDialog extends StatefulWidget {
 class _UploadStoryDialogState extends State<UploadStoryDialog> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  String _selectedAudience = 'Public';
   XFile? _selectedImage;
   bool _isUploading = false;
 
@@ -289,19 +291,17 @@ class _UploadStoryDialogState extends State<UploadStoryDialog> {
   }
 
   Future<void> _uploadPost() async {
-    setState(() {
-      _isUploading = true;
-    });
-
-    // TODO: Replace this with your backend API call.
-    // Example:
-    // await uploadPostToBackend(_controller.text, _selectedImage);
-
-    await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
-
-    setState(() {
-      _isUploading = false;
-    });
+  setState(() {
+    _isUploading = true;
+  });
+  final backendAudience = audienceValueMap[_selectedAudience] ?? 'Public';
+  try {
+    await ApiService.uploadFeed(
+      text: _controller.text,
+      audience: backendAudience,
+      photo: _selectedImage != null ? File(_selectedImage!.path) : null,
+      // Add token or other params if needed
+    );
 
     if (mounted) {
       Navigator.pop(context);
@@ -309,7 +309,16 @@ class _UploadStoryDialogState extends State<UploadStoryDialog> {
         const SnackBar(content: Text('Your story has been uploaded!')),
       );
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Upload failed: $e')),
+    );
+  } finally {
+    setState(() {
+      _isUploading = false;
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -353,11 +362,17 @@ class _UploadStoryDialogState extends State<UploadStoryDialog> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () {
-                      showDialog(
+                    // ...inside the GestureDetector for the lock icon...
+                    onTap: () async {
+                      final selected = await showDialog<String>(
                         context: context,
                         builder: (context) => const ShowStoryDialog(),
                       );
+                      if (selected != null) {
+                        setState(() {
+                          _selectedAudience = selected;
+                        });
+                      }
                     },
                     child: const CircleAvatar(
                       radius: 23,
@@ -592,8 +607,7 @@ class ShowStoryDialog extends StatelessWidget {
                   child: ListView(
                     shrinkWrap: true,
                     children:
-                        storyStatusOptions
-                            .map(
+                            audienceValueMap.keys.map(
                               (status) => ListTile(
                                 title: Text(
                                   status,

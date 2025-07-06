@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shweeshaungdaily/models/user_reg_model.dart';
 import 'package:shweeshaungdaily/services/authorized_http_service.dart';
@@ -7,6 +8,7 @@ import '../models/user_model.dart';
 
 class ApiService {
   static const baseUrl = 'http://192.168.1.226:8080/api/auth';
+  static const feedBaseUrl = 'http://192.168.1.226:8080/feeds';
   static const secbaseUrl = 'http://192.168.1.226:8080/admin/schedules';
 
   static Future<Map<String, dynamic>?> login(UserModel user) async {
@@ -95,6 +97,55 @@ class ApiService {
 
     return null; // Token expired or user logged out
   }
+
+  static Future<void> uploadFeed({
+  required String text,
+  required String audience,
+  File? photo,
+}) async {
+  Future<http.Response> sendMultipart(String accessToken) async {
+    final url = Uri.parse('$feedBaseUrl');
+    var request = http.MultipartRequest('POST', url)
+      ..fields['text'] = text
+      ..fields['audience'] = audience
+      ..headers['Authorization'] = 'Bearer $accessToken';
+
+    if (photo != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath('photo', photo.path),
+      );
+    }
+
+    final streamedResponse = await request.send();
+    return await http.Response.fromStream(streamedResponse);
+  }
+
+  var tokens = await TokenService.loadTokens();
+  if (tokens == null) throw Exception('Not authenticated');
+
+  var response = await sendMultipart(tokens.accessToken);
+
+  if (response.statusCode == 401 || response.statusCode == 403) {
+    // Try to refresh token
+    final refreshed = await ApiService.refreshAccessToken(tokens.refreshToken);
+    if (refreshed != null &&
+        refreshed['accessToken'] != null &&
+        refreshed['refreshToken'] != null) {
+      await TokenService.saveTokens(
+        refreshed['accessToken'],
+        refreshed['refreshToken'],
+      );
+      response = await sendMultipart(refreshed['accessToken']);
+    } else {
+      await TokenService.clearTokens();
+      throw Exception('Session expired. Please log in again.');
+    }
+  }
+
+  if (response.statusCode != 200) {
+    throw Exception('Failed to upload feed: ${response.body}');
+  }
+}
 
   //schedule data to fetch
   static Future<Map<String, Map<int, dynamic>>> fetchTimetable() async {
