@@ -10,6 +10,7 @@ import 'package:shweeshaungdaily/views/timetablepage.dart';
 import 'package:dotted_border/dotted_border.dart';
 
 final List<String> storyStatusOptions = [
+  'Public',
   'Sem 1',
   'Sem 2',
   'Sem 3',
@@ -565,7 +566,7 @@ class ShowStoryDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              'Select Story Status',
+              'Select Audience',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,

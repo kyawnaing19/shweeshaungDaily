@@ -4,11 +4,20 @@ import 'package:shweeshaungdaily/services/token_service.dart';
 
 class StartupViewModel extends ChangeNotifier {
   bool? _isLoggedIn;
+  bool? isTeacher;
 
   bool? get isLoggedIn => _isLoggedIn;
 
+  void setIsTeacher(bool value) {
+  isTeacher = value;
+  notifyListeners();
+}
+
+
   Future<void> initializeApp() async {
     final tokens = await TokenService.loadTokens();
+    isTeacher = await TokenService.getRole() == 'teacher';
+    print("🔄 Is teacher: $isTeacher");
     print("🔄 Loaded tokens: ${tokens?.accessToken}, ${tokens?.refreshToken}");
 
     if (tokens != null) {

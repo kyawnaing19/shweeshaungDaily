@@ -306,6 +306,7 @@ class _SignInPageState extends State<SignInPage> {
                                   }
 
                                   bool success = await authViewModel.login(
+                                    context,
                                     _emailController.text.trim(),
                                     _passwordController.text,
                                   );

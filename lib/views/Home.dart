@@ -8,7 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/views/bottomNavBar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shweeshaungdaily/views/teacherprofile.dart';
+import 'package:shweeshaungdaily/views/profile_router.dart';
 import 'package:shweeshaungdaily/views/timetablepage.dart'; // Add this for SharedPreferences
 import 'package:shweeshaungdaily/utils/route_transition.dart';
 
@@ -31,7 +31,7 @@ class _HomePageState extends State<HomePage> {
       Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
     }
     if (index == 3) {
-      Navigator.of(context).pushReplacement(fadeRoute(const TeacherProfilePage()));
+      Navigator.of(context).pushReplacement(fadeRoute(const ProfileRouterPage()));
     } else {
       setState(() {
         _selectedIndex = index;
