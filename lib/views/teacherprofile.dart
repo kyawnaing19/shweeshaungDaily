@@ -8,7 +8,6 @@ import 'package:shweeshaungdaily/views/Home.dart';
 import 'package:shweeshaungdaily/views/bottomNavBar.dart';
 import 'package:shweeshaungdaily/utils/route_transition.dart';
 import 'package:shweeshaungdaily/views/timetablepage.dart';
-import 'package:dotted_border/dotted_border.dart';
 
 final Map<String, String> audienceValueMap = {
   'Public': 'Public',
@@ -30,7 +29,8 @@ class TeacherProfilePage extends StatefulWidget {
 }
 
 class _TeacherProfilePageState extends State<TeacherProfilePage> {
-  int _selectedIndex = 3; // State for the selected tab in the bottom navigation
+  int _selectedIndex = 3;
+  bool _showShares = true; // <-- Add this line
 
   void _onItemTapped(int index) {
     if (_selectedIndex == index) return;
@@ -175,22 +175,47 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 children: [
-                  const Text(
-                    'Shares',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: kPrimaryDarkColor,
-                      fontWeight: FontWeight.w800,
-                      decoration: TextDecoration.underline,
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _showShares = true;
+                      });
+                    },
+                    child: Text(
+                      'Shares',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: kPrimaryDarkColor.withOpacity(
+                          _showShares ? 1.0 : 0.5,
+                        ),
+                        fontWeight: FontWeight.w800,
+                        decoration:
+                            _showShares
+                                ? TextDecoration.underline
+                                : TextDecoration.none,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 20),
-                  Text(
-                    'Stories',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: kPrimaryDarkColor.withOpacity(0.8),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _showShares = false;
+                      });
+                    },
+                    child: Text(
+                      'Stories',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: kPrimaryDarkColor.withOpacity(
+                          _showShares ? 0.5 : 1.0,
+                        ),
+                        decoration:
+                            !_showShares
+                                ? TextDecoration.underline
+                                : TextDecoration.none,
+                      ),
                     ),
                   ),
                 ],
@@ -199,53 +224,138 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
 
             const SizedBox(height: 12),
 
-            // Input Box
-            Expanded(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                padding: const EdgeInsets.only(top: 12),
-                decoration: BoxDecoration(
-                  color: kPrimaryDarkColor,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 12),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: kAccentColor,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          const Expanded(
-                            child: Text(
-                              "What's on your mind?",
-                              style: TextStyle(color: Colors.white),
+            // Share Ui Box
+            if (_showShares)
+              Expanded(
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.only(top: 12),
+                  decoration: BoxDecoration(
+                    color: kPrimaryDarkColor,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: kAccentColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                "What's on your mind?",
+                                style: TextStyle(color: Colors.white),
+                              ),
                             ),
-                          ),
-                          // Replace the Icon with IconButton to show dialog
-                          IconButton(
-                            icon: const Icon(Icons.add, color: Colors.white),
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => const UploadStoryDialog(),
-                              );
-                            },
-                          ),
-                        ],
+                            IconButton(
+                              icon: const Icon(Icons.add, color: Colors.white),
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder:
+                                      (context) => const UploadSharesDialog(),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    // Additional content like shared posts could go here
-                  ],
+                      // Additional content like shared posts could go here
+                    ],
+                  ),
                 ),
               ),
-            ),
+
+            // Story UI box
+            if (!_showShares)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: GridView.builder(
+                    itemCount: 9,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 6,
+                          mainAxisSpacing: 6,
+                          childAspectRatio: 0.63,
+                        ),
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        return InkWell(
+                          borderRadius: BorderRadius.circular(5),
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => const UploadSharesDialog(),
+                            );
+                          },
+                          child: SizedBox(
+                            width: 100,
+                            height: 120,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFC9D4D4),
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.add,
+                                  size: 30,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      } else {
+                        return SizedBox(
+                          width: 100,
+                          height: 120,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF48C4BC),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Stack(
+                              children: const [
+                                Positioned(
+                                  bottom: 4,
+                                  left: 4,
+                                  child: Icon(
+                                    Icons.play_arrow,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 4,
+                                  left: 20,
+                                  child: Text(
+                                    '1:30',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -258,14 +368,16 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
   }
 }
 
-class UploadStoryDialog extends StatefulWidget {
-  const UploadStoryDialog({super.key});
+//upload share widget
+
+class UploadSharesDialog extends StatefulWidget {
+  const UploadSharesDialog({super.key});
 
   @override
-  State<UploadStoryDialog> createState() => _UploadStoryDialogState();
+  State<UploadSharesDialog> createState() => _UploadSharesDialogState();
 }
 
-class _UploadStoryDialogState extends State<UploadStoryDialog> {
+class _UploadSharesDialogState extends State<UploadSharesDialog> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   String _selectedAudience = 'Public';
@@ -291,34 +403,34 @@ class _UploadStoryDialogState extends State<UploadStoryDialog> {
   }
 
   Future<void> _uploadPost() async {
-  setState(() {
-    _isUploading = true;
-  });
-  final backendAudience = audienceValueMap[_selectedAudience] ?? 'Public';
-  try {
-    await ApiService.uploadFeed(
-      text: _controller.text,
-      audience: backendAudience,
-      photo: _selectedImage != null ? File(_selectedImage!.path) : null,
-      // Add token or other params if needed
-    );
-
-    if (mounted) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Your story has been uploaded!')),
-      );
-    }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Upload failed: $e')),
-    );
-  } finally {
     setState(() {
-      _isUploading = false;
+      _isUploading = true;
     });
+    final backendAudience = audienceValueMap[_selectedAudience] ?? 'Public';
+    try {
+      await ApiService.uploadFeed(
+        text: _controller.text,
+        audience: backendAudience,
+        photo: _selectedImage != null ? File(_selectedImage!.path) : null,
+        // Add token or other params if needed
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Your story has been uploaded!')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+    } finally {
+      setState(() {
+        _isUploading = false;
+      });
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -366,7 +478,7 @@ class _UploadStoryDialogState extends State<UploadStoryDialog> {
                     onTap: () async {
                       final selected = await showDialog<String>(
                         context: context,
-                        builder: (context) => const ShowStoryDialog(),
+                        builder: (context) => const ShowSharesDialog(),
                       );
                       if (selected != null) {
                         setState(() {
@@ -563,8 +675,10 @@ class _UploadStoryDialogState extends State<UploadStoryDialog> {
   }
 }
 
-class ShowStoryDialog extends StatelessWidget {
-  const ShowStoryDialog({super.key});
+//upload story widget
+
+class ShowSharesDialog extends StatelessWidget {
+  const ShowSharesDialog({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -607,7 +721,8 @@ class ShowStoryDialog extends StatelessWidget {
                   child: ListView(
                     shrinkWrap: true,
                     children:
-                            audienceValueMap.keys.map(
+                        audienceValueMap.keys
+                            .map(
                               (status) => ListTile(
                                 title: Text(
                                   status,

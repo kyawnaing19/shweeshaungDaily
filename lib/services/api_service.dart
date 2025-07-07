@@ -7,9 +7,9 @@ import 'package:shweeshaungdaily/services/token_service.dart';
 import '../models/user_model.dart';
 
 class ApiService {
-  static const baseUrl = 'http://192.168.1.226:8080/api/auth';
-  static const feedBaseUrl = 'http://192.168.1.226:8080/feeds';
-  static const secbaseUrl = 'http://192.168.1.226:8080/admin/schedules';
+  static const baseUrl = 'http://192.168.12.109:8080/api/auth';
+  static const feedBaseUrl = 'http://192.168.12.109:8080/feeds';
+  static const secbaseUrl = 'http://192.168.12.109:8080/admin/schedules';
 
   static Future<Map<String, dynamic>?> login(UserModel user) async {
     final response = await http.post(
@@ -104,7 +104,7 @@ class ApiService {
   File? photo,
 }) async {
   Future<http.Response> sendMultipart(String accessToken) async {
-    final url = Uri.parse('$feedBaseUrl');
+    final url = Uri.parse(feedBaseUrl);
     var request = http.MultipartRequest('POST', url)
       ..fields['text'] = text
       ..fields['audience'] = audience
