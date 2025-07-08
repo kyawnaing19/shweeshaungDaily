@@ -30,7 +30,20 @@ class TeacherProfilePage extends StatefulWidget {
 
 class _TeacherProfilePageState extends State<TeacherProfilePage> {
   int _selectedIndex = 3;
-  bool _showShares = true; // <-- Add this line
+  int _currentPage = 0;
+  late final PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _currentPage);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   void _onItemTapped(int index) {
     if (_selectedIndex == index) return;
@@ -119,9 +132,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
       body: SafeArea(
         child: Column(
           children: [
-            // ...existing code...
-            const SizedBox(height: 16),
-
+            SizedBox(height: 10),
             // Profile Card
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -168,7 +179,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 15),
 
             // Tabs: Shares & Stories
             Padding(
@@ -177,20 +188,22 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      setState(() {
-                        _showShares = true;
-                      });
+                      _pageController.animateToPage(
+                        0,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.ease,
+                      );
                     },
                     child: Text(
                       'Shares',
                       style: TextStyle(
                         fontSize: 18,
                         color: kPrimaryDarkColor.withOpacity(
-                          _showShares ? 1.0 : 0.5,
+                          _currentPage == 0 ? 1.0 : 0.5,
                         ),
                         fontWeight: FontWeight.w800,
                         decoration:
-                            _showShares
+                            _currentPage == 0
                                 ? TextDecoration.underline
                                 : TextDecoration.none,
                       ),
@@ -199,9 +212,11 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                   const SizedBox(width: 20),
                   GestureDetector(
                     onTap: () {
-                      setState(() {
-                        _showShares = false;
-                      });
+                      _pageController.animateToPage(
+                        1,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.ease,
+                      );
                     },
                     child: Text(
                       'Stories',
@@ -209,10 +224,10 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
                         color: kPrimaryDarkColor.withOpacity(
-                          _showShares ? 0.5 : 1.0,
+                          _currentPage == 1 ? 1.0 : 0.5,
                         ),
                         decoration:
-                            !_showShares
+                            _currentPage == 1
                                 ? TextDecoration.underline
                                 : TextDecoration.none,
                       ),
@@ -224,138 +239,149 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
 
             const SizedBox(height: 12),
 
-            // Share Ui Box
-            if (_showShares)
-              Expanded(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                  padding: const EdgeInsets.only(top: 12),
-                  decoration: BoxDecoration(
-                    color: kPrimaryDarkColor,
-                    borderRadius: BorderRadius.circular(16),
+            // Swipeable Shares & Stories
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentPage = index;
+                  });
+                },
+                children: [
+                  // Shares Widget
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.only(top: 12),
+                    decoration: BoxDecoration(
+                      color: kPrimaryDarkColor,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: kAccentColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Expanded(
+                                child: Text(
+                                  "What's on your mind?",
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.add,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder:
+                                        (context) => const UploadSharesDialog(),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Additional content like shared posts could go here
+                      ],
+                    ),
                   ),
-                  child: Column(
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 12),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: kAccentColor,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                "What's on your mind?",
-                                style: TextStyle(color: Colors.white),
+                  // Stories Widget
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: GridView.builder(
+                      itemCount: 9,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 6,
+                            mainAxisSpacing: 6,
+                            childAspectRatio: 0.63,
+                          ),
+                      itemBuilder: (context, index) {
+                        if (index == 0) {
+                          return InkWell(
+                            borderRadius: BorderRadius.circular(5),
+                            onTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (context) => const UploadStoryDialog(),
+                              );
+                            },
+                            child: SizedBox(
+                              width: 100,
+                              height: 120,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFC9D4D4),
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.add,
+                                    size: 30,
+                                    color: Colors.grey,
+                                  ),
+                                ),
                               ),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.add, color: Colors.white),
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder:
-                                      (context) => const UploadSharesDialog(),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Additional content like shared posts could go here
-                    ],
-                  ),
-                ),
-              ),
-
-            // Story UI box
-            if (!_showShares)
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: GridView.builder(
-                    itemCount: 9,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 6,
-                          mainAxisSpacing: 6,
-                          childAspectRatio: 0.63,
-                        ),
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        return InkWell(
-                          borderRadius: BorderRadius.circular(5),
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => const UploadSharesDialog(),
-                            );
-                          },
-                          child: SizedBox(
+                          );
+                        } else {
+                          return SizedBox(
                             width: 100,
                             height: 120,
                             child: Container(
                               decoration: BoxDecoration(
-                                color: const Color(0xFFC9D4D4),
+                                color: const Color(0xFF48C4BC),
                                 borderRadius: BorderRadius.circular(5),
                               ),
-                              child: const Center(
-                                child: Icon(
-                                  Icons.add,
-                                  size: 30,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      } else {
-                        return SizedBox(
-                          width: 100,
-                          height: 120,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF48C4BC),
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            child: Stack(
-                              children: const [
-                                Positioned(
-                                  bottom: 4,
-                                  left: 4,
-                                  child: Icon(
-                                    Icons.play_arrow,
-                                    size: 16,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                Positioned(
-                                  bottom: 4,
-                                  left: 20,
-                                  child: Text(
-                                    '1:30',
-                                    style: TextStyle(
+                              child: Stack(
+                                children: const [
+                                  Positioned(
+                                    bottom: 4,
+                                    left: 4,
+                                    child: Icon(
+                                      Icons.play_arrow,
+                                      size: 16,
                                       color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                ),
-                              ],
+                                  Positioned(
+                                    bottom: 4,
+                                    left: 20,
+                                    child: Text(
+                                      '1:30',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      }
-                    },
+                          );
+                        }
+                      },
+                    ),
                   ),
-                ),
+                ],
               ),
+            ),
           ],
         ),
       ),
@@ -474,7 +500,6 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
                     ),
                   ),
                   GestureDetector(
-                    // ...inside the GestureDetector for the lock icon...
                     onTap: () async {
                       final selected = await showDialog<String>(
                         context: context,
@@ -486,14 +511,41 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
                         });
                       }
                     },
-                    child: const CircleAvatar(
-                      radius: 23,
-                      backgroundColor: Color(0xFF48C4BC),
-                      child: Icon(
-                        Icons.lock_person_rounded,
-                        size: 25,
-                        color: Colors.white,
-                      ),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 250),
+                      transitionBuilder:
+                          (child, animation) =>
+                              FadeTransition(opacity: animation, child: child),
+                      child:
+                          _selectedAudience == 'Public'
+                              ? const CircleAvatar(
+                                key: ValueKey('icon'),
+                                radius: 23,
+                                backgroundColor: Color(0xFF48C4BC),
+                                child: Icon(
+                                  Icons.public,
+                                  size: 25,
+                                  color: Colors.white,
+                                ),
+                              )
+                              : Container(
+                                key: ValueKey(_selectedAudience),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF48C4BC),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Text(
+                                  _selectedAudience,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
                     ),
                   ),
                 ],
@@ -623,21 +675,21 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
                   ),
 
                   // Cancel button
-                  OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Color(0xFFD4F7F5),
-                      side: const BorderSide(color: Colors.teal),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
-                      ),
-                    ),
-                    child: const Text(
-                      "Cancel",
-                      style: TextStyle(color: Color(0xFF317575)),
-                    ),
-                  ),
+                  // OutlinedButton(
+                  //   onPressed: () => Navigator.pop(context),
+                  //   style: OutlinedButton.styleFrom(
+                  //     backgroundColor: Color(0xFFD4F7F5),
+                  //     side: const BorderSide(color: Colors.teal),
+                  //     padding: const EdgeInsets.symmetric(
+                  //       horizontal: 20,
+                  //       vertical: 10,
+                  //     ),
+                  //   ),
+                  //   child: const Text(
+                  //     "Cancel",
+                  //     style: TextStyle(color: Color(0xFF317575)),
+                  //   ),
+                  // ),
 
                   // Upload button
                   ElevatedButton(
@@ -661,7 +713,7 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
                               ),
                             )
                             : const Text(
-                              "Upload",
+                              "Share",
                               style: TextStyle(color: Colors.white),
                             ),
                   ),
@@ -674,8 +726,6 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
     );
   }
 }
-
-//upload story widget
 
 class ShowSharesDialog extends StatelessWidget {
   const ShowSharesDialog({super.key});
@@ -744,6 +794,227 @@ class ShowSharesDialog extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+//upload story widget
+
+class UploadStoryDialog extends StatefulWidget {
+  const UploadStoryDialog({super.key});
+
+  @override
+  State<UploadStoryDialog> createState() => _UploadStoryDialogState();
+}
+
+class _UploadStoryDialogState extends State<UploadStoryDialog> {
+  final TextEditingController _captionController = TextEditingController();
+  XFile? _selectedImage;
+  bool _isUploading = false;
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _selectedImage = image;
+      });
+    }
+  }
+
+  void _removeImage() {
+    setState(() {
+      _selectedImage = null;
+    });
+  }
+
+  Future<void> _uploadStory() async {
+    setState(() {
+      _isUploading = true;
+    });
+
+    // TODO: Replace this with your backend upload logic
+    // Example: await ApiService.uploadStory(photo: File(_selectedImage!.path), caption: _captionController.text);
+
+    await Future.delayed(const Duration(seconds: 1)); // Simulate upload
+
+    if (mounted) {
+      Navigator.pop(context); // Temporary: just close the modal
+      // Optionally show a snackbar or other feedback here
+    }
+    setState(() {
+      _isUploading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    return DraggableScrollableSheet(
+      initialChildSize: 0.55,
+      minChildSize: 0.4,
+      maxChildSize: 0.85,
+      expand: false,
+      builder:
+          (context, scrollController) => Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: SingleChildScrollView(
+              controller: scrollController,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 5,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                  const Text(
+                    "Upload Story",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: kPrimaryDarkColor,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child:
+                        _selectedImage == null
+                            ? Container(
+                              width: mediaQuery.size.width * 0.7,
+                              height: 180,
+                              decoration: BoxDecoration(
+                                color: kBackgroundColor,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: kPrimaryDarkColor,
+                                  width: 2,
+                                ),
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.add_a_photo,
+                                  size: 50,
+                                  color: kPrimaryDarkColor,
+                                ),
+                              ),
+                            )
+                            : Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Image.file(
+                                    File(_selectedImage!.path),
+                                    width: mediaQuery.size.width * 0.7,
+                                    height: 180,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 8,
+                                  right: 8,
+                                  child: GestureDetector(
+                                    onTap: _removeImage,
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.close,
+                                        color: Colors.white,
+                                        size: 22,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _captionController,
+                    minLines: 1,
+                    maxLines: 5,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: "Add a caption...",
+                      filled: true,
+                      fillColor: kAccentColor,
+                      hintStyle: const TextStyle(color: Colors.white),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed:
+                              _isUploading
+                                  ? null
+                                  : () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: kBackgroundColor,
+                            foregroundColor: kPrimaryDarkColor,
+                            side: const BorderSide(color: Color(0xFF317575)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text("Cancel"),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed:
+                              (_selectedImage != null && !_isUploading)
+                                  ? _uploadStory
+                                  : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrimaryDarkColor,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child:
+                              _isUploading
+                                  ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                  : const Text(
+                                    "Upload",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
     );
   }
 }
