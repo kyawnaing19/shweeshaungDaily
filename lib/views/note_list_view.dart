@@ -1,41 +1,52 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_quill/flutter_quill.dart'; // Keep this for FlutterQuillLocalizations.delegate
-import 'package:flutter_localizations/flutter_localizations.dart'; // Import for global localizations
+import 'dart:convert';
+
+import 'package:flutter/material.dart'; 
+import 'package:shweeshaungdaily/services/api_service.dart';
+import 'package:shweeshaungdaily/utils/note_database/note_database.dart';
 import 'note_editor_page.dart';
 
-// void main() {
-//   runApp(const MyApp());
-// }
-
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       debugShowCheckedModeBanner: false,
-//       home: const NotePage(),
-//       theme: ThemeData(
-//         fontFamily:
-//             'Roboto', // Using default Roboto but you can add custom fonts
-//       ),
-//       // *** ADD THESE LOCALIZATION DELEGATES ***
-//       localizationsDelegates: const [
-//         GlobalMaterialLocalizations.delegate,
-//         GlobalCupertinoLocalizations.delegate,
-//         GlobalWidgetsLocalizations.delegate,
-//         FlutterQuillLocalizations.delegate, // Essential for flutter_quill
-//       ],
-//       supportedLocales: const [
-//         Locale('en', 'US'), // Add locales your app supports
-//         // Locale('my', 'MM'), // Example for Myanmar locale if needed
-//       ],
-//     );
-//   }
-// }
-
-class NotePage extends StatelessWidget {
+class NotePage extends StatefulWidget {
   const NotePage({super.key});
+
+  @override
+  State<NotePage> createState() => _NotePageState();
+}
+
+class _NotePageState extends State<NotePage> {
+  List<Map<String, dynamic>> _notes = [];
+  @override
+  void initState() {
+    super.initState();
+    _loadNotes();
+  }
+
+  Future<void> _loadNotes() async {
+    await fetchAndCacheNotes();
+    final db = NoteDatabase();
+    final notes = await db.getAllNotes();
+
+    setState(() {
+      _notes = notes;
+    });
+  }
+
+  Future<void> fetchAndCacheNotes() async {
+    final db = NoteDatabase();
+    final existing = await db.getAllNotes();
+
+    if (existing.isEmpty) {
+      final response = await ApiService.getSubjectsForNote();
+
+      final List<dynamic> subjects = response;
+
+      for (final subject in subjects) {
+        await db.insertNote(
+          subject.toString(),
+          [],
+        ); // Insert empty delta for now
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,26 +121,32 @@ class NotePage extends StatelessWidget {
                 ),
                 padding: const EdgeInsets.all(16),
                 child: ListView.separated(
-                  itemCount: 6,
+                  itemCount: _notes.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
+                    final note = _notes[index];
+
                     return InkWell(
                       borderRadius: BorderRadius.circular(12),
                       onTap: () async {
+                        
                         final updatedNote = await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder:
                                 (_) => NoteEditorPage(
-                                  title: 'CST - 4231',
-                                  initialText:
-                                      'Your previous note text here... Note content for item ${index + 1}',
+                                  title: note['subject'],
+                                  initialText: note['content'],
                                 ), // Added dynamic initial text
                           ),
                         );
+                       
                         if (updatedNote != null) {
-                          // Handle saving updated note here
-                          print('New Note for item ${index + 1}: $updatedNote');
+                          await NoteDatabase().updateNote(
+                            note['subject'],
+                            updatedNote, // store as delta again
+                          );
+                          _loadNotes();
                         }
                       },
                       child: Container(
@@ -148,8 +165,8 @@ class NotePage extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Parallel and Distributed Computing',
+                             Text(
+                              note['subject'] ?? 'Untitled Note',
                               style: TextStyle(
                                 color: Colors.black87,
                                 fontWeight: FontWeight.w600,

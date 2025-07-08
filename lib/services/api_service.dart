@@ -10,6 +10,7 @@ class ApiService {
   static const baseUrl = 'http://192.168.12.109:8080/api/auth';
   static const feedBaseUrl = 'http://192.168.12.109:8080/feeds';
   static const secbaseUrl = 'http://192.168.12.109:8080/admin/schedules';
+  static const subbaseUrl = 'http://192.168.12.109:8080/admin/subjects';
 
   static Future<Map<String, dynamic>?> login(UserModel user) async {
     final response = await http.post(
@@ -195,6 +196,21 @@ class ApiService {
       return response.body == 'true' || response.body == '"true"';
     } else {
       throw Exception('Failed to verifyTeacher email');
+    }
+  }
+
+  static Future<List<String>> getSubjectsForNote () async {
+    final uri = Uri.parse('$subbaseUrl/list');
+    final response = await AuthorizedHttpService.sendAuthorizedRequest(
+      uri,
+      method: 'GET',
+    );
+
+    if (response != null && response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return List<String>.from(data);
+    } else {
+      throw Exception('Failed to load subjects for note');
     }
   }
 }
