@@ -7,32 +7,32 @@ import 'note_editor_page.dart';
 //   runApp(const MyApp());
 // }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: const NotePage(),
-      theme: ThemeData(
-        fontFamily:
-            'Roboto', // Using default Roboto but you can add custom fonts
-      ),
-      // *** ADD THESE LOCALIZATION DELEGATES ***
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        FlutterQuillLocalizations.delegate, // Essential for flutter_quill
-      ],
-      supportedLocales: const [
-        Locale('en', 'US'), // Add locales your app supports
-        // Locale('my', 'MM'), // Example for Myanmar locale if needed
-      ],
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       debugShowCheckedModeBanner: false,
+//       home: const NotePage(),
+//       theme: ThemeData(
+//         fontFamily:
+//             'Roboto', // Using default Roboto but you can add custom fonts
+//       ),
+//       // *** ADD THESE LOCALIZATION DELEGATES ***
+//       localizationsDelegates: const [
+//         GlobalMaterialLocalizations.delegate,
+//         GlobalCupertinoLocalizations.delegate,
+//         GlobalWidgetsLocalizations.delegate,
+//         FlutterQuillLocalizations.delegate, // Essential for flutter_quill
+//       ],
+//       supportedLocales: const [
+//         Locale('en', 'US'), // Add locales your app supports
+//         // Locale('my', 'MM'), // Example for Myanmar locale if needed
+//       ],
+//     );
+//   }
+// }
 
 class NotePage extends StatelessWidget {
   const NotePage({super.key});

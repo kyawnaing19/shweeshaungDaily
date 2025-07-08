@@ -7,6 +7,8 @@ import 'package:shweeshaungdaily/views/Home.dart';
 import 'package:shweeshaungdaily/views/loading.dart';
 import 'package:shweeshaungdaily/views/teacherprofile.dart';
 import 'package:shweeshaungdaily/views/timetablepage.dart';
+import 'package:flutter_quill/flutter_quill.dart'; // Keep this for FlutterQuillLocalizations.delegate
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,6 +46,18 @@ class MyApp extends StatelessWidget {
                   // '/notes': (context) => NotesPage(),
                   '/profile': (context) => TeacherProfilePage(),
                 },
+
+                localizationsDelegates: const [
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  FlutterQuillLocalizations
+                      .delegate, // Essential for flutter_quill
+                ],
+                supportedLocales: const [
+                  Locale('en', 'US'), // Add locales your app supports
+                  // Locale('my', 'MM'), // Example for Myanmar locale if needed
+                ],
               ),
             ),
           ),
