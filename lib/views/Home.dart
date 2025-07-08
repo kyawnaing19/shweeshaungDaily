@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/views/bottomNavBar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shweeshaungdaily/views/note_list_view.dart';
 import 'package:shweeshaungdaily/views/profile_router.dart';
 import 'package:shweeshaungdaily/views/timetablepage.dart'; // Add this for SharedPreferences
 import 'package:shweeshaungdaily/utils/route_transition.dart';
@@ -24,14 +25,16 @@ class _HomePageState extends State<HomePage> {
 
   void _onItemTapped(int index) {
     if (_selectedIndex == index) return;
-     if (index == 1) {
+    if (index == 1) {
       Navigator.of(context).pushReplacement(fadeRoute(const TimeTablePage()));
     }
     if (index == 2) {
       Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
     }
     if (index == 3) {
-      Navigator.of(context).pushReplacement(fadeRoute(const ProfileRouterPage()));
+      Navigator.of(
+        context,
+      ).pushReplacement(fadeRoute(const ProfileRouterPage()));
     } else {
       setState(() {
         _selectedIndex = index;
@@ -749,7 +752,7 @@ class _HomePageState extends State<HomePage> {
                   context,
                   MaterialPageRoute(
                     builder: (context) {
-                      return const NoteListPage();
+                      return const NotePage();
                     },
                   ),
                 );

@@ -35,6 +35,7 @@ class MyApp extends StatelessWidget {
               child: MaterialApp(
                 title: 'Flutter MVVM Auth',
                 theme: ThemeData(primarySwatch: Colors.blue),
+
                 debugShowCheckedModeBanner: false,
                 home: const LoadingPage(),
                 routes: {
