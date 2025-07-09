@@ -326,6 +326,7 @@ class _HomePageState extends State<HomePage> {
           _showCustomSnackbar("Connection Error");
         }
       });
+      print(e.toString());
     }
   }
 

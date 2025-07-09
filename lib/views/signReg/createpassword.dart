@@ -96,7 +96,7 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
         _showErrorMessage('Registration failed. Please try again.');
         return;
       }
-      await authViewModel.login(context,email, password);
+      await authViewModel.login(email, password);
       print("Login successful, navigating to HomePage...");
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(

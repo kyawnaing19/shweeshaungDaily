@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:shweeshaungdaily/models/user_reg_model.dart';
-import 'package:shweeshaungdaily/view_models/StartupViewModel.dart';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
 import '../services/token_service.dart';
@@ -13,7 +11,6 @@ class AuthViewModel extends ChangeNotifier {
   String? refreshToken;
 
   Future<bool> login(
-    BuildContext context,
     String email,
     String password, {
     bool stayLoggedIn = true,
@@ -34,8 +31,8 @@ class AuthViewModel extends ChangeNotifier {
         if (accessToken != null && refreshToken != null) {
           await TokenService.saveTokens(accessToken!, refreshToken!);
           await TokenService.setRole(isTeacher ? 'teacher' : 'user');
-           final startupViewModel = Provider.of<StartupViewModel>(context, listen: false);
-        startupViewModel.setIsTeacher(isTeacher);
+        //    final startupViewModel = Provider.of<StartupViewModel>(listen: false);
+        // startupViewModel.setIsTeacher(isTeacher);
           print('✅ Login successful. Tokens saved.');
           return true;
         } else {

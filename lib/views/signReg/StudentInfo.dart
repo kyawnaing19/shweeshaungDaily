@@ -70,7 +70,7 @@ class _StudentInfoPageState extends State<StudendInfoPage> {
       );
       return;
     }
-    authViewModel.login(context,regViewModel.email, regViewModel.password);
+    authViewModel.login(regViewModel.email, regViewModel.password);
     // All validations passed
     Navigator.pushAndRemoveUntil(
       context,
