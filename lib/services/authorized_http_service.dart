@@ -18,7 +18,7 @@ class AuthorizedHttpService {
     headers['Content-Type'] = 'application/json';
 
     http.Response response = await _sendRequest(method, url, headers, body);
-
+    print(tokens.accessToken);
     if (response.statusCode == 200) return response;
 
     // Try refresh on 401 or 403

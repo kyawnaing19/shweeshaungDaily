@@ -25,7 +25,7 @@ class _StudentInfoPageState extends State<StudendInfoPage> {
   String? _classError;
   String? _majorError;
 
-  @override
+  
   Future<void> _onSignIn() async {
     String semester = _semesterController.text;
     String stuclass = _classController.text;
@@ -70,8 +70,9 @@ class _StudentInfoPageState extends State<StudendInfoPage> {
       );
       return;
     }
-    authViewModel.login(regViewModel.email, regViewModel.password);
+    await authViewModel.login(regViewModel.email, regViewModel.password);
     // All validations passed
+    if(!mounted) return; // Check if the widget is still mounted before navigating
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => HomePage()),

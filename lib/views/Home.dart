@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert'; // Add this for JSON encoding/decoding
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shweeshaungdaily/NoteListPage.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:intl/intl.dart';
 import 'package:shweeshaungdaily/colors.dart';
@@ -298,7 +297,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> _fetchTimetable() async {
+  Future<void>  _fetchTimetable() async {
     setState(() {
       isLoading = true;
       errorMessage = null;

@@ -8,7 +8,7 @@ import '../models/user_model.dart';
 
 class ApiService {
   static const baseUrl = 'http://52.77.118.48:8080/api/auth';
-  static const feedBaseUrl = 'http://52.77.118.48.109:8080/feeds';
+  static const feedBaseUrl = 'http://52.77.118.48:8080/feeds';
   static const secbaseUrl = 'http://52.77.118.48:8080/admin/schedules';
   static const subbaseUrl = 'http://52.77.118.48:8080/admin/subjects';
 
