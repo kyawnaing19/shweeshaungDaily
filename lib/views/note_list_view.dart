@@ -16,26 +16,26 @@ class NotePage extends StatefulWidget {
 }
 
 class _NotePageState extends State<NotePage> {
-  int _selectedIndex = 2; // State for the selected tab in the bottom navigation
+  //int _selectedIndex = 2; // State for the selected tab in the bottom navigation
 
-  void _onItemTapped(int index) {
-    if (_selectedIndex == index) return;
-    if (index == 1) {
-      Navigator.of(context).pushReplacement(fadeRoute(const TimeTablePage()));
-    }
-    if (index == 0) {
-      Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
-    }
-    if (index == 3) {
-      Navigator.of(
-        context,
-      ).pushReplacement(fadeRoute(const ProfileRouterPage()));
-    } else {
-      setState(() {
-        _selectedIndex = index;
-      });
-    }
-  }
+  // void _onItemTapped(int index) {
+  //   if (_selectedIndex == index) return;
+  //   if (index == 1) {
+  //     Navigator.of(context).pushReplacement(fadeRoute(const TimeTablePage()));
+  //   }
+  //   if (index == 0) {
+  //     Navigator.of(context).pushReplacement(fadeRoute(const HomeScreenPage()));
+  //   }
+  //   if (index == 3) {
+  //     Navigator.of(
+  //       context,
+  //     ).pushReplacement(fadeRoute(const ProfileRouterPage()));
+  //   } else {
+  //     setState(() {
+  //       _selectedIndex = index;
+  //     });
+  //   }
+  // }
 
   List<Map<String, dynamic>> _notes = [];
   @override
@@ -49,6 +49,7 @@ class _NotePageState extends State<NotePage> {
     final db = NoteDatabase();
     final notes = await db.getAllNotes();
 
+    if (!mounted) return;
     setState(() {
       _notes = notes;
     });
@@ -82,7 +83,9 @@ class _NotePageState extends State<NotePage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
+            Navigator.of(
+              context,
+            ).pushReplacement(fadeRoute(const HomeScreenPage()));
           },
         ),
         title: const Text(
@@ -250,79 +253,10 @@ class _NotePageState extends State<NotePage> {
         child: const Icon(Icons.add, color: Colors.white),
       ),
 
-      bottomNavigationBar: CustomBottomNavBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: _onItemTapped,
-      ),
-      // bottomNavigationBar: Container(
-      //   decoration: const BoxDecoration(
-      //     color: Color(0xFF4DB6AC),
-      //     borderRadius: BorderRadius.only(
-      //       topLeft: Radius.circular(16),
-      //       topRight: Radius.circular(16),
-      //     ),
-      //     boxShadow: [
-      //       BoxShadow(
-      //         color: Colors.black12,
-      //         blurRadius: 8,
-      //         offset: Offset(0, -3),
-      //       ),
-      //     ],
+      //  bottomNavigationBar: CustomBottomNavBar(
+      //     selectedIndex: _selectedIndex,
+      //     onItemTapped: _onItemTapped,
       //   ),
-      //   padding: const EdgeInsets.symmetric(vertical: 12),
-      //   child: const Row(
-      //     mainAxisAlignment: MainAxisAlignment.spaceAround,
-      //     children: [
-      //       _BottomNavItem(icon: Icons.home, label: 'Home', isActive: false),
-      //       _BottomNavItem(icon: Icons.notes, label: 'Notes', isActive: true),
-      //       _BottomNavItem(
-      //         icon: Icons.check_box,
-      //         label: 'Tasks',
-      //         isActive: false,
-      //       ),
-      //       _BottomNavItem(
-      //         icon: Icons.person,
-      //         label: 'Profile',
-      //         isActive: false,
-      //       ),
-      //     ],
-      //   ),
-      // ),
     );
   }
 }
-
-// class _BottomNavItem extends StatelessWidget {
-//   final IconData icon;
-//   final String label;
-//   final bool isActive;
-
-//   const _BottomNavItem({
-//     required this.icon,
-//     required this.label,
-//     required this.isActive,
-//   });
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Column(
-//       mainAxisSize: MainAxisSize.min,
-//       children: [
-//         Icon(
-//           icon,
-//           color: isActive ? Colors.white : Colors.white.withOpacity(0.7),
-//           size: 26,
-//         ),
-//         const SizedBox(height: 4),
-//         Text(
-//           label,
-//           style: TextStyle(
-//             color: isActive ? Colors.white : Colors.white.withOpacity(0.7),
-//             fontSize: 12,
-//             fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-// }

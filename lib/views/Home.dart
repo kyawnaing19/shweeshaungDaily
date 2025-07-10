@@ -12,14 +12,14 @@ import 'package:shweeshaungdaily/views/profile_router.dart';
 import 'package:shweeshaungdaily/views/timetablepage.dart'; // Add this for SharedPreferences
 import 'package:shweeshaungdaily/utils/route_transition.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class HomeScreenPage extends StatefulWidget {
+  const HomeScreenPage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<HomeScreenPage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomeScreenPage> {
   int _selectedIndex = 0; // State for the selected tab in the bottom navigation
 
   void _onItemTapped(int index) {
@@ -297,7 +297,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void>  _fetchTimetable() async {
+  Future<void> _fetchTimetable() async {
     setState(() {
       isLoading = true;
       errorMessage = null;
@@ -566,10 +566,10 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      bottomNavigationBar: CustomBottomNavBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: _onItemTapped,
-      ),
+      // bottomNavigationBar: CustomBottomNavBar(
+      //   selectedIndex: _selectedIndex,
+      //   onItemTapped: _onItemTapped,
+      // ),
     );
   }
 

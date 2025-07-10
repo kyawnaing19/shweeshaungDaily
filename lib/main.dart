@@ -5,6 +5,7 @@ import 'package:shweeshaungdaily/view_models/auth_viewmodel.dart';
 import 'package:shweeshaungdaily/view_models/reg_viewmodel.dart';
 import 'package:shweeshaungdaily/views/Home.dart';
 import 'package:shweeshaungdaily/views/loading.dart';
+import 'package:shweeshaungdaily/views/main_screen.dart';
 import 'package:shweeshaungdaily/views/note_list_view.dart';
 import 'package:shweeshaungdaily/views/profile_router.dart';
 import 'package:shweeshaungdaily/views/teacherprofile.dart';
@@ -42,13 +43,13 @@ class MyApp extends StatelessWidget {
 
                 debugShowCheckedModeBanner: false,
                 home: const LoadingPage(),
-                routes: {
-                  '/home': (context) => HomePage(),
-                  '/timetable': (context) => TimeTablePage(),
-                  '/note': (context) => NotePage(),
-                  '/profile': (context) => ProfileRouterPage(),
-                },
 
+                // routes: {
+                //   '/home': (context) => HomePage(),
+                //   '/timetable': (context) => TimeTablePage(),
+                //   '/note': (context) => NotePage(),
+                //   '/profile': (context) => ProfileRouterPage(),
+                // },
                 localizationsDelegates: const [
                   GlobalMaterialLocalizations.delegate,
                   GlobalCupertinoLocalizations.delegate,

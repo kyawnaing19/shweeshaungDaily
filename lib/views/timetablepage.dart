@@ -181,7 +181,9 @@ class _TimeTablePageState extends State<TimeTablePage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
+            Navigator.of(
+              context,
+            ).pushReplacement(fadeRoute(const HomeScreenPage()));
           },
         ),
         title: const Text(
@@ -277,10 +279,10 @@ class _TimeTablePageState extends State<TimeTablePage> {
         ],
       ),
       // Add the bottomNavigationBar property here
-      bottomNavigationBar: CustomBottomNavBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: _onItemTapped,
-      ),
+      // bottomNavigationBar: CustomBottomNavBar(
+      //   selectedIndex: _selectedIndex,
+      //   onItemTapped: _onItemTapped,
+      // ),
     );
   }
 
@@ -288,24 +290,24 @@ class _TimeTablePageState extends State<TimeTablePage> {
 
   // ...existing code...
 
-  void _onItemTapped(int index) {
-    if (_selectedIndex == index) return;
-    if (index == 0) {
-      Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
-    }
-    if (index == 2) {
-      Navigator.of(context).pushReplacement(fadeRoute(const NotePage()));
-    }
-    if (index == 3) {
-      Navigator.of(
-        context,
-      ).pushReplacement(fadeRoute(const ProfileRouterPage()));
-    } else {
-      setState(() {
-        _selectedIndex = index;
-      });
-    }
-  }
+  // void _onItemTapped(int index) {
+  //   if (_selectedIndex == index) return;
+  //   if (index == 0) {
+  //     Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
+  //   }
+  //   if (index == 2) {
+  //     Navigator.of(context).pushReplacement(fadeRoute(const NotePage()));
+  //   }
+  //   if (index == 3) {
+  //     Navigator.of(
+  //       context,
+  //     ).pushReplacement(fadeRoute(const ProfileRouterPage()));
+  //   } else {
+  //     setState(() {
+  //       _selectedIndex = index;
+  //     });
+  //   }
+  // }
 
   // ...existing code...
 }

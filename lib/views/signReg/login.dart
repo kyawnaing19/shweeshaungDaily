@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shweeshaungdaily/view_models/auth_viewmodel.dart';
 import 'package:shweeshaungdaily/views/Home.dart';
+import 'package:shweeshaungdaily/views/main_screen.dart';
 import 'package:shweeshaungdaily/views/signReg/register.dart';
 
 class SignInPage extends StatefulWidget {

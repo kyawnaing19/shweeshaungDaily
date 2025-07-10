@@ -45,22 +45,22 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     super.dispose();
   }
 
-  void _onItemTapped(int index) {
-    if (_selectedIndex == index) return;
-    if (index == 0) {
-      Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
-    }
-    if (index == 1) {
-      Navigator.of(context).pushReplacement(fadeRoute(const TimeTablePage()));
-    }
-    if (index == 2) {
-      Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
-    } else {
-      setState(() {
-        _selectedIndex = index;
-      });
-    }
-  }
+  // void _onItemTapped(int index) {
+  //   if (_selectedIndex == index) return;
+  //   if (index == 0) {
+  //     Navigator.of(context).pushReplacement(fadeRoute(const HomeScreenPage()));
+  //   }
+  //   if (index == 1) {
+  //     Navigator.of(context).pushReplacement(fadeRoute(const TimeTablePage()));
+  //   }
+  //   if (index == 2) {
+  //     Navigator.of(context).pushReplacement(fadeRoute(const HomeScreenPage()));
+  //   } else {
+  //     setState(() {
+  //       _selectedIndex = index;
+  //     });
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +82,9 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
+            Navigator.of(
+              context,
+            ).pushReplacement(fadeRoute(const HomeScreenPage()));
           },
           color: Colors.white,
           tooltip: 'Back',
@@ -386,10 +388,10 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
         ),
       ),
 
-      bottomNavigationBar: CustomBottomNavBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: _onItemTapped,
-      ),
+      // bottomNavigationBar: CustomBottomNavBar(
+      //   selectedIndex: _selectedIndex,
+      //   onItemTapped: _onItemTapped,
+      // ),
     );
   }
 }

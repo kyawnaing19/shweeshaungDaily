@@ -101,7 +101,7 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => HomePage()),
+        MaterialPageRoute(builder: (context) => HomeScreenPage()),
         (Route<dynamic> route) => false, // This removes all previous routes
       );
       return; // Prevent navigating to StudentInfoPage for teachers

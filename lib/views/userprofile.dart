@@ -32,7 +32,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _onItemTapped(int index) {
     if (_selectedIndex == index) return;
     if (index == 0) {
-      Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
+      Navigator.of(context).pushReplacement(fadeRoute(const HomeScreenPage()));
     } else if (index == 1) {
       Navigator.of(context).pushReplacement(fadeRoute(const TimeTablePage()));
     } else if (index == 2) {
@@ -54,7 +54,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
+            Navigator.of(
+              context,
+            ).pushReplacement(fadeRoute(const HomeScreenPage()));
           },
         ),
         centerTitle: true,
@@ -266,10 +268,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: CustomBottomNavBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: _onItemTapped,
-      ),
+      // bottomNavigationBar: CustomBottomNavBar(
+      //   selectedIndex: _selectedIndex,
+      //   onItemTapped: _onItemTapped,
+      // ),
     );
   }
 }
