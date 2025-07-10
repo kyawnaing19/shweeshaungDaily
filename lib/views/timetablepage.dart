@@ -5,9 +5,11 @@ import 'dart:convert';
 
 class TimeTablePage extends StatefulWidget {
   final EdgeInsetsGeometry timelinePadding;
+  final VoidCallback? onBack;
 
   const TimeTablePage({
     super.key,
+    this.onBack,
     this.timelinePadding = const EdgeInsets.all(17),
   });
 
@@ -161,7 +163,6 @@ class _TimeTablePageState extends State<TimeTablePage> {
 
   @override
   Widget build(BuildContext context) {
-   
     // Only show periods 1,2,3,5,6,7 (skip 4)
     final periodNumbers = [1, 2, 3, 4, 5, 6];
 
@@ -171,11 +172,11 @@ class _TimeTablePageState extends State<TimeTablePage> {
         backgroundColor: kAccentColor,
         elevation: 4,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            // Navigator.of(
-            //   context,
-            // ).pushReplacement( const HomeScreenPage());
+            if (widget.onBack != null) {
+              widget.onBack!(); // ✅ Access via `widget`
+            }
           },
         ),
         title: const Text(

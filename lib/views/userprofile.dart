@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:shweeshaungdaily/utils/route_transition.dart';
 import 'package:shweeshaungdaily/views/Home.dart';
+
 // List of story privacy/status options for backend integration
 final List<String> storyStatusOptions = [
   'Public',
@@ -16,14 +17,15 @@ final List<String> storyStatusOptions = [
 ];
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final VoidCallback? onBack;
+
+  const ProfileScreen({super.key, this.onBack});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -32,11 +34,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: const Color(0xFF57C5BE),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.of(
-              context,
-            ).pushReplacement(fadeRoute(const HomeScreenPage()));
+            if (widget.onBack != null) {
+              widget.onBack!(); // ✅ Access via `widget`
+            }
           },
         ),
         centerTitle: true,

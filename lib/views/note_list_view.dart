@@ -6,7 +6,9 @@ import 'note_editor_page.dart';
 import 'package:shweeshaungdaily/utils/route_transition.dart';
 
 class NotePage extends StatefulWidget {
-  const NotePage({super.key});
+  final VoidCallback? onBack;
+
+  const NotePage({super.key, this.onBack});
 
   @override
   State<NotePage> createState() => _NotePageState();
@@ -78,13 +80,22 @@ class _NotePageState extends State<NotePage> {
         backgroundColor: const Color(0xFF4DB6AC),
         elevation: 4,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.of(
-              context,
-            ).pushReplacement(fadeRoute(const HomeScreenPage()));
+            if (widget.onBack != null) {
+              widget.onBack!(); // ✅ Access via `widget`
+            }
           },
         ),
+
+        // leading: IconButton(
+        //   icon: const Icon(Icons.arrow_back, color: Colors.white),
+        //   onPressed: () {
+        //     Navigator.of(
+        //       context,
+        //     ).pushReplacement(fadeRoute(const HomeScreenPage()));
+        //   },
+        // ),
         title: const Text(
           'Note',
           style: TextStyle(

@@ -20,7 +20,9 @@ final Map<String, String> audienceValueMap = {
 };
 
 class TeacherProfilePage extends StatefulWidget {
-  const TeacherProfilePage({super.key});
+  final VoidCallback? onBack;
+
+  const TeacherProfilePage({super.key, this.onBack});
 
   @override
   State<TeacherProfilePage> createState() => _TeacherProfilePageState();
@@ -42,23 +44,6 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     super.dispose();
   }
 
-  // void _onItemTapped(int index) {
-  //   if (_selectedIndex == index) return;
-  //   if (index == 0) {
-  //     Navigator.of(context).pushReplacement(fadeRoute(const HomeScreenPage()));
-  //   }
-  //   if (index == 1) {
-  //     Navigator.of(context).pushReplacement(fadeRoute(const TimeTablePage()));
-  //   }
-  //   if (index == 2) {
-  //     Navigator.of(context).pushReplacement(fadeRoute(const HomeScreenPage()));
-  //   } else {
-  //     setState(() {
-  //       _selectedIndex = index;
-  //     });
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,14 +62,12 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.of(
-              context,
-            ).pushReplacement(fadeRoute(const HomeScreenPage()));
+            if (widget.onBack != null) {
+              widget.onBack!(); // ✅ Access via `widget`
+            }
           },
-          color: Colors.white,
-          tooltip: 'Back',
         ),
         actions: [
           Builder(
