@@ -28,7 +28,7 @@ class _HomePageState extends State<HomePage> {
       Navigator.of(context).pushReplacement(fadeRoute(const TimeTablePage()));
     }
     if (index == 2) {
-      Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
+      Navigator.of(context).pushReplacement(fadeRoute(const NotePage()));
     }
     if (index == 3) {
       Navigator.of(

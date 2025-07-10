@@ -5,6 +5,8 @@ import 'package:shweeshaungdaily/view_models/auth_viewmodel.dart';
 import 'package:shweeshaungdaily/view_models/reg_viewmodel.dart';
 import 'package:shweeshaungdaily/views/Home.dart';
 import 'package:shweeshaungdaily/views/loading.dart';
+import 'package:shweeshaungdaily/views/note_list_view.dart';
+import 'package:shweeshaungdaily/views/profile_router.dart';
 import 'package:shweeshaungdaily/views/teacherprofile.dart';
 import 'package:shweeshaungdaily/views/timetablepage.dart';
 import 'package:flutter_quill/flutter_quill.dart'; // Keep this for FlutterQuillLocalizations.delegate
@@ -43,8 +45,8 @@ class MyApp extends StatelessWidget {
                 routes: {
                   '/home': (context) => HomePage(),
                   '/timetable': (context) => TimeTablePage(),
-                  // '/notes': (context) => NotesPage(),
-                  '/profile': (context) => TeacherProfilePage(),
+                  '/note': (context) => NotePage(),
+                  '/profile': (context) => ProfileRouterPage(),
                 },
 
                 localizationsDelegates: const [

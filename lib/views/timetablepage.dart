@@ -5,7 +5,8 @@ import 'package:shweeshaungdaily/views/Home.dart';
 import 'dart:convert';
 import 'package:shweeshaungdaily/views/bottomNavBar.dart';
 import 'package:shweeshaungdaily/utils/route_transition.dart';
-import 'package:shweeshaungdaily/views/teacherprofile.dart';
+import 'package:shweeshaungdaily/views/note_list_view.dart';
+import 'package:shweeshaungdaily/views/profile_router.dart';
 
 class TimeTablePage extends StatefulWidget {
   final EdgeInsetsGeometry timelinePadding;
@@ -21,6 +22,7 @@ class TimeTablePage extends StatefulWidget {
 
 class _TimeTablePageState extends State<TimeTablePage> {
   final List<String> days = const ['Mon', 'Tue', 'Wed', 'Thrs', 'Fri'];
+  late PageController _pageController;
   int selectedDay = 0;
 
   // Define period times for each period number
@@ -38,15 +40,22 @@ class _TimeTablePageState extends State<TimeTablePage> {
   @override
   void initState() {
     super.initState();
-    // Set selectedDay based on current weekday
+
     final now = DateTime.now();
-    // DateTime.weekday: Monday=1, ..., Friday=5, Saturday=6, Sunday=7
     if (now.weekday == 6 || now.weekday == 7) {
-      selectedDay = 0; // Mon
+      selectedDay = 0;
     } else {
-      selectedDay = now.weekday - 1; // Mon=0, Tue=1, ..., Fri=4
+      selectedDay = now.weekday - 1;
     }
+
+    _pageController = PageController(initialPage: selectedDay);
     loadTimetableData();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   Future<void> loadTimetableData() async {
@@ -169,12 +178,11 @@ class _TimeTablePageState extends State<TimeTablePage> {
       appBar: AppBar(
         backgroundColor: kAccentColor,
         elevation: 4,
-        leading: const Padding(
-          padding: EdgeInsets.all(12.0),
-          child: CircleAvatar(
-            backgroundColor: Colors.white,
-            child: Icon(Icons.arrow_back, color: Colors.teal),
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
+          },
         ),
         title: const Text(
           'Time Table',
@@ -194,8 +202,14 @@ class _TimeTablePageState extends State<TimeTablePage> {
                 onTap: () {
                   setState(() {
                     selectedDay = index;
+                    _pageController.animateToPage(
+                      index,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
                   });
                 },
+
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -220,22 +234,44 @@ class _TimeTablePageState extends State<TimeTablePage> {
           const SizedBox(height: 16),
           // Timeline area for selected day
           Expanded(
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: widget.timelinePadding,
-              decoration: BoxDecoration(
-                color: kAccentColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: ListView(
-                children:
-                    periodNumbers.map((period) {
-                      final periodData = periods[period]; // <-- FIXED HERE
-                      return buildTimelineItem(period, periodData);
-                    }).toList(),
-              ),
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: days.length,
+              onPageChanged: (index) {
+                setState(() {
+                  selectedDay = index;
+                });
+              },
+              itemBuilder: (context, index) {
+                final dayNames = [
+                  'Monday',
+                  'Tuesday',
+                  'Wednesday',
+                  'Thursday',
+                  'Friday',
+                ];
+                final dayName = dayNames[index];
+                final periods = timetableData[dayName] ?? {};
+
+                return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: widget.timelinePadding,
+                  decoration: BoxDecoration(
+                    color: kAccentColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ListView(
+                    children:
+                        periodNumbers.map((period) {
+                          final periodData = periods[period];
+                          return buildTimelineItem(period, periodData);
+                        }).toList(),
+                  ),
+                );
+              },
             ),
           ),
+
           const SizedBox(height: 16),
           // Bottom nav bar
         ],
@@ -258,12 +294,12 @@ class _TimeTablePageState extends State<TimeTablePage> {
       Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
     }
     if (index == 2) {
-      Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
+      Navigator.of(context).pushReplacement(fadeRoute(const NotePage()));
     }
     if (index == 3) {
       Navigator.of(
         context,
-      ).pushReplacement(fadeRoute(const TeacherProfilePage()));
+      ).pushReplacement(fadeRoute(const ProfileRouterPage()));
     } else {
       setState(() {
         _selectedIndex = index;

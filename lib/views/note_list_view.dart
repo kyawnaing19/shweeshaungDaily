@@ -1,8 +1,12 @@
-
-import 'package:flutter/material.dart'; 
+import 'package:flutter/material.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/utils/note_database/note_database.dart';
+import 'package:shweeshaungdaily/views/Home.dart';
+import 'package:shweeshaungdaily/views/bottomNavBar.dart';
+import 'package:shweeshaungdaily/views/profile_router.dart';
+import 'package:shweeshaungdaily/views/timetablepage.dart';
 import 'note_editor_page.dart';
+import 'package:shweeshaungdaily/utils/route_transition.dart';
 
 class NotePage extends StatefulWidget {
   const NotePage({super.key});
@@ -12,6 +16,27 @@ class NotePage extends StatefulWidget {
 }
 
 class _NotePageState extends State<NotePage> {
+  int _selectedIndex = 2; // State for the selected tab in the bottom navigation
+
+  void _onItemTapped(int index) {
+    if (_selectedIndex == index) return;
+    if (index == 1) {
+      Navigator.of(context).pushReplacement(fadeRoute(const TimeTablePage()));
+    }
+    if (index == 0) {
+      Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
+    }
+    if (index == 3) {
+      Navigator.of(
+        context,
+      ).pushReplacement(fadeRoute(const ProfileRouterPage()));
+    } else {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
+  }
+
   List<Map<String, dynamic>> _notes = [];
   @override
   void initState() {
@@ -57,10 +82,7 @@ class _NotePageState extends State<NotePage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            // Note: If this is your main home page, Navigator.pop(context) might not be what you want here.
-            // It would try to pop the current route, which might be the last route in the stack or the app itself.
-            // Consider if you need a back button on your main Notes page.
-            Navigator.pop(context);
+            Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
           },
         ),
         title: const Text(
@@ -128,7 +150,6 @@ class _NotePageState extends State<NotePage> {
                     return InkWell(
                       borderRadius: BorderRadius.circular(12),
                       onTap: () async {
-                        
                         final updatedNote = await Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -139,7 +160,7 @@ class _NotePageState extends State<NotePage> {
                                 ), // Added dynamic initial text
                           ),
                         );
-                       
+
                         if (updatedNote != null) {
                           await NoteDatabase().updateNote(
                             note['subject'],
@@ -164,7 +185,7 @@ class _NotePageState extends State<NotePage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                             Text(
+                            Text(
                               note['subject'] ?? 'Untitled Note',
                               style: TextStyle(
                                 color: Colors.black87,
@@ -228,75 +249,80 @@ class _NotePageState extends State<NotePage> {
         },
         child: const Icon(Icons.add, color: Colors.white),
       ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF4DB6AC),
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(16),
-            topRight: Radius.circular(16),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 8,
-              offset: Offset(0, -3),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _BottomNavItem(icon: Icons.home, label: 'Home', isActive: false),
-            _BottomNavItem(icon: Icons.notes, label: 'Notes', isActive: true),
-            _BottomNavItem(
-              icon: Icons.check_box,
-              label: 'Tasks',
-              isActive: false,
-            ),
-            _BottomNavItem(
-              icon: Icons.person,
-              label: 'Profile',
-              isActive: false,
-            ),
-          ],
-        ),
+
+      bottomNavigationBar: CustomBottomNavBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
       ),
+      // bottomNavigationBar: Container(
+      //   decoration: const BoxDecoration(
+      //     color: Color(0xFF4DB6AC),
+      //     borderRadius: BorderRadius.only(
+      //       topLeft: Radius.circular(16),
+      //       topRight: Radius.circular(16),
+      //     ),
+      //     boxShadow: [
+      //       BoxShadow(
+      //         color: Colors.black12,
+      //         blurRadius: 8,
+      //         offset: Offset(0, -3),
+      //       ),
+      //     ],
+      //   ),
+      //   padding: const EdgeInsets.symmetric(vertical: 12),
+      //   child: const Row(
+      //     mainAxisAlignment: MainAxisAlignment.spaceAround,
+      //     children: [
+      //       _BottomNavItem(icon: Icons.home, label: 'Home', isActive: false),
+      //       _BottomNavItem(icon: Icons.notes, label: 'Notes', isActive: true),
+      //       _BottomNavItem(
+      //         icon: Icons.check_box,
+      //         label: 'Tasks',
+      //         isActive: false,
+      //       ),
+      //       _BottomNavItem(
+      //         icon: Icons.person,
+      //         label: 'Profile',
+      //         isActive: false,
+      //       ),
+      //     ],
+      //   ),
+      // ),
     );
   }
 }
 
-class _BottomNavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isActive;
+// class _BottomNavItem extends StatelessWidget {
+//   final IconData icon;
+//   final String label;
+//   final bool isActive;
 
-  const _BottomNavItem({
-    required this.icon,
-    required this.label,
-    required this.isActive,
-  });
+//   const _BottomNavItem({
+//     required this.icon,
+//     required this.label,
+//     required this.isActive,
+//   });
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          color: isActive ? Colors.white : Colors.white.withOpacity(0.7),
-          size: 26,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: isActive ? Colors.white : Colors.white.withOpacity(0.7),
-            fontSize: 12,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-          ),
-        ),
-      ],
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Column(
+//       mainAxisSize: MainAxisSize.min,
+//       children: [
+//         Icon(
+//           icon,
+//           color: isActive ? Colors.white : Colors.white.withOpacity(0.7),
+//           size: 26,
+//         ),
+//         const SizedBox(height: 4),
+//         Text(
+//           label,
+//           style: TextStyle(
+//             color: isActive ? Colors.white : Colors.white.withOpacity(0.7),
+//             fontSize: 12,
+//             fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+// }
