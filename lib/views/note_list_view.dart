@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/utils/note_database/note_database.dart';
 import 'package:shweeshaungdaily/views/Home.dart';
-import 'package:shweeshaungdaily/views/bottomNavBar.dart';
-import 'package:shweeshaungdaily/views/profile_router.dart';
-import 'package:shweeshaungdaily/views/timetablepage.dart';
 import 'note_editor_page.dart';
 import 'package:shweeshaungdaily/utils/route_transition.dart';
 

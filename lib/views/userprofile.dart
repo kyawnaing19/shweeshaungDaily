@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:shweeshaungdaily/utils/route_transition.dart';
 import 'package:shweeshaungdaily/views/Home.dart';
-import 'package:shweeshaungdaily/views/bottomNavBar.dart';
-import 'package:shweeshaungdaily/views/note_list_view.dart';
-import 'package:shweeshaungdaily/views/timetablepage.dart';
-
 // List of story privacy/status options for backend integration
 final List<String> storyStatusOptions = [
   'Public',
@@ -27,22 +23,6 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  int _selectedIndex = 3;
-
-  void _onItemTapped(int index) {
-    if (_selectedIndex == index) return;
-    if (index == 0) {
-      Navigator.of(context).pushReplacement(fadeRoute(const HomeScreenPage()));
-    } else if (index == 1) {
-      Navigator.of(context).pushReplacement(fadeRoute(const TimeTablePage()));
-    } else if (index == 2) {
-      Navigator.of(context).pushReplacement(fadeRoute(const NotePage()));
-    } else {
-      setState(() {
-        _selectedIndex = index;
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

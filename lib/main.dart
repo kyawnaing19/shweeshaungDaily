@@ -3,13 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shweeshaungdaily/view_models/StartupViewModel.dart';
 import 'package:shweeshaungdaily/view_models/auth_viewmodel.dart';
 import 'package:shweeshaungdaily/view_models/reg_viewmodel.dart';
-import 'package:shweeshaungdaily/views/Home.dart';
 import 'package:shweeshaungdaily/views/loading.dart';
-import 'package:shweeshaungdaily/views/main_screen.dart';
-import 'package:shweeshaungdaily/views/note_list_view.dart';
-import 'package:shweeshaungdaily/views/profile_router.dart';
-import 'package:shweeshaungdaily/views/teacherprofile.dart';
-import 'package:shweeshaungdaily/views/timetablepage.dart';
 import 'package:flutter_quill/flutter_quill.dart'; // Keep this for FlutterQuillLocalizations.delegate
 import 'package:flutter_localizations/flutter_localizations.dart';
 

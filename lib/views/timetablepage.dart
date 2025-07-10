@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shweeshaungdaily/views/Home.dart';
 import 'dart:convert';
-import 'package:shweeshaungdaily/views/bottomNavBar.dart';
-import 'package:shweeshaungdaily/utils/route_transition.dart';
-import 'package:shweeshaungdaily/views/note_list_view.dart';
-import 'package:shweeshaungdaily/views/profile_router.dart';
 
 class TimeTablePage extends StatefulWidget {
   final EdgeInsetsGeometry timelinePadding;
@@ -166,10 +161,7 @@ class _TimeTablePageState extends State<TimeTablePage> {
 
   @override
   Widget build(BuildContext context) {
-    final dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-    final selectedDayName = dayNames[selectedDay];
-    final periods = timetableData[selectedDayName] ?? {};
-
+   
     // Only show periods 1,2,3,5,6,7 (skip 4)
     final periodNumbers = [1, 2, 3, 4, 5, 6];
 
@@ -181,9 +173,9 @@ class _TimeTablePageState extends State<TimeTablePage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.of(
-              context,
-            ).pushReplacement(fadeRoute(const HomeScreenPage()));
+            // Navigator.of(
+            //   context,
+            // ).pushReplacement( const HomeScreenPage());
           },
         ),
         title: const Text(
@@ -278,36 +270,6 @@ class _TimeTablePageState extends State<TimeTablePage> {
           // Bottom nav bar
         ],
       ),
-      // Add the bottomNavigationBar property here
-      // bottomNavigationBar: CustomBottomNavBar(
-      //   selectedIndex: _selectedIndex,
-      //   onItemTapped: _onItemTapped,
-      // ),
     );
   }
-
-  int _selectedIndex = 1; // 1 for Timetable, 0 for Home, etc.
-
-  // ...existing code...
-
-  // void _onItemTapped(int index) {
-  //   if (_selectedIndex == index) return;
-  //   if (index == 0) {
-  //     Navigator.of(context).pushReplacement(fadeRoute(const HomePage()));
-  //   }
-  //   if (index == 2) {
-  //     Navigator.of(context).pushReplacement(fadeRoute(const NotePage()));
-  //   }
-  //   if (index == 3) {
-  //     Navigator.of(
-  //       context,
-  //     ).pushReplacement(fadeRoute(const ProfileRouterPage()));
-  //   } else {
-  //     setState(() {
-  //       _selectedIndex = index;
-  //     });
-  //   }
-  // }
-
-  // ...existing code...
 }
