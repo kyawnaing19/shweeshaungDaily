@@ -832,7 +832,7 @@ class _ShowSharesDialogState extends State<ShowSharesDialog> {
                         _showMajors
                             ? ListView(
                               shrinkWrap: true,
-                              children:
+                              children:                                                      
                                   majorsList
                                       .map(
                                         (major) => ListTile(

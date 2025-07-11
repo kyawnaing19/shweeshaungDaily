@@ -1,0 +1,61 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:path_provider/path_provider.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
+
+class ImageCacheManager {
+  static Future<String> _getCacheDirPath() async {
+    final dir = await getTemporaryDirectory();
+    final cacheDir = Directory('${dir.path}/image_cache');
+    if (!(await cacheDir.exists())) {
+      await cacheDir.create(recursive: true);
+    }
+    return cacheDir.path;
+  }
+
+  static String _generateFileName(String url) {
+    return md5.convert(utf8.encode(url)).toString(); // Use MD5 for unique ID
+  }
+
+  static Future<File> _getFile(String url) async {
+    final path = await _getCacheDirPath();
+    final fileName = _generateFileName(url);
+    return File('$path/$fileName.jpg');
+  }
+
+  static Future<Uint8List?> getCachedImage(String url) async {
+    final file = await _getFile(url);
+    if (await file.exists()) {
+      return await file.readAsBytes();
+    }
+    return null;
+  }
+
+  static Future<void> cacheImage(String url, Uint8List bytes) async {
+    final file = await _getFile(url);
+    await file.writeAsBytes(bytes, flush: true);
+  }
+
+  static Future<void> deleteImage(String url) async {
+    final file = await _getFile(url);
+    if (await file.exists()) {
+      await file.delete();
+    }
+  }
+
+  static Future<void> clearUnusedImages(Set<String> activeUrls) async {
+    final dirPath = await _getCacheDirPath();
+    final dir = Directory(dirPath);
+    final files = dir.listSync();
+    for (final file in files) {
+      if (file is File) {
+        final fileName = file.path.split('/').last.split('.jpg').first;
+        final urlHash = activeUrls.map((url) => _generateFileName(url));
+        if (!urlHash.contains(fileName)) {
+          await file.delete();
+        }
+      }
+    }
+  }
+}

@@ -99,6 +99,34 @@ class ApiService {
     return null; // Token expired or user logged out
   }
 
+  static Future<List<Map<String, dynamic>>?> getFeed() async {
+    final url = Uri.parse(feedBaseUrl);
+
+    try {
+      final response = await AuthorizedHttpService.sendAuthorizedRequest(
+        url,
+        method: 'GET',
+      );
+
+      if (response != null && response.statusCode == 200) {
+        final body = response.body;
+        final decoded = jsonDecode(body);
+
+        if (decoded is List) {
+          return decoded.cast<Map<String, dynamic>>();
+        } else {
+          print('Unexpected response format: $decoded');
+        }
+      } else {
+        print('Failed to fetch feed. Status code: ${response?.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching feed: $e');
+    }
+
+    return null;
+  }
+
   static Future<void> uploadFeed({
     required String text,
     required String audience,

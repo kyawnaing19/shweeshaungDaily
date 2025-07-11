@@ -6,6 +6,8 @@ import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:intl/intl.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shweeshaungdaily/services/authorize_image.dart';
+import 'package:shweeshaungdaily/utils/image_cache.dart';
 import 'package:shweeshaungdaily/views/note_list_view.dart';
 import 'package:shweeshaungdaily/views/timetablepage.dart'; // Add this for SharedPreferences
 
@@ -17,8 +19,9 @@ class HomeScreenPage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomeScreenPage> {
-
-  late List<Map<String, String?>> feedItems;
+  List<Map<String, dynamic>>? feedItems = [];
+  bool isFeedLoading = true;
+  String? feedErrorMessage;
   Map<String, Map<int, dynamic>>? timetableData;
   bool isLoading = true;
   String? errorMessage;
@@ -76,34 +79,8 @@ class _HomePageState extends State<HomeScreenPage> {
   void initState() {
     super.initState();
     _loadTimetableFromPrefs();
-    feedItems = [
-      {
-        "user": "Daw Aye Mya ",
-        "timeAgo": "6 min ago",
-        "message": "Min ga lar bar ka lay toh",
-        "imageUrl":
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Bagan_sunset.jpg/640px-Bagan_sunset.jpg",
-      },
-      {
-        "user": "Daw Aye Mya Kyi",
-        "timeAgo": "8 min ago",
-        "message": "This is a post with only text and no image.",
-        "imageUrl": null,
-      },
-      {
-        "user": "Daw Aye Mya Kyi",
-        "timeAgo": "15 min ago",
-        "message": "This post has an image.",
-        "imageUrl":
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Bagan_sunset.jpg/640px-Bagan_sunset.jpg",
-      },
-      {
-        "user": "Daw Aye Mya Kyi",
-        "timeAgo": "20 min ago",
-        "message": "This is another post with only text.",
-        "imageUrl": "",
-      },
-    ];
+    loadCachedFeed();
+    _fetchFeed();
     _pageController = PageController(
       viewportFraction: 0.92,
       initialPage: _getCurrentPeriodIndex(),
@@ -119,7 +96,73 @@ class _HomePageState extends State<HomeScreenPage> {
     });
   }
 
+  Future<void> loadCachedFeed() async {
+  final prefs = await SharedPreferences.getInstance();
+  final cachedFeed = prefs.getString('cached_feed');
+
+  if (cachedFeed != null) {
+    try {
+      final decoded = jsonDecode(cachedFeed);
+      if (decoded is List) {
+        setState(() {
+          feedItems = decoded
+              .map((item) => Map<String, dynamic>.from(item as Map))
+              .toList();
+        });
+        return;
+      } else {
+        debugPrint('Cached feed is not a List');
+      }
+    } catch (e) {
+      debugPrint('Error decoding cached feed: $e');
+    }
+  }
+  // If cache is missing or invalid, set feedItems to empty and update UI
+  setState(() {
+    feedItems = [];
+  });
+}
+
+
   Timer? _lunchTimer;
+  Future<void> _fetchFeed() async {
+    setState(() {
+      isFeedLoading = true;
+      feedErrorMessage = null;
+    });
+
+    try {
+      final result = await ApiService.getFeed();
+
+      // Save feed to local cache
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('cached_feed', jsonEncode(result));
+
+      setState(() {
+        feedItems = result ?? [];
+        isFeedLoading = false;
+      });
+
+      // 🧹 Clean up cached images not in feed
+      final imageUrls =
+          feedItems!
+              .map((item) => item['photoUrl'])
+              .where((url) => url != null && url != '')
+              .map((url) => 'https://shweeshaung.mooo.com/$url')
+              .toSet();
+
+      await ImageCacheManager.clearUnusedImages(imageUrls);
+    } catch (e) {
+      // API failed – try to reload cached feed
+      await loadCachedFeed();
+      setState(() {
+        // Ensure feedItems is updated after loading cache
+        feedItems = feedItems ?? [];
+        feedErrorMessage = 'Failed to load feed: ${e.toString()}';
+        isFeedLoading = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -316,61 +359,6 @@ class _HomePageState extends State<HomeScreenPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading && timetableData == null) {
-      // Only show loading on first load
-      // return Scaffold(
-      //   backgroundColor: const Color(0xFFE0F7FA),
-      //   body: const Center(child: CircularProgressIndicator()),
-      // );
-      return Scaffold(
-        body: Container(
-          color: kAccentColor, // The greenish-blue color from your image
-          child: const Center(
-            child: Column(
-              // Use Column to arrange widgets vertically
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Shwee Shaung Daily',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 30,
-                    fontFamily:
-                        'Pacifico', // Ensure this font is added to your pubspec.yaml
-                  ),
-                ),
-                SizedBox(
-                  height: 100,
-                ), // Space between "Shwee Shaung Daily" and "Loading..."
-                Text(
-                  'Loading...',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    // You can also apply a fontFamily here if desired, e.g., fontFamily: 'Pacifico',
-                  ),
-                ),
-                SizedBox(
-                  height: 20,
-                ), // Space between "Loading..." and the indicator
-                CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Colors.white,
-                  ), // White loading indicator
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-    // if (errorMessage != null) {
-    //   return Scaffold(
-    //     backgroundColor: const Color(0xFFE0F7FA),
-    //     body: Center(child: Text('Error: $errorMessage')),
-    //   );
-    // }
-
     final today = getCurrentDayName();
     final classes = timetableData?[today] ?? {};
 
@@ -396,7 +384,10 @@ class _HomePageState extends State<HomeScreenPage> {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: _handleRefresh,
+        onRefresh: () async {
+          await _handleRefresh();
+          await _fetchFeed();
+        },
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
@@ -408,7 +399,6 @@ class _HomePageState extends State<HomeScreenPage> {
                     height:
                         MediaQuery.of(context).size.height *
                         0.3, // 30% of screen height for responsiveness
-                    // ...existing code...
                     child: Builder(
                       builder: (context) {
                         if (isOutsideClassTime()) {
@@ -417,7 +407,6 @@ class _HomePageState extends State<HomeScreenPage> {
                         final currentPeriod = _getCurrentPeriodIndex();
                         final periodType = periodTimes[currentPeriod]["type"];
                         if (periodType == "lunch") {
-                          // ...existing lunch card code...
                           final now = DateTime.now();
                           final periodTime =
                               periodTimes[currentPeriod]["start"] as TimeOfDay;
@@ -436,7 +425,6 @@ class _HomePageState extends State<HomeScreenPage> {
                             periodTimeStr,
                           );
                         } else {
-                          // ...existing class PageView code...
                           final classPeriodIndices =
                               List.generate(periodTimes.length, (i) => i)
                                   .where(
@@ -492,7 +480,6 @@ class _HomePageState extends State<HomeScreenPage> {
                         }
                       },
                     ),
-                    // ...existing code...,
                   ),
                   const SizedBox(height: 10),
                   _buildQuickActionsRow(),
@@ -526,27 +513,63 @@ class _HomePageState extends State<HomeScreenPage> {
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final item = feedItems[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16.0),
-                    child: _buildFeedCard(
-                      user: item['user']!,
-                      timeAgo: item['timeAgo']!,
-                      message: item['message']!,
-                      imageUrl: item['imageUrl'],
-                    ),
-                  );
-                }, childCount: feedItems.length),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    if (isFeedLoading) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 32.0),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+
+                    if (feedErrorMessage != null) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 32.0),
+                        child: Center(child: Text(feedErrorMessage!)),
+                      );
+                    }
+
+                    if (feedItems!.isEmpty) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 32.0),
+                        child: Center(child: Text('No feed items available.')),
+                      );
+                    }
+
+                    final item = feedItems![index];
+                    final String user = 'User'; // Replace with actual user
+                    final String timeAgo = item['createdAt'] ?? '';
+                    final String message = item['text'] ?? '';
+                    final String? imageUrl =
+                        (item['photoUrl'] != null && item['photoUrl'] != '')
+                            ? 'https://shweeshaung.mooo.com/${item['photoUrl']}'
+                            : null;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: _buildFeedCard(
+                        user: user,
+                        timeAgo: timeAgo,
+                        message: message,
+                        imageUrl: imageUrl,
+                      ),
+                    );
+                  },
+                  childCount: () {
+                    if (isFeedLoading ||
+                        feedErrorMessage != null ||
+                        feedItems!.isEmpty) {
+                      return 1;
+                    } else {
+                      return feedItems?.length;
+                    }
+                  }(),
+                ),
               ),
             ),
           ],
         ),
       ),
-      // bottomNavigationBar: CustomBottomNavBar(
-      //   selectedIndex: _selectedIndex,
-      //   onItemTapped: _onItemTapped,
-      // ),
     );
   }
 
@@ -897,36 +920,10 @@ class _HomePageState extends State<HomeScreenPage> {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
+                  child: AuthorizedImage(
+                    imageUrl: imageUrl,
                     height: 180,
                     width: double.infinity,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        height: 180,
-                        width: double.infinity,
-                        color: Colors.grey.shade200,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: const Color(0xFF00897B),
-                            value:
-                                loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
-                                    : null,
-                          ),
-                        ),
-                      );
-                    },
-                    errorBuilder:
-                        (context, error, stackTrace) => Image.asset(
-                          'assets/images/tpo.jpg',
-                          fit: BoxFit.cover,
-                          height: 180,
-                          width: double.infinity,
-                        ),
                   ),
                 ),
               ),
