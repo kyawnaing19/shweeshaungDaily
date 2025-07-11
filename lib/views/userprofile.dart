@@ -30,60 +30,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFD4F7F5),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF57C5BE),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (widget.onBack != null) {
-              widget.onBack!(); // ✅ Access via `widget`
-            }
-          },
-        ),
-        centerTitle: true,
-        title: const Text(
-          'Profile',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          Builder(
-            builder:
-                (context) => IconButton(
-                  icon: const Icon(Icons.settings, color: Colors.white),
-                  onPressed: () {
-                    final RenderBox overlay =
-                        Overlay.of(context).context.findRenderObject()
-                            as RenderBox;
-                    final Offset topRight = overlay.localToGlobal(
-                      Offset(overlay.size.width, 0),
-                    );
-                    showMenu(
-                      context: context,
-                      position: RelativeRect.fromLTRB(
-                        topRight.dx - 200, // 200 = width of SettingsCard
-                        topRight.dy + kToolbarHeight + 8, // below appbar
-                        16, // right margin
-                        0,
-                      ),
-                      items: [
-                        PopupMenuItem(
-                          enabled: false,
-                          padding: EdgeInsets.zero,
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 180),
-                            child: SettingsCard(),
-                          ),
-                        ),
-                      ],
-                      elevation: 8,
-                      color: Colors.transparent,
-                    );
-                  },
-                ),
-          ),
-        ],
-      ),
       body: Column(
         children: [
           const SizedBox(height: 10),
