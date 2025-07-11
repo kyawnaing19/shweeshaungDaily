@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/utils/note_database/note_database.dart';
 import 'package:shweeshaungdaily/views/Home.dart';
@@ -15,6 +16,24 @@ class NotePage extends StatefulWidget {
 }
 
 class _NotePageState extends State<NotePage> {
+
+String formatToMMT(String? utcString) {
+  if (utcString == null) return 'Unknown';
+
+  try {
+    // Parse assuming the input is in UTC
+    final utcTime = DateFormat('yyyy-MM-dd HH:mm:ss').parseUtc(utcString);
+
+    // Convert to Myanmar Time (UTC+6:30)
+    final mmtTime = utcTime.add(const Duration(hours: 6, minutes: 30));
+
+    // Format back to the same format
+    return DateFormat('yyyy-MM-dd HH:mm:ss').format(mmtTime);
+  } catch (e) {
+    print('❌ Error: $e');
+    return 'Invalid time';
+  }
+}
   //int _selectedIndex = 2; // State for the selected tab in the bottom navigation
 
   // void _onItemTapped(int index) {
@@ -37,6 +56,8 @@ class _NotePageState extends State<NotePage> {
   // }
 
   List<Map<String, dynamic>> _notes = [];
+  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
@@ -52,6 +73,12 @@ class _NotePageState extends State<NotePage> {
     setState(() {
       _notes = notes;
     });
+  }
+
+  Future<void> addNewNote(String subject) async {
+    final db = NoteDatabase();
+    await db.insertNote(subject, []);
+    _loadNotes();
   }
 
   Future<void> fetchAndCacheNotes() async {
@@ -95,13 +122,18 @@ class _NotePageState extends State<NotePage> {
                   ),
                 ],
               ),
-              child: const TextField(
-                decoration: InputDecoration(
+              child: TextField(
+                decoration: const InputDecoration(
                   hintText: 'Search notes...',
                   border: InputBorder.none,
                   icon: Icon(Icons.search, color: Color(0xFF4DB6AC)),
-                  suffixIcon: Icon(Icons.tune, color: Color(0xFF4DB6AC)),
+                  // suffixIcon: Icon(Icons.tune, color: Color(0xFF4DB6AC)),
                 ),
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
               ),
             ),
             const SizedBox(height: 16),
@@ -120,10 +152,21 @@ class _NotePageState extends State<NotePage> {
                 ),
                 padding: const EdgeInsets.all(16),
                 child: ListView.separated(
-                  itemCount: _notes.length,
+                  itemCount: _notes
+                      .where((note) => note['subject']
+                          .toString()
+                          .toLowerCase()
+                          .contains(_searchQuery.toLowerCase()))
+                      .length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
-                    final note = _notes[index];
+                    final filteredNotes = _notes
+                        .where((note) => note['subject']
+                            .toString()
+                            .toLowerCase()
+                            .contains(_searchQuery.toLowerCase()))
+                        .toList();
+                    final note = filteredNotes[index];
 
                     return InkWell(
                       borderRadius: BorderRadius.circular(12),
@@ -173,7 +216,7 @@ class _NotePageState extends State<NotePage> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Last modified: ${DateTime.now().toString().substring(0, 10)}',
+                              'Last modified: ${formatToMMT(note['updatedAt'])}',
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 12,
@@ -211,19 +254,42 @@ class _NotePageState extends State<NotePage> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF4DB6AC),
         onPressed: () async {
-          // Add new note functionality
-          final newNote = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder:
-                  (_) =>
-                      const NoteEditorPage(title: 'New Note', initialText: ''),
-            ),
+          String newTitle = '';
+          await showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                title: const Text('New Note Title'),
+                content: TextField(
+                  autofocus: true,
+                  decoration: const InputDecoration(hintText: 'Enter note title'),
+                  onChanged: (value) {
+                    newTitle = value;
+                  },
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      if(newTitle.isNotEmpty) {
+                        addNewNote(newTitle);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Title cannot be empty')),
+                        );
+                      }
+                      // You can handle the newTitle here if needed
+                    },
+                    child: const Text('OK'),
+                  ),
+                ],
+              );
+            },
           );
-          if (newNote != null) {
-            print('New Note created: $newNote');
-            // You'd typically add this new note to a list or database here
-          }
         },
         child: const Icon(Icons.add, color: Colors.white),
       ),

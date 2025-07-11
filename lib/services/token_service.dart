@@ -11,6 +11,16 @@ class TokenService {
     await prefs.setString(_refreshTokenKey, refreshToken);
   }
 
+  static Future<void> setUserName(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userName', name);
+  }
+  static Future<String?> getUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userName');
+  }
+
+
   static Future<void> setRole(String role) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('role', role);

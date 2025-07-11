@@ -20,19 +20,31 @@ class NoteDatabase {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'notes.db');
 
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE notes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            subject TEXT,
-            content TEXT
-          )
-        ''');
-      },
-    );
+   return await openDatabase(
+  path,
+  version: 1,
+  onCreate: (db, version) async {
+    await db.execute('''
+      CREATE TABLE notes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        subject TEXT,
+        content TEXT,
+        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    ''');
+
+    // Create trigger to update `updatedAt` on row update
+    await db.execute('''
+      CREATE TRIGGER update_notes_updatedAt
+      AFTER UPDATE ON notes
+      FOR EACH ROW
+      BEGIN
+        UPDATE notes SET updatedAt = CURRENT_TIMESTAMP WHERE id = OLD.id;
+      END;
+    ''');
+  },
+);
+
   }
 
   Future<void> insertNote(

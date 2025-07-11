@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shweeshaungdaily/services/authorize_image.dart';
+import 'package:shweeshaungdaily/services/token_service.dart';
 import 'package:shweeshaungdaily/utils/image_cache.dart';
 import 'package:shweeshaungdaily/views/note_list_view.dart';
 import 'package:shweeshaungdaily/views/timetablepage.dart'; // Add this for SharedPreferences
@@ -21,7 +22,7 @@ class HomeScreenPage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomeScreenPage> {
-  final String baseUrl = ApiService.base; 
+  final String baseUrl = ApiService.base;
   List<Map<String, dynamic>>? feedItems = [];
   bool isFeedLoading = true;
   String? feedErrorMessage;
@@ -516,7 +517,8 @@ class _HomePageState extends State<HomeScreenPage> {
                     }
 
                     final item = feedItems![index];
-                    final String user = item['teacherName'] ;// Replace with actual user
+                    final String user =
+                        item['teacherName']; // Replace with actual user
                     final String timeAgo = item['createdAt'] ?? '';
                     final String message = item['text'] ?? '';
                     final String? imageUrl =
@@ -524,19 +526,33 @@ class _HomePageState extends State<HomeScreenPage> {
                             ? '$baseUrl/${item['photoUrl']}'
                             : null;
                     // Count likes and comments from the response arrays
-final int likeCount = (item['likes'] as List?)?.length ?? 0;
-final int commentCount = (item['comments'] as List?)?.length ?? 0;
+                    final int likeCount = (item['likes'] as List?)?.length ?? 0;
+                    final int commentCount =
+                        (item['comments'] as List?)?.length ?? 0;
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16.0),
-                      child: _buildFeedCard(
-                        user: user,
-                        timeAgo: timeAgo,
-                        message: message,
-                        imageUrl: imageUrl,
-                        likeCount: likeCount,
-                        commentCount: commentCount
-                      ),
+                    return FutureBuilder<String?>(
+                      future: TokenService.getUserName(),
+                      builder: (context, snapshot) {
+                        final List<String> likes = List<String>.from(
+                          item['likes'] ?? [],
+                        );
+                        final userName = snapshot.data ?? '';
+                        final bool isLikedByMe = likes.contains(userName);
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: _buildFeedCard(
+                            user: user,
+                            timeAgo: timeAgo,
+                            message: message,
+                            imageUrl: imageUrl,
+                            likeCount: likeCount,
+                            commentCount: commentCount,
+                            comments: item['comments'] ?? [],
+                            feedId: item['id'] ?? '',
+                            isLiked: isLikedByMe,
+                          ),
+                        );
+                      },
                     );
                   },
                   childCount: () {
@@ -818,6 +834,9 @@ final int commentCount = (item['comments'] as List?)?.length ?? 0;
     required String? imageUrl,
     required int? likeCount,
     required int? commentCount,
+    required List<dynamic> comments,
+    required int? feedId,
+    required bool isLiked,
   }) {
     final bool hasImage = imageUrl != null && imageUrl.isNotEmpty;
 
@@ -921,18 +940,53 @@ final int commentCount = (item['comments'] as List?)?.length ?? 0;
               padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.favorite_border_rounded,
-                      color: Colors.white70,
-                      size: 22,
-                    ),
-                    onPressed: () {},
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    likeCount.toString(),
-                    style: const TextStyle(color: Colors.white70, fontSize: 14),
+                  StatefulBuilder(
+                    builder: (context, setState) {
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              isLiked
+                                  ? Icons.favorite_rounded
+                                  : Icons.favorite_border_rounded,
+                              color: Colors.white70,
+                              size: 22,
+                            ),
+                            onPressed: () async {
+                              if (isLiked) {
+                                print("is liked");
+                                final success = await ApiService.unlike(
+                                  feedId!,
+                                );
+                                if (success) {
+                                  setState(() {
+                                    isLiked = false;
+                                    likeCount = likeCount! - 1;
+                                  });
+                                }
+                              } else {
+                                final success = await ApiService.like(feedId!);
+                                if (success) {
+                                  setState(() {
+                                    isLiked = true;
+                                    likeCount = likeCount! + 1;
+                                  });
+                                }
+                              }
+                            },
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            likeCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(width: 16),
                   IconButton(
@@ -946,10 +1000,23 @@ final int commentCount = (item['comments'] as List?)?.length ?? 0;
                         context: context,
                         isScrollControlled: true,
                         backgroundColor: Colors.transparent,
-                        builder: (context) => const FractionallySizedBox(
-                          heightFactor: 1.0,
-                          child: CommentSection(),
-                        ),
+                        builder:
+                            (context) => FractionallySizedBox(
+                              heightFactor: 1.0,
+                              child: CommentSection(
+                                feedId: feedId,
+                                comments: comments,
+                                onCommentSuccess: () {
+                                  setState(() {
+                                    // Find the feed item by feedId and add a dummy comment to increment count
+                                    final idx = feedItems?.indexWhere((item) => item['id'] == feedId);
+                                    if (idx != null && idx >= 0) {
+                                      feedItems![idx]['comments'] = List.from(feedItems![idx]['comments'] ?? [])..add({});
+                                    }
+                                  });
+                                },
+                              ),
+                            ),
                       );
                     },
                   ),

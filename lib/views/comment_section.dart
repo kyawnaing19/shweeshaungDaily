@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
+import '../services/api_service.dart';
 class CommentSection extends StatefulWidget {
-  final int? commentCount;
-  const CommentSection({Key? key, this.commentCount}) : super(key: key);
+  final List<dynamic> comments;
+  final int? feedId;
+  final VoidCallback? onCommentSuccess;
+  const CommentSection({Key? key, required this.comments, required this.feedId, this.onCommentSuccess}) : super(key: key);
 
   @override
   State<CommentSection> createState() => _CommentSectionState();
@@ -11,21 +15,85 @@ class CommentSection extends StatefulWidget {
 class _CommentSectionState extends State<CommentSection> {
   final FocusNode _focusNode = FocusNode();
   final TextEditingController _controller = TextEditingController();
+  List<dynamic>? _comments;
+  bool _loading = true;
+  bool _hasText = false;
+  bool _showUserSuggestions = false;
+  List<String> _userSuggestions = [];
+  int _selectedSuggestionIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    // Request focus when the widget is built
+    _controller.addListener(_onTextChanged);
+    _fetchComments();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
   }
 
+  void _onTextChanged() {
+    final text = _controller.text;
+    setState(() {
+      _hasText = text.trim().isNotEmpty;
+      // Show suggestions if text starts with '@'
+      if (text.startsWith('@')) {
+        _userSuggestions = _getUniqueUserNames();
+        _showUserSuggestions = _userSuggestions.isNotEmpty;
+        _selectedSuggestionIndex = 0;
+      } else {
+        _showUserSuggestions = false;
+      }
+    });
+  }
+
+  List<String> _getUniqueUserNames() {
+    if (_comments == null) return [];
+    final names = _comments!
+        .map((c) => c['userName']?.toString() ?? '')
+        .where((name) => name.isNotEmpty)
+        .toSet()
+        .toList();
+    return names;
+  }
+
+  Future<void> _fetchComments() async {
+    try {
+      if (widget.feedId != null) {
+        final apiComments = await ApiService.getComments(widget.feedId!);
+        setState(() {
+          _comments = apiComments ?? widget.comments;
+          _loading = false;
+        });
+      } else {
+        setState(() {
+          _comments = widget.comments;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _comments = widget.comments;
+        _loading = false;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _focusNode.dispose();
+    _controller.removeListener(_onTextChanged);
     _controller.dispose();
     super.dispose();
+  }
+
+  String _formatDate(String dateStr) {
+    try {
+      final date = DateTime.parse(dateStr);
+      return DateFormat('MMM d, HH:mm').format(date);
+    } catch (_) {
+      return dateStr;
+    }
   }
 
   @override
@@ -67,24 +135,52 @@ class _CommentSectionState extends State<CommentSection> {
                       ),
                     ),
                     const Spacer(),
-                    if (widget.commentCount != null)
-                      Text('${widget.commentCount}', style: const TextStyle(fontSize: 16)),
+                    Text(
+                      (_comments?.length ?? 0).toString(),
+                      style: const TextStyle(fontSize: 16),
+                    ),
                   ],
                 ),
               ),
               const Divider(height: 1),
               Expanded(
-                child: ListView.builder(
-                  controller: scrollController,
-                  itemCount: widget.commentCount ?? 5,
-                  itemBuilder: (context, index) {
-                    return ListTile(
-                      leading: const CircleAvatar(child: Icon(Icons.person)),
-                      title: Text('User $index'),
-                      subtitle: const Text('This is a comment.'),
-                    );
-                  },
-                ),
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : (_comments == null || _comments!.isEmpty)
+                        ? const Center(child: Text('No comments yet.'))
+                        : ListView.builder(
+                            controller: scrollController,
+                            itemCount: _comments!.length,
+                            itemBuilder: (context, index) {
+                              final comment = _comments![index];
+                              final userName = comment['userName'] ?? 'User';
+                              final text = comment['text'] ?? '';
+                              final createdAt = comment['createdAt'] ?? '';
+                              final profileUrl = comment['authorProfileUrl'] ?? '';
+                              return ListTile(
+                                leading: CircleAvatar(
+                                  backgroundImage: (profileUrl != null && profileUrl.isNotEmpty)
+                                      ? NetworkImage(profileUrl)
+                                      : null,
+                                  child: (profileUrl == null || profileUrl.isEmpty)
+                                      ? const Icon(Icons.person)
+                                      : null,
+                                ),
+                                title: Text(userName),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(text),
+                                    if (createdAt.isNotEmpty)
+                                      Text(
+                                        _formatDate(createdAt),
+                                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                      ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
               ),
               const Divider(height: 1),
               SafeArea(
@@ -93,27 +189,97 @@ class _CommentSectionState extends State<CommentSection> {
                   duration: const Duration(milliseconds: 200),
                   curve: Curves.easeOut,
                   padding: EdgeInsets.only(bottom: bottomInset, left: 16, right: 8, top: 8),
-                  child: Row(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Expanded(
-                        child: TextField(
-                          focusNode: _focusNode,
-                          controller: _controller,
-                          decoration: InputDecoration(
-                            hintText: 'Write a comment...',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(20),
-                              borderSide: BorderSide.none,
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey[200],
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                      if (_showUserSuggestions)
+                        Container(
+                          constraints: const BoxConstraints(maxHeight: 150),
+                          margin: const EdgeInsets.only(bottom: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 4,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: _userSuggestions.length,
+                            itemBuilder: (context, index) {
+                              final user = _userSuggestions[index];
+                              return ListTile(
+                                dense: true,
+                                tileColor: index == _selectedSuggestionIndex ? Colors.blue.shade50 : null,
+                                title: Text(user),
+                                onTap: () {
+                                  setState(() {
+                                    _controller.text = '$user ';
+                                    _controller.selection = TextSelection.fromPosition(
+                                      TextPosition(offset: _controller.text.length),
+                                    );
+                                    _showUserSuggestions = false;
+                                  });
+                                },
+                              );
+                            },
                           ),
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.send_rounded, color: Colors.blue),
-                        onPressed: () {},
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              focusNode: _focusNode,
+                              controller: _controller,
+                              keyboardType: TextInputType.multiline,
+                              maxLines: null,
+                              minLines: 1,
+                              decoration: InputDecoration(
+                                hintText: 'Write a comment...',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: BorderSide.none,
+                                ),
+                                filled: true,
+                                fillColor: Colors.grey[200],
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              Icons.send_rounded,
+                              color: _hasText ? Colors.blue : const Color.fromARGB(255, 230, 159, 159),
+                            ),
+                            onPressed: _hasText
+                                ? () async {
+                                    if (widget.feedId != null) {
+                                      final text = _controller.text.trim();
+                                      if (text.isNotEmpty) {
+                                        final success = await ApiService.comment(widget.feedId!, text);
+                                        if (success) {
+                                          _controller.clear();
+                                          FocusScope.of(context).unfocus();
+                                          await _fetchComments();
+                                          if (widget.onCommentSuccess != null) {
+                                            widget.onCommentSuccess!();
+                                          }
+                                        } else {
+                                          // ScaffoldMessenger.of(context).showSnackBar(
+                                          //   const SnackBar(content: Text('Failed to post comment.')),
+                                          // );
+                                        }
+                                      }
+                                    }
+                                  }
+                                : null,
+                          ),
+                        ],
                       ),
                     ],
                   ),

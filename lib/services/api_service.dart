@@ -25,6 +25,25 @@ class ApiService {
     return null;
   }
 
+  static Future<String> getUserName() async {
+     try {
+      final url = Uri.parse('$baseUrl/getUsername');
+      final response = await AuthorizedHttpService.sendAuthorizedRequest(
+        url,
+        method: 'GET',
+      );
+
+      if (response!.statusCode == 200) {
+        return response.body;
+      }
+
+      return '';
+    } catch (e) {
+      print('❌ Comment failed: $e');
+      return '';
+    }
+  }
+
   static Future<bool> register(UserRegistrationData user) async {
     print(jsonEncode(user.toJson()));
     final response = await http.post(
@@ -98,6 +117,82 @@ class ApiService {
     }
 
     return null; // Token expired or user logged out
+  }
+
+  static Future<bool> comment(int feedId, String text) async {
+    try {
+      final url = Uri.parse('$feedBaseUrl/$feedId/comments?text=$text');
+      final response = await AuthorizedHttpService.sendAuthorizedRequest(
+        url,
+        method: 'POST',
+      );
+
+      if (response?.statusCode == 200) {
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      print('❌ Comment failed: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> like(int feedId) async {
+    try {
+      final url = Uri.parse('$base/api/feeds/$feedId/like');
+      final response = await AuthorizedHttpService.sendAuthorizedRequest(
+        url,
+        method: 'POST',
+      );
+
+      if (response?.statusCode == 200) {
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static Future<bool> unlike(int feedId) async {
+    try {
+      final url = Uri.parse('$base/api/feeds/$feedId/like');
+      final response = await AuthorizedHttpService.sendAuthorizedRequest(
+        url,
+        method: 'DELETE',
+      );
+
+      if (response?.statusCode == 200) {
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>?> getComments(int feedId) async {
+    final url = Uri.parse('$feedBaseUrl/$feedId/comments');
+    final response = await AuthorizedHttpService.sendAuthorizedRequest(
+      url,
+      method: 'GET',
+    );
+
+    if (response != null && response.statusCode == 200) {
+      final body = response.body;
+      final decoded = jsonDecode(body);
+      if (decoded is List) {
+        return decoded.cast<Map<String, dynamic>>();
+      } else {
+        print('Unexpected response format: $decoded');
+      }
+    } else {
+      print('Failed to fetch comments. Status code: ${response?.statusCode}');
+    }
+    return null;
   }
 
   static Future<List<Map<String, dynamic>>?> getFeed() async {
@@ -202,7 +297,6 @@ class ApiService {
 
       return timetable;
     } else {
-      print(res);
       throw Exception('Failed to load timetable');
     }
   }
