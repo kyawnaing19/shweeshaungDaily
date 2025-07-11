@@ -55,7 +55,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
       body: SafeArea(
         child: Column(
           children: [
-            SizedBox(height: 10),
+            SizedBox(height: 5),
             // Profile Card
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -102,7 +102,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
               ),
             ),
 
-            const SizedBox(height: 15),
+            const SizedBox(height: 7),
 
             // Tabs: Shares & Stories
             Padding(
@@ -161,10 +161,11 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
               ),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 5),
 
             // Swipeable Shares & Stories
-            Expanded(
+            SizedBox(
+              height: 555,
               child: NotificationListener<ScrollNotification>(
                 onNotification: (notification) {
                   // 👇 Absorb scroll gestures here to prevent them from bubbling up
@@ -212,8 +213,10 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                                     color: Colors.white,
                                   ),
                                   onPressed: () {
-                                    showDialog(
+                                    showModalBottomSheet(
                                       context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
                                       builder:
                                           (context) =>
                                               const UploadSharesDialog(),
@@ -364,8 +367,6 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
     try {
       await ApiService.uploadFeed(
         text: _controller.text,
-        // audience:
-        //     '${_selectedSemester?.replaceAll('Sem ', '') ?? ''} ${_selectedMajor ?? ''}',
         audience:
             _selectedAudience == 'Public'
                 ? 'public'
@@ -376,9 +377,7 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
                 : _selectedAudience.startsWith('Sem ')
                 ? '${_selectedAudience.replaceAll('Sem ', '')} CST'
                 : _selectedAudience,
-
         photo: _selectedImage != null ? File(_selectedImage!.path) : null,
-        // Add token or other params if needed
       );
 
       if (mounted) {
@@ -400,272 +399,328 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final maxDialogHeight = MediaQuery.of(context).size.height * 0.8;
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.95,
-        constraints: BoxConstraints(maxHeight: maxDialogHeight),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder:
+          (context, scrollController) => Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: SingleChildScrollView(
+              controller: scrollController,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Tell Us a Tale!',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF317575),
-                          ),
-                        ),
-                        SizedBox(height: 5),
-                        Text(
-                          'Even if it’s about a potato who saved the world :)',
-                          style: TextStyle(color: Color(0xFF317575)),
-                        ),
-                      ],
+                  // Drag handle
+                  Container(
+                    width: 40,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(3),
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () async {
-                      final selected = await showDialog<String>(
-                        context: context,
-                        builder: (context) => const ShowSharesDialog(),
-                      );
-                      if (selected != null) {
-                        setState(() {
-                          if (selected.contains('::')) {
-                            // Format: Sem X::MAJOR
-                            final parts = selected.split('::');
-                            _selectedSemester = parts[0];
-                            _selectedMajor = parts[1];
-                            _selectedAudience = 'Majors';
-                          } else if (selected.startsWith('Majors-')) {
-                            _selectedAudience = 'Majors';
-                            _selectedMajor = selected.split('-')[1];
-                            _selectedSemester = null;
-                          } else {
-                            _selectedAudience = selected;
-                            _selectedMajor = null;
-                            _selectedSemester = null;
-                          }
-                        });
-                      }
-                    },
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 250),
-                      transitionBuilder:
-                          (child, animation) =>
-                              FadeTransition(opacity: animation, child: child),
-                      child:
-                          _selectedAudience == 'Public'
-                              ? const CircleAvatar(
-                                key: ValueKey('icon'),
-                                radius: 23,
-                                backgroundColor: Color(0xFF48C4BC),
-                                child: Icon(
-                                  Icons.public,
-                                  size: 25,
-                                  color: Colors.white,
-                                ),
-                              )
-                              : Container(
-                                key: ValueKey(
-                                  _selectedAudience + (_selectedMajor ?? ''),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF48C4BC),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Text(
-                                  _selectedAudience == 'Majors' &&
-                                          _selectedMajor != null &&
-                                          _selectedSemester != null
-                                      ? '$_selectedSemester ( $_selectedMajor )'
-                                      : _selectedAudience,
-                                  style: const TextStyle(
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      ElevatedButton(
+                        onPressed: !_isUploading ? _uploadPost : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF317575),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 11,
+                            horizontal: 16,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              14,
+                            ), // Change 16 to your desired radius
+                          ),
+                        ),
+                        child:
+                            _isUploading
+                                ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
                                     color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                                : const Text(
+                                  "Share",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // TextArea with dynamic height and scrollbar
-              ScrollbarTheme(
-                data: ScrollbarThemeData(
-                  thumbColor: WidgetStateProperty.all(Color(0xFF317575)),
-                  trackColor: WidgetStateProperty.all(Color(0xFFD4F7F5)),
-                  thickness: WidgetStateProperty.all(6),
-                  radius: Radius.circular(15),
-                ),
-                child: Scrollbar(
-                  controller: _scrollController,
-                  thumbVisibility: true,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      minHeight: 50,
-                      maxHeight: 180,
-                    ),
-                    child: TextField(
-                      controller: _controller,
-                      scrollController: _scrollController,
-                      minLines: 1,
-                      maxLines: null,
-                      keyboardType: TextInputType.multiline,
-                      style: TextStyle(
-                        color: _textColor,
-                        fontWeight: FontWeight.w500,
                       ),
-                      decoration: InputDecoration(
-                        hintText: "Add a caption ....",
-                        hintStyle: const TextStyle(color: Colors.white),
-                        filled: true,
-                        fillColor: const Color(0xFF48C4BC),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 15,
-                          vertical: 15,
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
-                ),
-              ),
+                  const SizedBox(height: 12),
+                  // 🔼🔼 NEW ROW ENDS HERE 🔼🔼
 
-              // Image preview with remove button
-              if (_selectedImage != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Stack(
-                    alignment: Alignment.topRight,
+                  // Header
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.file(
-                          File(_selectedImage!.path),
-                          width: 180,
-                          height: 180,
-                          fit: BoxFit.cover,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              'Tell Us a Tale!',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF317575),
+                              ),
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              'Even if it’s about a potato who saved the world :)',
+                              style: TextStyle(color: Color(0xFF317575)),
+                            ),
+                          ],
                         ),
                       ),
-                      Positioned(
-                        top: 4,
-                        right: 4,
-                        child: GestureDetector(
-                          onTap: () {
+                      GestureDetector(
+                        onTap: () async {
+                          final selected = await showDialog<String>(
+                            context: context,
+                            builder: (context) => const ShowSharesDialog(),
+                          );
+                          if (selected != null) {
                             setState(() {
-                              _selectedImage = null;
+                              if (selected.contains('::')) {
+                                final parts = selected.split('::');
+                                _selectedSemester = parts[0];
+                                _selectedMajor = parts[1];
+                                _selectedAudience = 'Majors';
+                              } else if (selected.startsWith('Majors-')) {
+                                _selectedAudience = 'Majors';
+                                _selectedMajor = selected.split('-')[1];
+                                _selectedSemester = null;
+                              } else {
+                                _selectedAudience = selected;
+                                _selectedMajor = null;
+                                _selectedSemester = null;
+                              }
                             });
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.black54,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.close,
-                              color: Colors.white,
-                              size: 22,
-                            ),
-                          ),
+                          }
+                        },
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 250),
+                          transitionBuilder:
+                              (child, animation) => FadeTransition(
+                                opacity: animation,
+                                child: child,
+                              ),
+                          child:
+                              _selectedAudience == 'Public'
+                                  ? const CircleAvatar(
+                                    key: ValueKey('icon'),
+                                    radius: 23,
+                                    backgroundColor: Color(0xFF48C4BC),
+                                    child: Icon(
+                                      Icons.public,
+                                      size: 25,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                  : Container(
+                                    key: ValueKey(
+                                      _selectedAudience +
+                                          (_selectedMajor ?? ''),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF48C4BC),
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Text(
+                                      _selectedAudience == 'Majors' &&
+                                              _selectedMajor != null &&
+                                              _selectedSemester != null
+                                          ? '$_selectedSemester ($_selectedMajor)'
+                                          : _selectedAudience,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
                         ),
                       ),
                     ],
                   ),
-                ),
 
-              const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-              // Action buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Select photo
-                  GestureDetector(
-                    onTap: () async {
-                      final ImagePicker picker = ImagePicker();
-                      final XFile? image = await picker.pickImage(
-                        source: ImageSource.gallery,
-                      );
-                      if (image != null) {
-                        setState(() {
-                          _selectedImage = image;
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Selected image: ${image.name}'),
+                  // Caption TextField
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minHeight: 50,
+                      maxHeight: 250, // Limit max height
+                    ),
+                    child: Scrollbar(
+                      controller: _scrollController,
+                      thumbVisibility: true,
+                      child: TextField(
+                        controller: _controller,
+                        scrollController: _scrollController,
+                        keyboardType: TextInputType.multiline,
+                        minLines: 1,
+                        maxLines: null, // unlimited until maxHeight is hit
+                        style: TextStyle(
+                          color: _textColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: "Add a caption....",
+                          hintStyle: const TextStyle(color: Colors.white),
+                          filled: true,
+                          fillColor: const Color(0xFF48C4BC),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide.none,
                           ),
-                        );
-                      }
-                    },
-                    child: const CircleAvatar(
-                      radius: 23,
-                      backgroundColor: Color(0xFF48C4BC),
-                      child: Icon(
-                        Icons.camera_alt_outlined,
-                        size: 25,
-                        color: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 15,
+                            vertical: 15,
+                          ),
+                        ),
                       ),
                     ),
                   ),
 
-                  // Upload button
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF317575),
-                    ),
-                    onPressed:
-                        _isUploading
-                            ? null
-                            : () async {
-                              await _uploadPost();
-                            },
-                    child:
-                        _isUploading
-                            ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
+                  const SizedBox(height: 20),
+
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_selectedImage != null)
+                        Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.file(
+                                File(_selectedImage!.path),
+                                width: MediaQuery.of(context).size.width,
+                                height: 200,
+                                fit: BoxFit.cover,
                               ),
-                            )
-                            : const Text(
-                              "Share",
-                              style: TextStyle(color: Colors.white),
                             ),
+                            // Close button (top right)
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedImage = null;
+                                  });
+                                },
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 22,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Camera button (bottom right)
+                            Positioned(
+                              bottom: 8,
+                              right: 8,
+                              child: GestureDetector(
+                                onTap: () async {
+                                  final picker = ImagePicker();
+                                  final XFile? image = await picker.pickImage(
+                                    source: ImageSource.gallery,
+                                  );
+                                  if (image != null) {
+                                    setState(() {
+                                      _selectedImage = image;
+                                    });
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Selected image: ${image.name}',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                                child: CircleAvatar(
+                                  radius: 24,
+                                  backgroundColor: const Color(0xFFD4F7F5),
+                                  child: const Icon(
+                                    Icons.camera_alt,
+                                    size: 26,
+                                    color: Color(0xFF317575),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        GestureDetector(
+                          onTap: () async {
+                            final picker = ImagePicker();
+                            final XFile? image = await picker.pickImage(
+                              source: ImageSource.gallery,
+                            );
+                            if (image != null) {
+                              setState(() {
+                                _selectedImage = image;
+                              });
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Selected image: ${image.name}',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: CircleAvatar(
+                              radius: 30,
+                              backgroundColor: const Color(0xFFD4F7F5),
+                              child: const Icon(
+                                Icons.camera_alt,
+                                size: 30,
+                                color: Color(0xFF317575),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
+
+                  // Image Preview or Picker
                 ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
     );
   }
 }
@@ -678,9 +733,18 @@ class ShowSharesDialog extends StatefulWidget {
 }
 
 class _ShowSharesDialogState extends State<ShowSharesDialog> {
-  String? _selectedMajor;
   bool _showMajors = false;
   String? _pendingSem;
+
+  // Inside build -> showDialog -> in your widget
+  @override
+  void dispose() {
+    // If user exits without choosing a major after choosing Sem 3–8, fallback to Public
+    if (_showMajors && _pendingSem != null) {
+      Navigator.pop(context, 'Public');
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -695,134 +759,147 @@ class _ShowSharesDialogState extends State<ShowSharesDialog> {
       'Sem 7',
       'Sem 8',
     ];
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        width: MediaQuery.of(context).size.width * 0.6,
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Select Audience',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF317575),
+    return WillPopScope(
+      onWillPop: () async {
+        if (_showMajors && _pendingSem != null) {
+          Navigator.pop(context, 'Public');
+          return false;
+        }
+        return true;
+      },
+      child: Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          width: MediaQuery.of(context).size.width * 0.6,
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Select Audience',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF317575),
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 230,
-              child: Row(
-                children: [
-                  // Left column: Public to Sem8
-                  Expanded(
-                    child: ScrollbarTheme(
-                      data: ScrollbarThemeData(
-                        thumbColor: WidgetStateProperty.all(Color(0xFF317575)),
-                        trackColor: WidgetStateProperty.all(Color(0xFFD4F7F5)),
-                        thickness: WidgetStateProperty.all(6),
-                        radius: Radius.circular(10),
-                      ),
-                      child: Scrollbar(
-                        thumbVisibility: true,
-                        trackVisibility: true,
-                        interactive: true,
-                        child: ListView(
-                          shrinkWrap: true,
-                          children:
-                              audienceList
-                                  .map(
-                                    (status) => ListTile(
-                                      title: Text(
-                                        status,
-                                        style: const TextStyle(
-                                          color: Color(0xFF317575),
-                                          fontWeight: FontWeight.bold,
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 230,
+                child: Row(
+                  children: [
+                    // Left column: Public to Sem8
+                    Expanded(
+                      child: ScrollbarTheme(
+                        data: ScrollbarThemeData(
+                          thumbColor: WidgetStateProperty.all(
+                            Color(0xFF317575),
+                          ),
+                          trackColor: WidgetStateProperty.all(
+                            Color(0xFFD4F7F5),
+                          ),
+                          thickness: WidgetStateProperty.all(6),
+                          radius: Radius.circular(10),
+                        ),
+                        child: Scrollbar(
+                          thumbVisibility: true,
+                          trackVisibility: true,
+                          interactive: true,
+                          child: ListView(
+                            shrinkWrap: true,
+                            children:
+                                audienceList
+                                    .map(
+                                      (status) => ListTile(
+                                        title: Text(
+                                          status,
+                                          style: const TextStyle(
+                                            color: Color(0xFF317575),
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
+                                        onTap: () {
+                                          if (status == 'Public' ||
+                                              status == 'Sem 1' ||
+                                              status == 'Sem 2') {
+                                            Navigator.pop(context, status);
+                                          } else if ([
+                                            'Sem 3',
+                                            'Sem 4',
+                                            'Sem 5',
+                                            'Sem 6',
+                                            'Sem 7',
+                                            'Sem 8',
+                                          ].contains(status)) {
+                                            setState(() {
+                                              _showMajors = true;
+                                              _pendingSem = status;
+                                            });
+                                          }
+                                        },
                                       ),
-                                      onTap: () {
-                                        if (status == 'Public' ||
-                                            status == 'Sem 1' ||
-                                            status == 'Sem 2') {
-                                          Navigator.pop(context, status);
-                                        } else if ([
-                                          'Sem 3',
-                                          'Sem 4',
-                                          'Sem 5',
-                                          'Sem 6',
-                                          'Sem 7',
-                                          'Sem 8',
-                                        ].contains(status)) {
-                                          setState(() {
-                                            _showMajors = true;
-                                            _pendingSem = status;
-                                          });
-                                        }
-                                      },
-                                    ),
-                                  )
-                                  .toList(),
+                                    )
+                                    .toList(),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  // Right column: Majors
-                  Expanded(
-                    child:
-                        _showMajors
-                            ? ListView(
-                              shrinkWrap: true,
-                              children:
-                                  majorsList
-                                      .map(
-                                        (major) => ListTile(
-                                          title: Text(
-                                            major,
-                                            style: const TextStyle(
-                                              color: Color(0xFF317575),
-                                              fontWeight: FontWeight.bold,
+                    const SizedBox(width: 10),
+                    // Right column: Majors
+                    Expanded(
+                      child:
+                          _showMajors
+                              ? ListView(
+                                shrinkWrap: true,
+                                children:
+                                    majorsList
+                                        .map(
+                                          (major) => ListTile(
+                                            title: Text(
+                                              major,
+                                              style: const TextStyle(
+                                                color: Color(0xFF317575),
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
+                                            onTap: () {
+                                              // For Sem3-Sem8, return the selected semester and major
+                                              if (_pendingSem != null) {
+                                                Navigator.pop(
+                                                  context,
+                                                  '$_pendingSem::$major',
+                                                );
+                                              }
+                                            },
                                           ),
-                                          onTap: () {
-                                            // For Sem3-Sem8, return the selected semester and major
-                                            if (_pendingSem != null) {
-                                              Navigator.pop(
-                                                context,
-                                                '$_pendingSem::$major',
-                                              );
-                                            }
-                                          },
-                                        ),
-                                      )
-                                      .toList(),
-                            )
-                            : ListTile(
-                              title: const Text(
-                                'Majors',
-                                style: TextStyle(
-                                  color: Color(0xFF317575),
-                                  fontWeight: FontWeight.bold,
+                                        )
+                                        .toList(),
+                              )
+                              : ListTile(
+                                title: const Text(
+                                  'Majors',
+                                  style: TextStyle(
+                                    color: Color(0xFF317575),
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
+                                onTap: () {
+                                  setState(() {
+                                    _showMajors = true;
+                                    _pendingSem = null;
+                                  });
+                                },
                               ),
-                              onTap: () {
-                                setState(() {
-                                  _showMajors = true;
-                                  _pendingSem = null;
-                                });
-                              },
-                            ),
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -901,14 +978,56 @@ class _UploadStoryDialogState extends State<UploadStoryDialog> {
                   Container(
                     width: 40,
                     height: 5,
-                    margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
                       color: Colors.grey[300],
                       borderRadius: BorderRadius.circular(3),
                     ),
                   ),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      ElevatedButton(
+                        onPressed:
+                            (_selectedImage != null && !_isUploading)
+                                ? _uploadStory
+                                : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kPrimaryDarkColor,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 11,
+                            horizontal: 16,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              14,
+                            ), // Change 16 to your desired radius
+                          ),
+                        ),
+                        child:
+                            _isUploading
+                                ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                                : const Text(
+                                  "Upload",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                      ),
+                    ],
+                  ),
+
                   const Text(
-                    "Upload Story",
+                    "Create Story",
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -996,52 +1115,26 @@ class _UploadStoryDialogState extends State<UploadStoryDialog> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed:
-                              _isUploading
-                                  ? null
-                                  : () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: kBackgroundColor,
-                            foregroundColor: kPrimaryDarkColor,
-                            side: const BorderSide(color: Color(0xFF317575)),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          child: const Text("Cancel"),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed:
-                              (_selectedImage != null && !_isUploading)
-                                  ? _uploadStory
-                                  : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: kPrimaryDarkColor,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          child:
-                              _isUploading
-                                  ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                  : const Text(
-                                    "Upload",
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  // Row(
+                  //   children: [
+                  //     Expanded(
+                  //       child: OutlinedButton(
+                  //         onPressed:
+                  //             _isUploading
+                  //                 ? null
+                  //                 : () => Navigator.pop(context),
+                  //         style: OutlinedButton.styleFrom(
+                  //           backgroundColor: kBackgroundColor,
+                  //           foregroundColor: kPrimaryDarkColor,
+                  //           side: const BorderSide(color: Color(0xFF317575)),
+                  //           padding: const EdgeInsets.symmetric(vertical: 14),
+                  //         ),
+                  //         child: const Text("Cancel"),
+                  //       ),
+                  //     ),
+                  //     const SizedBox(width: 16),
+                  //   ],
+                  // ),
                 ],
               ),
             ),
@@ -1072,6 +1165,8 @@ class SettingsCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: const [
+          _SettingsItem(icon: Icons.person, text: 'Edit Profile'),
+          SizedBox(height: 12),
           _SettingsItem(
             icon: Icons.headset_mic_outlined,
             text: 'Customer Support',

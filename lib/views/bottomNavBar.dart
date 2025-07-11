@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:curved_navigation_bar/curved_navigation_bar.dart'; // Import the CurvedNavigationBar
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import 'package:shweeshaungdaily/colors.dart'; // Import the CurvedNavigationBar
 
 class CustomBottomNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -19,24 +20,19 @@ class CustomBottomNavBar extends StatelessWidget {
       index: selectedIndex,
       height: 70.0, // Adjust height as needed
       items: const <Widget>[
-        Icon(Icons.home, size: 30),
-        Icon(Icons.description, size: 30),
-        Icon(Icons.calendar_today, size: 30),
-        Icon(Icons.person, size: 30),
+        Icon(Icons.home, size: 30 , color: Colors.white,),
+        Icon(Icons.description, size: 30 , color: Colors.white,),
+        Icon(Icons.calendar_today, size: 30 , color: Colors.white,),
+        Icon(Icons.person, size: 30 , color: Colors.white,),
       ],
-      color: const Color.fromARGB(
-        255,
-        38,
-        207,
-        219,
-      ), // Color of the navigation bar itself
+      color: kAccentColor, // Color of the navigation bar itself
       buttonBackgroundColor:
-          Colors.teal, // Color of the selected item's background circle
+          kPrimaryDarkColor, // Color of the selected item's background circle
       backgroundColor:
           Colors
               .transparent, // Background color behind the bar (usually the scaffold's background)
       animationCurve: Curves.easeInOut,
-      animationDuration: const Duration(milliseconds: 600),
+      animationDuration: const Duration(milliseconds: 500),
       onTap: (index) {
         pageController.jumpToPage(index); // Control the PageView
         onItemTapped(index); // Update state in parent

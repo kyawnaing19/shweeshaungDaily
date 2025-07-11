@@ -461,9 +461,8 @@ class _HomePageState extends State<HomeScreenPage> {
                       },
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  // const SizedBox(height: 10),
                   _buildQuickActionsRow(),
-                  const SizedBox(height: 32),
                 ],
               ),
             ),
@@ -1009,9 +1008,13 @@ class _HomePageState extends State<HomeScreenPage> {
                                 onCommentSuccess: () {
                                   setState(() {
                                     // Find the feed item by feedId and add a dummy comment to increment count
-                                    final idx = feedItems?.indexWhere((item) => item['id'] == feedId);
+                                    final idx = feedItems?.indexWhere(
+                                      (item) => item['id'] == feedId,
+                                    );
                                     if (idx != null && idx >= 0) {
-                                      feedItems![idx]['comments'] = List.from(feedItems![idx]['comments'] ?? [])..add({});
+                                      feedItems![idx]['comments'] = List.from(
+                                        feedItems![idx]['comments'] ?? [],
+                                      )..add({});
                                     }
                                   });
                                 },

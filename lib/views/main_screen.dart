@@ -65,25 +65,44 @@ class _HomePageState extends State<HomePage> {
       case 0:
         return AppBar(
           backgroundColor: kAccentColor,
-          title: const Text('Home'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.search),
-              onPressed: () {
-                // Handle search action
-              },
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          title: const Text(
+            'Home',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
-          ],
+          ),
         );
       case 1:
         return AppBar(
           backgroundColor: kAccentColor,
-          title: const Text('Notes'),
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          title: const Text(
+            'Note',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
         );
       case 2:
         return AppBar(
           backgroundColor: kAccentColor,
-          title: const Text('Timetable'),
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          title: const Text(
+            'Timetable',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
         );
       case 3:
         return AppBar(
