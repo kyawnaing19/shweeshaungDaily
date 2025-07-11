@@ -168,23 +168,7 @@ class _TimeTablePageState extends State<TimeTablePage> {
 
     return Scaffold(
       backgroundColor: kBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: kAccentColor,
-        elevation: 4,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (widget.onBack != null) {
-              widget.onBack!(); // ✅ Access via `widget`
-            }
-          },
-        ),
-        title: const Text(
-          'Time Table',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-      ),
+
       body: Column(
         children: [
           const SizedBox(height: 12),
@@ -229,41 +213,48 @@ class _TimeTablePageState extends State<TimeTablePage> {
           const SizedBox(height: 16),
           // Timeline area for selected day
           Expanded(
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: days.length,
-              onPageChanged: (index) {
-                setState(() {
-                  selectedDay = index;
-                });
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (notification) {
+                // 👇 Absorb scroll gestures here to prevent them from bubbling up
+                return true;
               },
-              itemBuilder: (context, index) {
-                final dayNames = [
-                  'Monday',
-                  'Tuesday',
-                  'Wednesday',
-                  'Thursday',
-                  'Friday',
-                ];
-                final dayName = dayNames[index];
-                final periods = timetableData[dayName] ?? {};
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: days.length,
+                physics: const ClampingScrollPhysics(),
+                onPageChanged: (index) {
+                  setState(() {
+                    selectedDay = index;
+                  });
+                },
+                itemBuilder: (context, index) {
+                  final dayNames = [
+                    'Monday',
+                    'Tuesday',
+                    'Wednesday',
+                    'Thursday',
+                    'Friday',
+                  ];
+                  final dayName = dayNames[index];
+                  final periods = timetableData[dayName] ?? {};
 
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: widget.timelinePadding,
-                  decoration: BoxDecoration(
-                    color: kAccentColor,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: ListView(
-                    children:
-                        periodNumbers.map((period) {
-                          final periodData = periods[period];
-                          return buildTimelineItem(period, periodData);
-                        }).toList(),
-                  ),
-                );
-              },
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: widget.timelinePadding,
+                    decoration: BoxDecoration(
+                      color: kAccentColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: ListView(
+                      children:
+                          periodNumbers.map((period) {
+                            final periodData = periods[period];
+                            return buildTimelineItem(period, periodData);
+                          }).toList(),
+                    ),
+                  );
+                },
+              ),
             ),
           ),
 

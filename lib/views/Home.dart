@@ -357,25 +357,7 @@ class _HomePageState extends State<HomeScreenPage> {
 
     return Scaffold(
       backgroundColor: kBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: kPrimaryColor,
-        elevation: 0,
-        title: const Text(
-          "Shwee Shaung Daily",
-          style: TextStyle(fontWeight: FontWeight.w600, letterSpacing: 0.5),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, size: 26),
-          onPressed: () {},
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.account_circle_rounded, size: 26),
-            onPressed: () {},
-          ),
-        ],
-      ),
+
       body: RefreshIndicator(
         onRefresh: () async {
           await _handleRefresh();

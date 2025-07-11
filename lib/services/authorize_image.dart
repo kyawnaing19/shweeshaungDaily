@@ -38,6 +38,7 @@ class _AuthorizedImageState extends State<AuthorizedImage> {
       // Try loading from cache first
       final cached = await ImageCacheManager.getCachedImage(widget.imageUrl);
       if (cached != null) {
+        if (!mounted) return;
         setState(() {
           _imageBytes = cached;
           _isLoading = false;
@@ -54,16 +55,19 @@ class _AuthorizedImageState extends State<AuthorizedImage> {
       if (response != null && response.statusCode == 200) {
         _imageBytes = response.bodyBytes;
         await ImageCacheManager.cacheImage(widget.imageUrl, _imageBytes!);
+        if (!mounted) return;
         setState(() {
           _isLoading = false;
         });
       } else {
+        if (!mounted) return;
         setState(() {
           _hasError = true;
           _isLoading = false;
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _hasError = true;
         _isLoading = false;
@@ -88,9 +92,7 @@ class _AuthorizedImageState extends State<AuthorizedImage> {
         width: widget.width,
         color: Colors.grey.shade200,
         child: const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFF00897B),
-          ),
+          child: CircularProgressIndicator(color: Color(0xFF00897B)),
         ),
       );
     }

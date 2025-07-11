@@ -51,69 +51,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: kAccentColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'Profile',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (widget.onBack != null) {
-              widget.onBack!(); // ✅ Access via `widget`
-            }
-          },
-        ),
-        actions: [
-          Builder(
-            builder:
-                (context) => IconButton(
-                  icon: const Icon(
-                    Icons.settings,
-                    color: Colors.white,
-                    size: 30,
-                  ),
-                  onPressed: () {
-                    final RenderBox overlay =
-                        Overlay.of(context).context.findRenderObject()
-                            as RenderBox;
-                    final Offset topRight = overlay.localToGlobal(
-                      Offset(overlay.size.width, 0),
-                    );
-                    showMenu(
-                      context: context,
-                      position: RelativeRect.fromLTRB(
-                        topRight.dx - 200, // 200 = width of SettingsCard
-                        topRight.dy + kToolbarHeight + 8, // below appbar
-                        10, // right margin
-                        0,
-                      ),
-                      items: [
-                        PopupMenuItem(
-                          enabled: false,
-                          padding: EdgeInsets.zero,
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 250),
-                            child: SettingsCard(),
-                          ),
-                        ),
-                      ],
-                      elevation: 8,
-                      color: Colors.transparent,
-                    );
-                  },
-                ),
-          ),
-        ],
-      ),
+
       body: SafeArea(
         child: Column(
           children: [
@@ -179,6 +117,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                         curve: Curves.ease,
                       );
                     },
+
                     child: Text(
                       'Shares',
                       style: TextStyle(
@@ -226,145 +165,153 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
 
             // Swipeable Shares & Stories
             Expanded(
-              child: PageView(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentPage = index;
-                  });
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  // 👇 Absorb scroll gestures here to prevent them from bubbling up
+                  return true;
                 },
-                children: [
-                  // Shares Widget
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 20),
-                    padding: const EdgeInsets.only(top: 12),
-                    decoration: BoxDecoration(
-                      color: kPrimaryDarkColor,
-                      borderRadius: BorderRadius.circular(16),
+                child: PageView(
+                  controller: _pageController,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentPage = index;
+                    });
+                  },
+                  children: [
+                    // Shares Widget
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.only(top: 12),
+                      decoration: BoxDecoration(
+                        color: kPrimaryDarkColor,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: kAccentColor,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                const Expanded(
+                                  child: Text(
+                                    "What's on your mind?",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.add,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder:
+                                          (context) =>
+                                              const UploadSharesDialog(),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Additional content like shared posts could go here
+                        ],
+                      ),
                     ),
-                    child: Column(
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 12),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: kAccentColor,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              const Expanded(
-                                child: Text(
-                                  "What's on your mind?",
-                                  style: TextStyle(color: Colors.white),
+                    // Stories Widget
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: GridView.builder(
+                        itemCount: 9,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 6,
+                              mainAxisSpacing: 6,
+                              childAspectRatio: 0.63,
+                            ),
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            return InkWell(
+                              borderRadius: BorderRadius.circular(5),
+                              onTap: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  backgroundColor: Colors.transparent,
+                                  builder:
+                                      (context) => const UploadStoryDialog(),
+                                );
+                              },
+                              child: SizedBox(
+                                width: 100,
+                                height: 120,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFC9D4D4),
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.add,
+                                      size: 30,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
                                 ),
                               ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.add,
-                                  color: Colors.white,
-                                ),
-                                onPressed: () {
-                                  showDialog(
-                                    context: context,
-                                    builder:
-                                        (context) => const UploadSharesDialog(),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Additional content like shared posts could go here
-                      ],
-                    ),
-                  ),
-                  // Stories Widget
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: GridView.builder(
-                      itemCount: 9,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 6,
-                            mainAxisSpacing: 6,
-                            childAspectRatio: 0.63,
-                          ),
-                      itemBuilder: (context, index) {
-                        if (index == 0) {
-                          return InkWell(
-                            borderRadius: BorderRadius.circular(5),
-                            onTap: () {
-                              showModalBottomSheet(
-                                context: context,
-                                isScrollControlled: true,
-                                backgroundColor: Colors.transparent,
-                                builder: (context) => const UploadStoryDialog(),
-                              );
-                            },
-                            child: SizedBox(
+                            );
+                          } else {
+                            return SizedBox(
                               width: 100,
                               height: 120,
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFC9D4D4),
+                                  color: const Color(0xFF48C4BC),
                                   borderRadius: BorderRadius.circular(5),
                                 ),
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.add,
-                                    size: 30,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        } else {
-                          return SizedBox(
-                            width: 100,
-                            height: 120,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF48C4BC),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: Stack(
-                                children: const [
-                                  Positioned(
-                                    bottom: 4,
-                                    left: 4,
-                                    child: Icon(
-                                      Icons.play_arrow,
-                                      size: 16,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  Positioned(
-                                    bottom: 4,
-                                    left: 20,
-                                    child: Text(
-                                      '1:30',
-                                      style: TextStyle(
+                                child: Stack(
+                                  children: const [
+                                    Positioned(
+                                      bottom: 4,
+                                      left: 4,
+                                      child: Icon(
+                                        Icons.play_arrow,
+                                        size: 16,
                                         color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    Positioned(
+                                      bottom: 4,
+                                      left: 20,
+                                      child: Text(
+                                        '1:30',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          );
-                        }
-                      },
+                            );
+                          }
+                        },
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -419,16 +366,16 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
         text: _controller.text,
         // audience:
         //     '${_selectedSemester?.replaceAll('Sem ', '') ?? ''} ${_selectedMajor ?? ''}',
-       audience: _selectedAudience == 'Public'
-    ? 'public'
-    : _selectedAudience == 'Majors' &&
-            _selectedMajor != null &&
-            _selectedSemester != null
-        ? '${_selectedSemester?.replaceAll('Sem ', '') ?? ''} ${_selectedMajor ?? ''}'
-        : _selectedAudience.startsWith('Sem ')
-            ? '${_selectedAudience.replaceAll('Sem ', '')} CST'
-            : _selectedAudience,
-
+        audience:
+            _selectedAudience == 'Public'
+                ? 'public'
+                : _selectedAudience == 'Majors' &&
+                    _selectedMajor != null &&
+                    _selectedSemester != null
+                ? '${_selectedSemester?.replaceAll('Sem ', '') ?? ''} ${_selectedMajor ?? ''}'
+                : _selectedAudience.startsWith('Sem ')
+                ? '${_selectedAudience.replaceAll('Sem ', '')} CST'
+                : _selectedAudience,
 
         photo: _selectedImage != null ? File(_selectedImage!.path) : null,
         // Add token or other params if needed
@@ -832,7 +779,7 @@ class _ShowSharesDialogState extends State<ShowSharesDialog> {
                         _showMajors
                             ? ListView(
                               shrinkWrap: true,
-                              children:                                                      
+                              children:
                                   majorsList
                                       .map(
                                         (major) => ListTile(

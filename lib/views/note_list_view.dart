@@ -76,40 +76,7 @@ class _NotePageState extends State<NotePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE0F2F1),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF4DB6AC),
-        elevation: 4,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (widget.onBack != null) {
-              widget.onBack!(); // ✅ Access via `widget`
-            }
-          },
-        ),
-
-        // leading: IconButton(
-        //   icon: const Icon(Icons.arrow_back, color: Colors.white),
-        //   onPressed: () {
-        //     Navigator.of(
-        //       context,
-        //     ).pushReplacement(fadeRoute(const HomeScreenPage()));
-        //   },
-        // ),
-        title: const Text(
-          'Note',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
-          ),
-        ),
-        centerTitle: true,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
-        ),
-      ),
+      // appBar: AppBar(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
