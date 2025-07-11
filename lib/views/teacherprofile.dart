@@ -17,7 +17,10 @@ final Map<String, String> audienceValueMap = {
   'Sem 6': '6',
   'Sem 7': '7',
   'Sem 8': '8',
+  'Majors': 'Majors',
 };
+
+const List<String> majorsList = ['CST', 'CS', 'CT'];
 
 class TeacherProfilePage extends StatefulWidget {
   final VoidCallback? onBack;
@@ -367,11 +370,6 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
           ],
         ),
       ),
-
-      // bottomNavigationBar: CustomBottomNavBar(
-      //   selectedIndex: _selectedIndex,
-      //   onItemTapped: _onItemTapped,
-      // ),
     );
   }
 }
@@ -389,6 +387,8 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   String _selectedAudience = 'Public';
+  String? _selectedMajor;
+  String? _selectedSemester;
   XFile? _selectedImage;
   bool _isUploading = false;
 
@@ -414,11 +414,22 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
     setState(() {
       _isUploading = true;
     });
-    final backendAudience = audienceValueMap[_selectedAudience] ?? 'Public';
     try {
       await ApiService.uploadFeed(
         text: _controller.text,
-        audience: backendAudience,
+        // audience:
+        //     '${_selectedSemester?.replaceAll('Sem ', '') ?? ''} ${_selectedMajor ?? ''}',
+       audience: _selectedAudience == 'Public'
+    ? 'public'
+    : _selectedAudience == 'Majors' &&
+            _selectedMajor != null &&
+            _selectedSemester != null
+        ? '${_selectedSemester?.replaceAll('Sem ', '') ?? ''} ${_selectedMajor ?? ''}'
+        : _selectedAudience.startsWith('Sem ')
+            ? '${_selectedAudience.replaceAll('Sem ', '')} CST'
+            : _selectedAudience,
+
+
         photo: _selectedImage != null ? File(_selectedImage!.path) : null,
         // Add token or other params if needed
       );
@@ -489,7 +500,21 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
                       );
                       if (selected != null) {
                         setState(() {
-                          _selectedAudience = selected;
+                          if (selected.contains('::')) {
+                            // Format: Sem X::MAJOR
+                            final parts = selected.split('::');
+                            _selectedSemester = parts[0];
+                            _selectedMajor = parts[1];
+                            _selectedAudience = 'Majors';
+                          } else if (selected.startsWith('Majors-')) {
+                            _selectedAudience = 'Majors';
+                            _selectedMajor = selected.split('-')[1];
+                            _selectedSemester = null;
+                          } else {
+                            _selectedAudience = selected;
+                            _selectedMajor = null;
+                            _selectedSemester = null;
+                          }
                         });
                       }
                     },
@@ -511,7 +536,9 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
                                 ),
                               )
                               : Container(
-                                key: ValueKey(_selectedAudience),
+                                key: ValueKey(
+                                  _selectedAudience + (_selectedMajor ?? ''),
+                                ),
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 14,
                                   vertical: 8,
@@ -521,7 +548,11 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Text(
-                                  _selectedAudience,
+                                  _selectedAudience == 'Majors' &&
+                                          _selectedMajor != null &&
+                                          _selectedSemester != null
+                                      ? '$_selectedSemester ( $_selectedMajor )'
+                                      : _selectedAudience,
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -656,23 +687,6 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
                     ),
                   ),
 
-                  // Cancel button
-                  // OutlinedButton(
-                  //   onPressed: () => Navigator.pop(context),
-                  //   style: OutlinedButton.styleFrom(
-                  //     backgroundColor: Color(0xFFD4F7F5),
-                  //     side: const BorderSide(color: Colors.teal),
-                  //     padding: const EdgeInsets.symmetric(
-                  //       horizontal: 20,
-                  //       vertical: 10,
-                  //     ),
-                  //   ),
-                  //   child: const Text(
-                  //     "Cancel",
-                  //     style: TextStyle(color: Color(0xFF317575)),
-                  //   ),
-                  // ),
-
                   // Upload button
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -709,11 +723,31 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
   }
 }
 
-class ShowSharesDialog extends StatelessWidget {
+class ShowSharesDialog extends StatefulWidget {
   const ShowSharesDialog({super.key});
 
   @override
+  State<ShowSharesDialog> createState() => _ShowSharesDialogState();
+}
+
+class _ShowSharesDialogState extends State<ShowSharesDialog> {
+  String? _selectedMajor;
+  bool _showMajors = false;
+  String? _pendingSem;
+
+  @override
   Widget build(BuildContext context) {
+    final List<String> audienceList = [
+      'Public',
+      'Sem 1',
+      'Sem 2',
+      'Sem 3',
+      'Sem 4',
+      'Sem 5',
+      'Sem 6',
+      'Sem 7',
+      'Sem 8',
+    ];
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Container(
@@ -721,7 +755,7 @@ class ShowSharesDialog extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
         ),
-        width: MediaQuery.of(context).size.width * 0.3,
+        width: MediaQuery.of(context).size.width * 0.6,
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -736,41 +770,109 @@ class ShowSharesDialog extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             SizedBox(
-              height: 230, // Customize this height as needed
-              child: ScrollbarTheme(
-                data: ScrollbarThemeData(
-                  thumbColor: WidgetStateProperty.all(
-                    Color(0xFF317575),
-                  ), // Your custom color
-                  trackColor: WidgetStateProperty.all(Color(0xFFD4F7F5)),
-                  thickness: WidgetStateProperty.all(6),
-                  radius: Radius.circular(10),
-                ),
-                child: Scrollbar(
-                  thumbVisibility: true,
-                  trackVisibility: true,
-                  interactive: true,
-                  child: ListView(
-                    shrinkWrap: true,
-                    children:
-                        audienceValueMap.keys
-                            .map(
-                              (status) => ListTile(
-                                title: Text(
-                                  status,
-                                  style: const TextStyle(
-                                    color: Color(0xFF317575),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                onTap: () {
-                                  Navigator.pop(context, status);
-                                },
-                              ),
-                            )
-                            .toList(),
+              height: 230,
+              child: Row(
+                children: [
+                  // Left column: Public to Sem8
+                  Expanded(
+                    child: ScrollbarTheme(
+                      data: ScrollbarThemeData(
+                        thumbColor: WidgetStateProperty.all(Color(0xFF317575)),
+                        trackColor: WidgetStateProperty.all(Color(0xFFD4F7F5)),
+                        thickness: WidgetStateProperty.all(6),
+                        radius: Radius.circular(10),
+                      ),
+                      child: Scrollbar(
+                        thumbVisibility: true,
+                        trackVisibility: true,
+                        interactive: true,
+                        child: ListView(
+                          shrinkWrap: true,
+                          children:
+                              audienceList
+                                  .map(
+                                    (status) => ListTile(
+                                      title: Text(
+                                        status,
+                                        style: const TextStyle(
+                                          color: Color(0xFF317575),
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      onTap: () {
+                                        if (status == 'Public' ||
+                                            status == 'Sem 1' ||
+                                            status == 'Sem 2') {
+                                          Navigator.pop(context, status);
+                                        } else if ([
+                                          'Sem 3',
+                                          'Sem 4',
+                                          'Sem 5',
+                                          'Sem 6',
+                                          'Sem 7',
+                                          'Sem 8',
+                                        ].contains(status)) {
+                                          setState(() {
+                                            _showMajors = true;
+                                            _pendingSem = status;
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  )
+                                  .toList(),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  // Right column: Majors
+                  Expanded(
+                    child:
+                        _showMajors
+                            ? ListView(
+                              shrinkWrap: true,
+                              children:
+                                  majorsList
+                                      .map(
+                                        (major) => ListTile(
+                                          title: Text(
+                                            major,
+                                            style: const TextStyle(
+                                              color: Color(0xFF317575),
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          onTap: () {
+                                            // For Sem3-Sem8, return the selected semester and major
+                                            if (_pendingSem != null) {
+                                              Navigator.pop(
+                                                context,
+                                                '$_pendingSem::$major',
+                                              );
+                                            }
+                                          },
+                                        ),
+                                      )
+                                      .toList(),
+                            )
+                            : ListTile(
+                              title: const Text(
+                                'Majors',
+                                style: TextStyle(
+                                  color: Color(0xFF317575),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              onTap: () {
+                                setState(() {
+                                  _showMajors = true;
+                                  _pendingSem = null;
+                                });
+                              },
+                            ),
+                  ),
+                ],
               ),
             ),
           ],
