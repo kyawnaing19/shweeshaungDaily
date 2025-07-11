@@ -121,7 +121,7 @@ class ApiService {
         print('Failed to fetch feed. Status code: ${response?.statusCode}');
       }
     } catch (e) {
-      print('Error fetching feed: $e');
+      throw Exception('Error fetching feed: $e');
     }
 
     return null;

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:curved_navigation_bar/curved_navigation_bar.dart'; // Import the CurvedNavigationBar
 
 class CustomBottomNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -15,33 +14,50 @@ class CustomBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CurvedNavigationBar(
-      index: selectedIndex,
-      height: 70.0, // Adjust height as needed
-      items: const <Widget>[
-        Icon(Icons.home, size: 30),
-        Icon(Icons.description, size: 30),
-        Icon(Icons.calendar_today, size: 30),
-        Icon(Icons.person, size: 30),
-      ],
-      color: const Color.fromARGB(
-        255,
-        38,
-        207,
-        219,
-      ), // Color of the navigation bar itself
-      buttonBackgroundColor:
-          Colors.teal, // Color of the selected item's background circle
-      backgroundColor:
-          Colors
-              .transparent, // Background color behind the bar (usually the scaffold's background)
-      animationCurve: Curves.easeInOut,
-      animationDuration: const Duration(milliseconds: 600),
-      onTap: (index) {
-        pageController.jumpToPage(index); // Control the PageView
-        onItemTapped(index); // Update state in parent
-      },
-      letIndexChange: (index) => true, // Allows changing index
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(30.0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: const Offset(0, -3),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: BottomNavigationBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        selectedItemColor: Colors.teal,
+        unselectedItemColor: Colors.grey,
+        currentIndex: selectedIndex,
+        onTap: (index) {
+          pageController.jumpToPage(index); // ✅ Control the PageView
+          onItemTapped(index); // ✅ Update state in parent
+        },
+        type: BottomNavigationBarType.fixed,
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.description),
+            label: 'Notes',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_today),
+            label: 'Timetable',
+          ),
+
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        ],
+      ),
     );
   }
 }
+
+
+  // Move the navigation logic here if you want to centralize it
+ 

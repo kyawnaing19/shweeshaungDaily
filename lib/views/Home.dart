@@ -79,8 +79,9 @@ class _HomePageState extends State<HomeScreenPage> {
   void initState() {
     super.initState();
     _loadTimetableFromPrefs();
-    loadCachedFeed();
+
     _fetchFeed();
+
     _pageController = PageController(
       viewportFraction: 0.92,
       initialPage: _getCurrentPeriodIndex(),
@@ -96,33 +97,24 @@ class _HomePageState extends State<HomeScreenPage> {
     });
   }
 
-  Future<void> loadCachedFeed() async {
-  final prefs = await SharedPreferences.getInstance();
-  final cachedFeed = prefs.getString('cached_feed');
-
-  if (cachedFeed != null) {
-    try {
-      final decoded = jsonDecode(cachedFeed);
-      if (decoded is List) {
-        setState(() {
-          feedItems = decoded
+  // Update loadCachedFeed to return the feed list
+  Future<List<Map<String, dynamic>>> loadCachedFeed() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cachedFeed = prefs.getString('cached_feed');
+    if (cachedFeed != null) {
+      try {
+        final decoded = jsonDecode(cachedFeed);
+        if (decoded is List) {
+          return decoded
               .map((item) => Map<String, dynamic>.from(item as Map))
               .toList();
-        });
-        return;
-      } else {
-        debugPrint('Cached feed is not a List');
+        }
+      } catch (e) {
+        debugPrint('Error decoding cached feed: $e');
       }
-    } catch (e) {
-      debugPrint('Error decoding cached feed: $e');
     }
+    return [];
   }
-  // If cache is missing or invalid, set feedItems to empty and update UI
-  setState(() {
-    feedItems = [];
-  });
-}
-
 
   Timer? _lunchTimer;
   Future<void> _fetchFeed() async {
@@ -153,12 +145,13 @@ class _HomePageState extends State<HomeScreenPage> {
 
       await ImageCacheManager.clearUnusedImages(imageUrls);
     } catch (e) {
+      // print("hhhhh");
       // API failed – try to reload cached feed
-      await loadCachedFeed();
+      final cached = await loadCachedFeed();
       setState(() {
-        // Ensure feedItems is updated after loading cache
-        feedItems = feedItems ?? [];
-        feedErrorMessage = 'Failed to load feed: ${e.toString()}';
+        // print("hhhhh");
+        feedItems = cached;
+        //feedErrorMessage = 'Failed to load feed: ${e.toString()}';
         isFeedLoading = false;
       });
     }
