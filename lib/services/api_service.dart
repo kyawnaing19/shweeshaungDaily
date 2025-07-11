@@ -7,10 +7,11 @@ import 'package:shweeshaungdaily/services/token_service.dart';
 import '../models/user_model.dart';
 
 class ApiService {
-  static const baseUrl = 'https://shweeshaung.mooo.com/api/auth';
-  static const feedBaseUrl = 'https://shweeshaung.mooo.com/feeds';
-  static const secbaseUrl = 'https://shweeshaung.mooo.com/admin/schedules';
-  static const subbaseUrl = 'https://shweeshaung.mooo.com/admin/subjects';
+  static const String base = 'https://shweeshaung.mooo.com';
+  static const baseUrl = '$base/api/auth';
+  static const feedBaseUrl = '$base/feeds';
+  static const secbaseUrl = '$base/admin/schedules';
+  static const subbaseUrl = '$base/admin/subjects';
 
   static Future<Map<String, dynamic>?> login(UserModel user) async {
     final response = await http.post(

@@ -10,15 +10,18 @@ import 'package:shweeshaungdaily/services/authorize_image.dart';
 import 'package:shweeshaungdaily/utils/image_cache.dart';
 import 'package:shweeshaungdaily/views/note_list_view.dart';
 import 'package:shweeshaungdaily/views/timetablepage.dart'; // Add this for SharedPreferences
+import 'package:shweeshaungdaily/views/comment_section.dart';
 
 class HomeScreenPage extends StatefulWidget {
   const HomeScreenPage({super.key});
+  // Add this for base URL
 
   @override
   State<HomeScreenPage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomeScreenPage> {
+  final String baseUrl = ApiService.base; 
   List<Map<String, dynamic>>? feedItems = [];
   bool isFeedLoading = true;
   String? feedErrorMessage;
@@ -140,7 +143,7 @@ class _HomePageState extends State<HomeScreenPage> {
           feedItems!
               .map((item) => item['photoUrl'])
               .where((url) => url != null && url != '')
-              .map((url) => 'https://shweeshaung.mooo.com/$url')
+              .map((url) => '$baseUrl/$url')
               .toSet();
 
       await ImageCacheManager.clearUnusedImages(imageUrls);
@@ -344,6 +347,7 @@ class _HomePageState extends State<HomeScreenPage> {
 
   Future<void> _handleRefresh() async {
     await _fetchTimetable();
+    await _fetchFeed();
     final currentPeriod = _getCurrentPeriodIndex();
     if (currentPeriod >= 0 && currentPeriod < periodTimes.length) {
       _pageController.jumpToPage(currentPeriod);
@@ -512,13 +516,16 @@ class _HomePageState extends State<HomeScreenPage> {
                     }
 
                     final item = feedItems![index];
-                    final String user = 'User'; // Replace with actual user
+                    final String user = item['teacherName'] ;// Replace with actual user
                     final String timeAgo = item['createdAt'] ?? '';
                     final String message = item['text'] ?? '';
                     final String? imageUrl =
                         (item['photoUrl'] != null && item['photoUrl'] != '')
-                            ? 'https://shweeshaung.mooo.com/${item['photoUrl']}'
+                            ? '$baseUrl/${item['photoUrl']}'
                             : null;
+                    // Count likes and comments from the response arrays
+final int likeCount = (item['likes'] as List?)?.length ?? 0;
+final int commentCount = (item['comments'] as List?)?.length ?? 0;
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 16.0),
@@ -527,6 +534,8 @@ class _HomePageState extends State<HomeScreenPage> {
                         timeAgo: timeAgo,
                         message: message,
                         imageUrl: imageUrl,
+                        likeCount: likeCount,
+                        commentCount: commentCount
                       ),
                     );
                   },
@@ -807,6 +816,8 @@ class _HomePageState extends State<HomeScreenPage> {
     required String timeAgo,
     required String message,
     required String? imageUrl,
+    required int? likeCount,
+    required int? commentCount,
   }) {
     final bool hasImage = imageUrl != null && imageUrl.isNotEmpty;
 
@@ -919,9 +930,9 @@ class _HomePageState extends State<HomeScreenPage> {
                     onPressed: () {},
                   ),
                   const SizedBox(width: 4),
-                  const Text(
-                    '24',
-                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  Text(
+                    likeCount.toString(),
+                    style: const TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   const SizedBox(width: 16),
                   IconButton(
@@ -930,12 +941,22 @@ class _HomePageState extends State<HomeScreenPage> {
                       color: Colors.white70,
                       size: 22,
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => const FractionallySizedBox(
+                          heightFactor: 1.0,
+                          child: CommentSection(),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(width: 4),
-                  const Text(
-                    '5',
-                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  Text(
+                    commentCount.toString(),
+                    style: const TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   const Spacer(),
                   IconButton(

@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shweeshaungdaily/services/api_service.dart';
 import 'token_service.dart';
 
 class AuthHttpClient extends http.BaseClient {
+  final String baseUrl = ApiService.base;
   final http.Client _inner = http.Client();
 
   @override
@@ -27,7 +29,7 @@ class AuthHttpClient extends http.BaseClient {
 
   Future<String?> _refreshAccessToken(String refreshToken) async {
     final response = await http.post(
-      Uri.parse('https://shweeshaung.mooo.com/auth/refresh-token'),
+      Uri.parse('$baseUrl/auth/refresh-token'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'refreshToken': refreshToken}),
     );
