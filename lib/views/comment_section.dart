@@ -6,7 +6,7 @@ class CommentSection extends StatefulWidget {
   final List<dynamic> comments;
   final int? feedId;
   final VoidCallback? onCommentSuccess;
-  const CommentSection({Key? key, required this.comments, required this.feedId, this.onCommentSuccess}) : super(key: key);
+  const CommentSection({super.key, required this.comments, required this.feedId, this.onCommentSuccess});
 
   @override
   State<CommentSection> createState() => _CommentSectionState();

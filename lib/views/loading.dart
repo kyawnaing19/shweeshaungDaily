@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:shweeshaungdaily/view_models/StartupViewModel.dart';
 import 'package:shweeshaungdaily/views/main_screen.dart';
 import 'package:shweeshaungdaily/views/signReg/landing.dart';
-import 'Home.dart';
 
 class LoadingPage extends StatefulWidget {
   const LoadingPage({super.key});

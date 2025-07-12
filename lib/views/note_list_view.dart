@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/utils/note_database/note_database.dart';
-import 'package:shweeshaungdaily/views/Home.dart';
 import 'note_editor_page.dart';
-import 'package:shweeshaungdaily/utils/route_transition.dart';
 
 class NotePage extends StatefulWidget {
   final VoidCallback? onBack;

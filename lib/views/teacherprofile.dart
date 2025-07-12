@@ -4,8 +4,6 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
-import 'package:shweeshaungdaily/views/Home.dart';
-import 'package:shweeshaungdaily/utils/route_transition.dart';
 
 final Map<String, String> audienceValueMap = {
   'Public': 'Public',

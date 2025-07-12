@@ -71,8 +71,9 @@ class _StudentInfoPageState extends State<StudendInfoPage> {
     }
     await authViewModel.login(regViewModel.email, regViewModel.password);
     // All validations passed
-    if (!mounted)
+    if (!mounted) {
       return; // Check if the widget is still mounted before navigating
+    }
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => HomeScreenPage()),

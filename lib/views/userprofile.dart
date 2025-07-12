@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
-import 'package:shweeshaungdaily/utils/route_transition.dart';
-import 'package:shweeshaungdaily/views/Home.dart';
 
 // List of story privacy/status options for backend integration
 final List<String> storyStatusOptions = [
