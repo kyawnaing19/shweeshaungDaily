@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert'; // Add this for JSON encoding/decoding
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
@@ -10,7 +11,6 @@ import 'package:shweeshaungdaily/services/authorize_image.dart';
 import 'package:shweeshaungdaily/services/token_service.dart';
 import 'package:shweeshaungdaily/utils/image_cache.dart';
 import 'package:shweeshaungdaily/views/note_list_view.dart';
-import 'package:shweeshaungdaily/views/timetablepage.dart'; // Add this for SharedPreferences
 import 'package:shweeshaungdaily/views/comment_section.dart';
 import 'package:audioplayers/audioplayers.dart';
 
@@ -22,7 +22,8 @@ class HomeScreenPage extends StatefulWidget {
   State<HomeScreenPage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomeScreenPage> {
+class _HomePageState extends State<HomeScreenPage>
+    with TickerProviderStateMixin {
   final String baseUrl = ApiService.base;
   List<Map<String, dynamic>>? feedItems = [];
   bool isFeedLoading = true;
@@ -34,14 +35,22 @@ class _HomePageState extends State<HomeScreenPage> {
   // Audio player state
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool _isPlaying = false;
+  bool _isFetchingAudio = false;
+
+  late AnimationController _waveController;
 
   Future<void> _playAudio() async {
+    setState(() {
+      _isFetchingAudio = true;
+    });
     // Placeholder audio URL (public domain short mp3)
     const url = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
     await _audioPlayer.play(UrlSource(url));
     setState(() {
       _isPlaying = true;
+      _isFetchingAudio = false;
     });
+    _waveController.repeat();
   }
 
   Future<void> _stopAudio() async {
@@ -49,6 +58,42 @@ class _HomePageState extends State<HomeScreenPage> {
     setState(() {
       _isPlaying = false;
     });
+    _waveController.stop();
+    _waveController.reset();
+  }
+
+  Widget _audioWaveAnimation() {
+    return SizedBox(
+      width: 60, // Fixed width (adjust based on your needs)
+      height: 60, // Fixed height to avoid dynamic resizing
+      child: AnimatedBuilder(
+        animation: _waveController,
+        builder: (context, child) {
+          final t = _waveController.value;
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(4, (i) {
+              final phase = t + i * 0.2;
+              final barHeight =
+                  14.0 +
+                  14.0 * (0.5 + 0.5 * (1 + sin(1.2 * 3.14159 * (phase % 1))));
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                width: 5,
+                height: barHeight.clamp(
+                  14.0,
+                  42.0,
+                ), // Optionally clamp the height
+                decoration: BoxDecoration(
+                  color: Colors.teal,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              );
+            }),
+          );
+        },
+      ),
+    );
   }
 
   final List<String> customMessageImages = [
@@ -103,6 +148,10 @@ class _HomePageState extends State<HomeScreenPage> {
   @override
   void initState() {
     super.initState();
+    _waveController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
     _loadTimetableFromPrefs();
 
     _fetchFeed();
@@ -186,6 +235,7 @@ class _HomePageState extends State<HomeScreenPage> {
   void dispose() {
     _lunchTimer?.cancel();
     _pageController.dispose();
+    _waveController.dispose();
     super.dispose();
   }
 
@@ -517,7 +567,13 @@ class _HomePageState extends State<HomeScreenPage> {
                     if (isFeedLoading) {
                       return const Padding(
                         padding: EdgeInsets.symmetric(vertical: 32.0),
-                        child: Center(child: CircularProgressIndicator()),
+                        child: Center(
+                          child: SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: CircularProgressIndicator(),
+                          ),
+                        ),
                       );
                     }
 
@@ -598,13 +654,14 @@ class _HomePageState extends State<HomeScreenPage> {
       controller: PageController(viewportFraction: 0.96),
       itemCount: customMessageImages.length,
       itemBuilder: (context, idx) {
+        final double maxWidth = MediaQuery.of(context).size.width * 0.96;
         return Center(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: Image.asset(
               customMessageImages[idx],
-              width: 350, // Set your desired fixed width
-              height: 220, // Set your desired fixed height
+              width: maxWidth > 350 ? 350 : maxWidth,
+              height: 220,
               fit: BoxFit.cover,
             ),
           ),
@@ -762,47 +819,83 @@ class _HomePageState extends State<HomeScreenPage> {
         children: [
           Expanded(
             flex: 1,
-            child: _buildQuickActionButton(
-              context,
-              Icons.menu_book_rounded,
-              "Note",
-              () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) {
-                      return const NotePage();
-                    },
-                  ),
-                );
-              },
+            child: Card(
+              elevation: 2, // adds shadow
+              color: Colors.teal.shade50, // light background color
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      switchInCurve: Curves.easeIn,
+                      switchOutCurve: Curves.easeOut,
+                      transitionBuilder: (child, animation) {
+                        return FadeTransition(opacity: animation, child: child);
+                      },
+                      child:
+                          _isFetchingAudio
+                              ? SizedBox(
+                                key: const ValueKey('loader'),
+                                width: 60,
+                                height: 60,
+                                child: SizedBox(
+                                  width: 10,
+                                  height: 10,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 5,
+                                    color: Colors.teal,
+                                  ),
+                                ),
+                              )     
+                              : (!_isPlaying
+                                  ? IconButton(
+                                    key: const ValueKey('play'),
+                                    icon: Icon(
+                                      Icons.play_arrow,
+                                      size: 45,
+                                      color: Colors.teal,
+                                    ),
+                                    onPressed: _playAudio,
+                                  )
+                                  : GestureDetector(
+                                    key: const ValueKey('wave'),
+                                    onTap: _stopAudio,
+                                    child: _audioWaveAnimation(),
+                                  )),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
+
           const SizedBox(width: 16),
           Expanded(
             flex: 2,
             child: Card(
               elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: Icon(_isPlaying ? Icons.stop : Icons.play_arrow, size: 32, color: Colors.teal),
-                      onPressed: () {
-                        if (_isPlaying) {
-                          _stopAudio();
-                        } else {
-                          _playAudio();
-                        }
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: _buildQuickActionButton(
+                context,
+                Icons.menu_book_rounded,
+                "Note",
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) {
+                        return const NotePage();
                       },
                     ),
-                    const SizedBox(width: 12),
-                    Text(_isPlaying ? 'Playing...' : 'Stopped', style: const TextStyle(fontSize: 16)),
-                  ],
-                ),
+                  );
+                },
               ),
             ),
           ),

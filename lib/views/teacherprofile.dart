@@ -836,15 +836,15 @@ class _ShowSharesDialogState extends State<ShowSharesDialog> {
                       Expanded(
                         child: ScrollbarTheme(
                           data: ScrollbarThemeData(
-                            thumbVisibility: MaterialStateProperty.all(true),
-                            trackVisibility: MaterialStateProperty.all(true),
-                            thumbColor: MaterialStateProperty.all(
+                            thumbVisibility: WidgetStateProperty.all(true),
+                            trackVisibility: WidgetStateProperty.all(true),
+                            thumbColor: WidgetStateProperty.all(
                               const Color(0xFF48C4BC),
                             ),
-                            trackColor: MaterialStateProperty.all(
+                            trackColor: WidgetStateProperty.all(
                               const Color(0xFFE8F7F6),
                             ),
-                            thickness: MaterialStateProperty.all(6),
+                            thickness: WidgetStateProperty.all(6),
                             radius: const Radius.circular(10),
                             crossAxisMargin: 2,
                           ),
@@ -935,16 +935,16 @@ class _ShowSharesDialogState extends State<ShowSharesDialog> {
                                   ? ScrollbarTheme(
                                     data: ScrollbarThemeData(
                                       thumbVisibility:
-                                          MaterialStateProperty.all(true),
+                                          WidgetStateProperty.all(true),
                                       trackVisibility:
-                                          MaterialStateProperty.all(true),
-                                      thumbColor: MaterialStateProperty.all(
+                                          WidgetStateProperty.all(true),
+                                      thumbColor: WidgetStateProperty.all(
                                         const Color(0xFF48C4BC),
                                       ),
-                                      trackColor: MaterialStateProperty.all(
+                                      trackColor: WidgetStateProperty.all(
                                         const Color(0xFFE8F7F6),
                                       ),
-                                      thickness: MaterialStateProperty.all(6),
+                                      thickness: WidgetStateProperty.all(6),
                                       radius: const Radius.circular(10),
                                       crossAxisMargin: 2,
                                     ),
