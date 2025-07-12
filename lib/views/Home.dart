@@ -12,6 +12,7 @@ import 'package:shweeshaungdaily/utils/image_cache.dart';
 import 'package:shweeshaungdaily/views/note_list_view.dart';
 import 'package:shweeshaungdaily/views/timetablepage.dart'; // Add this for SharedPreferences
 import 'package:shweeshaungdaily/views/comment_section.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class HomeScreenPage extends StatefulWidget {
   const HomeScreenPage({super.key});
@@ -29,6 +30,26 @@ class _HomePageState extends State<HomeScreenPage> {
   Map<String, Map<int, dynamic>>? timetableData;
   bool isLoading = true;
   String? errorMessage;
+
+  // Audio player state
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _isPlaying = false;
+
+  Future<void> _playAudio() async {
+    // Placeholder audio URL (public domain short mp3)
+    const url = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
+    await _audioPlayer.play(UrlSource(url));
+    setState(() {
+      _isPlaying = true;
+    });
+  }
+
+  Future<void> _stopAudio() async {
+    await _audioPlayer.stop();
+    setState(() {
+      _isPlaying = false;
+    });
+  }
 
   final List<String> customMessageImages = [
     'assets/images/poem1.webp',
@@ -461,7 +482,6 @@ class _HomePageState extends State<HomeScreenPage> {
                       },
                     ),
                   ),
-                  // const SizedBox(height: 10),
                   _buildQuickActionsRow(),
                 ],
               ),
@@ -761,20 +781,29 @@ class _HomePageState extends State<HomeScreenPage> {
           const SizedBox(width: 16),
           Expanded(
             flex: 2,
-            child: _buildQuickActionButton(
-              context,
-              Icons.event_rounded,
-              "Events",
-              () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) {
-                      return const TimeTablePage();
-                    },
-                  ),
-                );
-              },
+            child: Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: Icon(_isPlaying ? Icons.stop : Icons.play_arrow, size: 32, color: Colors.teal),
+                      onPressed: () {
+                        if (_isPlaying) {
+                          _stopAudio();
+                        } else {
+                          _playAudio();
+                        }
+                      },
+                    ),
+                    const SizedBox(width: 12),
+                    Text(_isPlaying ? 'Playing...' : 'Stopped', style: const TextStyle(fontSize: 16)),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
