@@ -10,7 +10,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shweeshaungdaily/services/authorize_image.dart';
 import 'package:shweeshaungdaily/services/token_service.dart';
 import 'package:shweeshaungdaily/utils/image_cache.dart';
-import 'package:shweeshaungdaily/views/note_list_view.dart';
+import 'package:shweeshaungdaily/views/audio_view.dart';
+import 'package:shweeshaungdaily/views/mail_view.dart';
+
 import 'package:shweeshaungdaily/views/comment_section.dart';
 import 'package:audioplayers/audioplayers.dart';
 
@@ -820,82 +822,90 @@ class _HomePageState extends State<HomeScreenPage>
           Expanded(
             flex: 1,
             child: Card(
-              elevation: 2, // adds shadow
-              color: Colors.teal.shade50, // light background color
+              // color: const Color.fromARGB(255, 18, 194, 194),
+              color: kPrimaryDarkColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      switchInCurve: Curves.easeIn,
-                      switchOutCurve: Curves.easeOut,
-                      transitionBuilder: (child, animation) {
-                        return FadeTransition(opacity: animation, child: child);
-                      },
-                      child:
-                          _isFetchingAudio
-                              ? SizedBox(
-                                key: const ValueKey('loader'),
-                                width: 60,
-                                height: 60,
-                                child: SizedBox(
-                                  width: 10,
-                                  height: 10,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 5,
-                                    color: Colors.teal,
-                                  ),
-                                ),
-                              )     
-                              : (!_isPlaying
-                                  ? IconButton(
-                                    key: const ValueKey('play'),
-                                    icon: Icon(
-                                      Icons.play_arrow,
-                                      size: 45,
-                                      color: Colors.teal,
-                                    ),
-                                    onPressed: _playAudio,
-                                  )
-                                  : GestureDetector(
-                                    key: const ValueKey('wave'),
-                                    onTap: _stopAudio,
-                                    child: _audioWaveAnimation(),
-                                  )),
+              elevation: 6,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ReactorAudioPage(),
+                      ),
+                    );
+                  },
+                  child: SizedBox(
+                    height: 100,
+                    width: double.infinity,
+                    child: Padding(
+                      padding: EdgeInsets.all(
+                        10,
+                      ), // 👈 creates space around image
+                      child: Image.asset('assets/images/reactorIcon.png'),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
 
-          const SizedBox(width: 16),
           Expanded(
             flex: 2,
             child: Card(
-              elevation: 2,
+              elevation: 6,
+              color: Colors.transparent,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(0),
+                side:
+                    BorderSide
+                        .none, // Ensures no default border line from the Card itself
+              ).copyWith(
+                side: BorderSide.none,
+                borderRadius: BorderRadius.circular(0),
               ),
-              child: _buildQuickActionButton(
-                context,
-                Icons.menu_book_rounded,
-                "Note",
-                () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) {
-                        return const NotePage();
-                      },
+              child: Stack(
+                children: [
+                  // Background Image (fills the Card's rounded shape)
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.asset(
+                        'assets/images/noinfomail.png',
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                  );
-                },
+                  ),
+                  // Foreground content (tappable)
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => MailBoxHome()),
+                      );
+                    },
+                    child: SizedBox(
+                      height: 100,
+                      width: double.infinity,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 65, left: 20),
+
+                        child: const Text(
+                          "Mail Box",
+                          style: TextStyle(
+                            color: kPrimaryDarkColor,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -904,49 +914,49 @@ class _HomePageState extends State<HomeScreenPage>
     );
   }
 
-  Widget _buildQuickActionButton(
-    BuildContext context,
-    IconData icon,
-    String label,
-    VoidCallback onTapAction,
-  ) {
-    return Material(
-      borderRadius: BorderRadius.circular(16),
-      color: const Color(0xFF00897B),
-      elevation: 2,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTapAction,
-        child: Container(
-          height: 100,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: Colors.white, size: 22),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  // Widget _buildQuickActionButton(
+  //   BuildContext context,
+  //   IconData icon,
+  //   String label,
+  //   VoidCallback onTapAction,
+  // ) {
+  //   return Material(
+  //     borderRadius: BorderRadius.circular(16),
+  //     color: const Color(0xFF00897B),
+  //     elevation: 2,
+  //     child: InkWell(
+  //       borderRadius: BorderRadius.circular(16),
+  //       onTap: onTapAction,
+  //       child: Container(
+  //         height: 100,
+  //         padding: const EdgeInsets.symmetric(vertical: 12),
+  //         child: Column(
+  //           mainAxisAlignment: MainAxisAlignment.center,
+  //           children: [
+  //             Container(
+  //               width: 40,
+  //               height: 40,
+  //               decoration: BoxDecoration(
+  //                 color: Colors.white.withOpacity(0.2),
+  //                 shape: BoxShape.circle,
+  //               ),
+  //               child: Icon(icon, color: Colors.white, size: 22),
+  //             ),
+  //             const SizedBox(height: 8),
+  //             Text(
+  //               label,
+  //               style: const TextStyle(
+  //                 color: Colors.white,
+  //                 fontWeight: FontWeight.w600,
+  //                 fontSize: 14,
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildFeedCard({
     required String user,
