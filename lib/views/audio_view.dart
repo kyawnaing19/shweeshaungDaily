@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 import 'audio_player_widget.dart';
+import '../utils/audio_timeformat.dart';
 
 class ReactorAudioPage extends StatefulWidget {
   const ReactorAudioPage({super.key});
@@ -10,35 +12,39 @@ class ReactorAudioPage extends StatefulWidget {
 
 class _ReactorAudioPageState extends State<ReactorAudioPage>
     with SingleTickerProviderStateMixin {
-  List<bool> cardExpanded = List.generate(5, (index) => false);
+  List<bool> cardExpanded = [];
   late AnimationController _animationController;
   final List<Animation<double>> _animations = [];
-  final int itemCount = 5;
+  List<dynamic> audioList = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _fetchAudios();
+  }
+
+  Future<void> _fetchAudios() async {
+    audioList = await ApiService.getAudios();
+    cardExpanded = List.generate(audioList.length, (index) => false);
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
-
-    // Create staggered animations for each card
-    for (int i = 0; i < itemCount; i++) {
-      final delay = i * 300; // 300ms delay between each card
+    _animations.clear();
+    for (int i = 0; i < audioList.length; i++) {
+      final delay = i * 300;
       final animation = Tween<double>(begin: 0, end: 1).animate(
         CurvedAnimation(
           parent: _animationController,
-          curve: Interval(
-            delay / _animationController.duration!.inMilliseconds,
-            1.0,
-            curve: Curves.elasticOut,
-          ),
+          curve: Interval(delay / 1500, 1.0, curve: Curves.elasticOut),
         ),
       );
       _animations.add(animation);
     }
-
+    setState(() {
+      isLoading = false;
+    });
     _animationController.forward();
   }
 
@@ -104,32 +110,35 @@ class _ReactorAudioPageState extends State<ReactorAudioPage>
                   ),
                 ],
               ),
-              child: ListView.separated(
-                itemCount: itemCount,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  return AnimatedBuilder(
-                    animation: _animations[index],
-                    builder: (context, child) {
-                      final animationValue = _animations[index].value.clamp(
-                        0.0,
-                        1.0,
-                      );
-                      return Transform.translate(
-                        offset: Offset(0, (1 - animationValue) * 100),
-                        child: Opacity(
-                          opacity: animationValue,
-                          child: Transform.scale(
-                            scale: 0.8 + 0.2 * animationValue,
-                            child: child,
-                          ),
-                        ),
-                      );
-                    },
-                    child: _buildAudioCard(index, cardExpanded[index]),
-                  );
-                },
-              ),
+              child:
+                  isLoading
+                      ? const Center(child: CircularProgressIndicator(),)
+                      : audioList.isEmpty
+                      ? const Center(child: Text('No audio found'))
+                      : ListView.separated(
+                        itemCount: audioList.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          return AnimatedBuilder(
+                            animation: _animations[index],
+                            builder: (context, child) {
+                              final animationValue = _animations[index].value
+                                  .clamp(0.0, 1.0);
+                              return Transform.translate(
+                                offset: Offset(0, (1 - animationValue) * 100),
+                                child: Opacity(
+                                  opacity: animationValue,
+                                  child: Transform.scale(
+                                    scale: 0.8 + 0.2 * animationValue,
+                                    child: child,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: _buildAudioCard(index, cardExpanded[index]),
+                          );
+                        },
+                      ),
             ),
           ),
         ],
@@ -138,6 +147,11 @@ class _ReactorAudioPageState extends State<ReactorAudioPage>
   }
 
   Widget _buildAudioCard(int index, bool isExpanded) {
+    final audio = audioList[index];
+    final title = audio['title'] ?? 'No Title';
+    final author = audio['teacherName'] ?? 'Unknown';
+    final audioUrl = ApiService.base + '/' + audio['fileUrl'];
+    final time = audio['createdAt'] ?? '';
     return GestureDetector(
       onTap: () => _toggleCard(index),
       child: AnimatedContainer(
@@ -176,15 +190,15 @@ class _ReactorAudioPageState extends State<ReactorAudioPage>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "About Warso Festival",
+                      title,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF3A7A72),
                       ),
                     ),
                     Text(
-                      "By Daw Aye Mya Kyi",
+                      "By $author",
                       style: const TextStyle(
                         fontSize: 10,
                         color: Color(0xFF3A7A72),
@@ -207,20 +221,18 @@ class _ReactorAudioPageState extends State<ReactorAudioPage>
               Column(
                 children: [
                   const SizedBox(height: 12),
-                  const AudioPlayerWidget(
-                    audioUrl:
-                        'https://shweeshaung.mooo.com/tfeedphoto/audio/b4a271f2-cf76-4ef9-ba73-a56dab0d2aec_myFile.m4a',
-                  ),
+                  AudioPlayerWidget(audioUrl: audioUrl),
                 ],
               )
             else
               Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  "4:11 PM",
+                  formatFacebookStyleTime(time),
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontWeight: FontWeight.bold,
+                    fontSize: 11,
                   ),
                 ),
               ),

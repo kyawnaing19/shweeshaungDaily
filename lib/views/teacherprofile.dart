@@ -3,10 +3,9 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-
+import 'package:animations/animations.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
-import 'package:shweeshaungdaily/views/voice_recorder_view.dart';
 
 final Map<String, String> audienceValueMap = {
   'Public': 'Public',
@@ -110,6 +109,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 children: [
+                  // Shares Tab
                   GestureDetector(
                     onTap: () {
                       _pageController.animateToPage(
@@ -133,7 +133,10 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                       ),
                     ),
                   ),
+
                   const SizedBox(width: 20),
+
+                  // Stories Tab
                   GestureDetector(
                     onTap: () {
                       _pageController.animateToPage(
@@ -157,47 +160,48 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 20),
 
-                  // 🔊 Mic icon added here
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => VoiceMessageUI(),
-                        ),
-                      );
+                  const SizedBox(width: 10),
 
-                      // showDialog(
-                      //   context: context,
-                      //   builder:
-                      //       (context) => Dialog(
-                      //         backgroundColor: Colors.white,
-                      //         shape: RoundedRectangleBorder(
-                      //           borderRadius: BorderRadius.circular(16),
-                      //         ),
-                      //         child: SizedBox(
-                      //           height: 350,
-                      //           width: 300,
-                      //           child:
-                      //               VoiceMessageUI(), // Your custom voice UI inside dialog
-                      //         ),
-                      //       ),
-                      // );
-                      print('Mic icon tapped');
-                    },
-                    child: Icon(Icons.mic, color: kPrimaryDarkColor, size: 24),
+                  // Speech Tab with OpenContainer Animation
+                  Material(
+                    // Wrap with Material for proper ink splash and elevation
+                    color: Colors.transparent,
+                    child: OpenContainer(
+                      closedBuilder:
+                          (_, openContainer) => InkWell(
+                            onTap: openContainer,
+                            splashColor: kPrimaryDarkColor.withOpacity(0.1),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Text(
+                                'Speech',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: kPrimaryDarkColor.withOpacity(0.7),
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ),
+                      openBuilder: (_, __) => AudioRecorderS  ,
+                      transitionDuration: Duration(milliseconds: 500),
+                      closedColor: Colors.transparent,
+                      openColor: Colors.white,
+                      closedElevation: 0,
+                      openElevation: 6,
+                      closedShape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(0),
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 5),
-
             // Swipeable Shares & Stories
             SizedBox(
-              height: 555,
+              height: 540,
               child: NotificationListener<ScrollNotification>(
                 onNotification: (notification) {
                   // 👇 Absorb scroll gestures here to prevent them from bubbling up
@@ -221,41 +225,47 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                       ),
                       child: Column(
                         children: [
-                          Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 12),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: kAccentColor,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: [
-                                const Expanded(
-                                  child: Text(
-                                    "What's on your mind?",
-                                    style: TextStyle(color: Colors.white),
+                          InkWell(
+                            onTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder:
+                                    (context) => const UploadSharesDialog(),
+                              );
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: kAccentColor,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Expanded(
+                                    child: Text(
+                                      "What's on your mind?",
+                                      style: TextStyle(color: Colors.white),
+                                    ),
                                   ),
-                                ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.add,
-                                    color: Colors.white,
+                                  // We'll set the IconButton's onPressed to null since the InkWell handles the main tap.
+                                  // This prevents double actions and keeps the UI clean.
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.add,
+                                      color: Colors.white,
+                                    ),
+                                    onPressed: null, // Set to null
                                   ),
-                                  onPressed: () {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      isScrollControlled: true,
-                                      backgroundColor: Colors.transparent,
-                                      builder:
-                                          (context) =>
-                                              const UploadSharesDialog(),
-                                    );
-                                  },
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                           // Additional content like shared posts could go here
@@ -647,11 +657,26 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: Image.file(
-                  File(_selectedImage!.path),
-                  width: double.infinity,
-                  height: 200,
-                  fit: BoxFit.cover,
+                child: FutureBuilder<Uint8List?>(
+                  future: _selectedImage!.readAsBytes(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done &&
+                        snapshot.hasData) {
+                      return Image.memory(
+                        snapshot.data!,
+                        width: double.infinity,
+                        height: 200,
+                        fit: BoxFit.cover,
+                      );
+                    } else {
+                      return Container(
+                        width: double.infinity,
+                        height: 200,
+                        color: Colors.grey[200],
+                        child: const Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                  },
                 ),
               ),
               Positioned(
@@ -972,6 +997,12 @@ class _ShowSharesDialogState extends State<ShowSharesDialog> {
                                       trackVisibility: WidgetStateProperty.all(
                                         true,
                                       ),
+                                      thumbVisibility: WidgetStateProperty.all(
+                                        true,
+                                      ),
+                                      trackVisibility: WidgetStateProperty.all(
+                                        true,
+                                      ),
                                       thumbColor: WidgetStateProperty.all(
                                         const Color(0xFF48C4BC),
                                       ),
@@ -1261,11 +1292,29 @@ class _UploadStoryDialogState extends State<UploadStoryDialog> {
                               children: [
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(16),
-                                  child: Image.file(
-                                    File(_selectedImage!.path),
-                                    width: mediaQuery.size.width * 0.7,
-                                    height: 180,
-                                    fit: BoxFit.cover,
+                                  child: FutureBuilder<Uint8List?>(
+                                    future: _selectedImage!.readAsBytes(),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.connectionState ==
+                                              ConnectionState.done &&
+                                          snapshot.hasData) {
+                                        return Image.memory(
+                                          snapshot.data!,
+                                          width: mediaQuery.size.width * 0.7,
+                                          height: 180,
+                                          fit: BoxFit.cover,
+                                        );
+                                      } else {
+                                        return Container(
+                                          width: mediaQuery.size.width * 0.7,
+                                          height: 180,
+                                          color: Colors.grey[200],
+                                          child: const Center(
+                                            child: CircularProgressIndicator(),
+                                          ),
+                                        );
+                                      }
+                                    },
                                   ),
                                 ),
                                 Positioned(
