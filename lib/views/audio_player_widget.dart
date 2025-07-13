@@ -49,11 +49,18 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget>
         }
       });
 
-      _audioPlayer.onPlayerComplete.listen((_) {
+      _audioPlayer.onPlayerComplete.listen((_) async {
         setState(() {
           _isPlaying = false;
           _controller.value = 0;
+          _currentPosition = Duration.zero;
         });
+        // Re-set the audio source to allow replay
+        try {
+          await _audioPlayer.setSource(UrlSource(widget.audioUrl));
+        } catch (e) {
+          debugPrint("Audio player reset error: $e");
+        }
       });
     } catch (e) {
       debugPrint("Audio player init error: $e");
@@ -74,6 +81,14 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget>
     });
 
     if (_isPlaying) {
+      // If audio is finished, restart from beginning
+      if (_currentPosition >= _audioDuration) {
+        await _audioPlayer.seek(Duration.zero);
+        _controller.value = 0;
+        setState(() {
+          _currentPosition = Duration.zero;
+        });
+      }
       await _audioPlayer.resume();
       _controller.forward();
     } else {

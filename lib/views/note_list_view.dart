@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/utils/note_database/note_database.dart';
 import 'note_editor_page.dart';
+import 'package:animations/animations.dart'; // Make sure to import this
 
 class NotePage extends StatefulWidget {
   final VoidCallback? onBack;
@@ -14,44 +16,23 @@ class NotePage extends StatefulWidget {
 }
 
 class _NotePageState extends State<NotePage> {
+  String formatToMMT(String? utcString) {
+    if (utcString == null) return 'Unknown';
 
-String formatToMMT(String? utcString) {
-  if (utcString == null) return 'Unknown';
+    try {
+      // Parse assuming the input is in UTC
+      final utcTime = DateFormat('yyyy-MM-dd HH:mm:ss').parseUtc(utcString);
 
-  try {
-    // Parse assuming the input is in UTC
-    final utcTime = DateFormat('yyyy-MM-dd HH:mm:ss').parseUtc(utcString);
+      // Convert to Myanmar Time (UTC+6:30)
+      final mmtTime = utcTime.add(const Duration(hours: 6, minutes: 30));
 
-    // Convert to Myanmar Time (UTC+6:30)
-    final mmtTime = utcTime.add(const Duration(hours: 6, minutes: 30));
-
-    // Format back to the same format
-    return DateFormat('yyyy-MM-dd HH:mm:ss').format(mmtTime);
-  } catch (e) {
-    print('❌ Error: $e');
-    return 'Invalid time';
+      // Format back to the same format
+      return DateFormat('yyyy-MM-dd HH:mm:ss').format(mmtTime);
+    } catch (e) {
+      print('❌ Error: $e');
+      return 'Invalid time';
+    }
   }
-}
-  //int _selectedIndex = 2; // State for the selected tab in the bottom navigation
-
-  // void _onItemTapped(int index) {
-  //   if (_selectedIndex == index) return;
-  //   if (index == 1) {
-  //     Navigator.of(context).pushReplacement(fadeRoute(const TimeTablePage()));
-  //   }
-  //   if (index == 0) {
-  //     Navigator.of(context).pushReplacement(fadeRoute(const HomeScreenPage()));
-  //   }
-  //   if (index == 3) {
-  //     Navigator.of(
-  //       context,
-  //     ).pushReplacement(fadeRoute(const ProfileRouterPage()));
-  //   } else {
-  //     setState(() {
-  //       _selectedIndex = index;
-  //     });
-  //   }
-  // }
 
   List<Map<String, dynamic>> _notes = [];
   String _searchQuery = '';
@@ -150,20 +131,26 @@ String formatToMMT(String? utcString) {
                 ),
                 padding: const EdgeInsets.all(16),
                 child: ListView.separated(
-                  itemCount: _notes
-                      .where((note) => note['subject']
-                          .toString()
-                          .toLowerCase()
-                          .contains(_searchQuery.toLowerCase()))
-                      .length,
+                  itemCount:
+                      _notes
+                          .where(
+                            (note) => note['subject']
+                                .toString()
+                                .toLowerCase()
+                                .contains(_searchQuery.toLowerCase()),
+                          )
+                          .length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
-                    final filteredNotes = _notes
-                        .where((note) => note['subject']
-                            .toString()
-                            .toLowerCase()
-                            .contains(_searchQuery.toLowerCase()))
-                        .toList();
+                    final filteredNotes =
+                        _notes
+                            .where(
+                              (note) => note['subject']
+                                  .toString()
+                                  .toLowerCase()
+                                  .contains(_searchQuery.toLowerCase()),
+                            )
+                            .toList();
                     final note = filteredNotes[index];
 
                     return InkWell(
@@ -249,49 +236,167 @@ String formatToMMT(String? utcString) {
           ],
         ),
       ),
+
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF4DB6AC),
+        backgroundColor: kPrimaryDarkColor,
+        elevation: 8,
+        highlightElevation: 12,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.0),
+        ),
         onPressed: () async {
           String newTitle = '';
-          await showDialog(
+          await showGeneralDialog(
             context: context,
-            builder: (context) {
-              return AlertDialog(
-                title: const Text('New Note Title'),
-                content: TextField(
-                  autofocus: true,
-                  decoration: const InputDecoration(hintText: 'Enter note title'),
-                  onChanged: (value) {
-                    newTitle = value;
-                  },
+            pageBuilder: (context, animation, secondaryAnimation) {
+              final focusNode = FocusNode();
+              return Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24.0),
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
+                elevation: 0,
+                backgroundColor: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Create New Note',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: kPrimaryDarkColor,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: TextField(
+                          focusNode: focusNode,
+                          autofocus: false,
+                          decoration: InputDecoration(
+                            hintText: 'Enter note title...',
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                          ),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[800],
+                          ),
+                          onChanged: (value) => newTitle = value,
+                          onTap: () => focusNode.requestFocus(),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.grey[600],
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
+                            ),
+                            child: const Text('Cancel'),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              gradient: LinearGradient(
+                                colors: [
+                                  kPrimaryDarkColor,
+                                  kPrimaryDarkColor.withOpacity(0.8),
+                                ],
+                              ),
+                            ),
+                            child: TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                if (newTitle.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      content: const Text(
+                                        'Please enter a title',
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  addNewNote(newTitle);
+                                }
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 10,
+                                ),
+                              ),
+                              child: const Text('Create'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      if(newTitle.isNotEmpty) {
-                        addNewNote(newTitle);
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Title cannot be empty')),
-                        );
-                      }
-                      // You can handle the newTitle here if needed
-                    },
-                    child: const Text('OK'),
-                  ),
-                ],
+                ),
               );
             },
+            transitionBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOut,
+                ),
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 450),
           );
         },
-        child: const Icon(Icons.add, color: Colors.white),
+        child: Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16.0),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF4DB6AC).withOpacity(0.4),
+                blurRadius: 8,
+                spreadRadius: 2,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Icon(Icons.add, color: Colors.white),
+        ),
       ),
-
       //  bottomNavigationBar: CustomBottomNavBar(
       //     selectedIndex: _selectedIndex,
       //     onItemTapped: _onItemTapped,

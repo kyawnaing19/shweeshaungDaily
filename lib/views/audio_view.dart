@@ -195,14 +195,17 @@ class _ReactorAudioPageState extends State<ReactorAudioPage>
               Column(
                 children: [
                   const SizedBox(height: 12),
-                  const AudioPlayerWidget(audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'),
+                  const AudioPlayerWidget(
+                    audioUrl:
+                        'https://shweeshaung.mooo.com/tfeedphoto/audio/b4a271f2-cf76-4ef9-ba73-a56dab0d2aec_myFile.m4a',
+                  ),
                 ],
               )
             else
               Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  "0:30",
+                  "4:11 PM",
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontWeight: FontWeight.bold,
