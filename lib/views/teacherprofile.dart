@@ -160,6 +160,9 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                       ),
                     ),
                   ),
+
+                  SizedBox(width: 20),
+
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
@@ -221,41 +224,39 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                       ),
                       child: Column(
                         children: [
-                          Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 12),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: kAccentColor,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: [
-                                const Expanded(
-                                  child: Text(
-                                    "What's on your mind?",
-                                    style: TextStyle(color: Colors.white),
+                          GestureDetector(
+                            onTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder:
+                                    (context) => const UploadSharesDialog(),
+                              );
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 15,
+                              ),
+                              decoration: BoxDecoration(
+                                color: kAccentColor,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: const [
+                                  Expanded(
+                                    child: Text(
+                                      "What's on your mind?",
+                                      style: TextStyle(color: Colors.white),
+                                    ),
                                   ),
-                                ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.add,
-                                    color: Colors.white,
-                                  ),
-                                  onPressed: () {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      isScrollControlled: true,
-                                      backgroundColor: Colors.transparent,
-                                      builder:
-                                          (context) =>
-                                              const UploadSharesDialog(),
-                                    );
-                                  },
-                                ),
-                              ],
+                                  Icon(Icons.add, color: Colors.white),
+                                ],
+                              ),
                             ),
                           ),
                           // Additional content like shared posts could go here
