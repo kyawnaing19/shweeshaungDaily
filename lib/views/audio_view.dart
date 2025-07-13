@@ -172,13 +172,25 @@ class _ReactorAudioPageState extends State<ReactorAudioPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  "Reactor Instruction ${index + 1}",
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF3A7A72),
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "About Warso Festival",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF3A7A72),
+                      ),
+                    ),
+                    Text(
+                      "By Daw Aye Mya Kyi",
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Color(0xFF3A7A72),
+                      ),
+                    ),
+                  ],
                 ),
                 AnimatedRotation(
                   turns: isExpanded ? 0.5 : 0,
