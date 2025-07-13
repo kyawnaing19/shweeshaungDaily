@@ -228,11 +228,13 @@ class ApiService {
 
   static Future<void> uploadAudio({
     required XFile? voice,
+    required String title
   }) async {
     Future<http.Response> sendMultipart(String accessToken) async {
       final url = Uri.parse("$feedBaseUrl/audio");
       var request =
           http.MultipartRequest('POST', url)
+            ..fields['title'] = title
             ..headers['Authorization'] = 'Bearer $accessToken';
 
       if (voice != null) {
