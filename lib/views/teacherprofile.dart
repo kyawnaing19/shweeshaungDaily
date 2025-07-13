@@ -1,11 +1,14 @@
-import 'dart:io';
+// import 'dart:io'; // Removed for web compatibility
+import 'dart:typed_data';
+
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:animations/animations.dart';
+
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
+import 'package:shweeshaungdaily/views/audio_upload_page.dart';
 
 final Map<String, String> audienceValueMap = {
   'Public': 'Public',
@@ -109,7 +112,6 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 children: [
-                  // Shares Tab
                   GestureDetector(
                     onTap: () {
                       _pageController.animateToPage(
@@ -118,6 +120,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                         curve: Curves.ease,
                       );
                     },
+
                     child: Text(
                       'Shares',
                       style: TextStyle(
@@ -133,10 +136,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                       ),
                     ),
                   ),
-
                   const SizedBox(width: 20),
-
-                  // Stories Tab
                   GestureDetector(
                     onTap: () {
                       _pageController.animateToPage(
@@ -160,38 +160,32 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                       ),
                     ),
                   ),
-
-                  const SizedBox(width: 10),
-
-                  // Speech Tab with OpenContainer Animation
-                  Material(
-                    // Wrap with Material for proper ink splash and elevation
-                    color: Colors.transparent,
-                    child: OpenContainer(
-                      closedBuilder:
-                          (_, openContainer) => InkWell(
-                            onTap: openContainer,
-                            splashColor: kPrimaryDarkColor.withOpacity(0.1),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Text(
-                                'Speech',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: kPrimaryDarkColor.withOpacity(0.7),
-                                  fontWeight: FontWeight.w800,
-                                ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        PageRouteBuilder(
+                          transitionDuration: Duration(milliseconds: 400),
+                          pageBuilder:
+                              (_, animation, __) => AudioRecorderScreen(),
+                          transitionsBuilder: (_, animation, __, child) {
+                            return ScaleTransition(
+                              scale: animation,
+                              child: FadeTransition(
+                                opacity: animation,
+                                child: child,
                               ),
-                            ),
-                          ),
-                      openBuilder: (_, __) => AudioRecorderS  ,
-                      transitionDuration: Duration(milliseconds: 500),
-                      closedColor: Colors.transparent,
-                      openColor: Colors.white,
-                      closedElevation: 0,
-                      openElevation: 6,
-                      closedShape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(0),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                    child: Text(
+                      'Speech',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: kPrimaryDarkColor.withOpacity(0.7),
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
@@ -199,9 +193,11 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
               ),
             ),
 
+            const SizedBox(height: 5),
+
             // Swipeable Shares & Stories
             SizedBox(
-              height: 540,
+              height: 555,
               child: NotificationListener<ScrollNotification>(
                 onNotification: (notification) {
                   // 👇 Absorb scroll gestures here to prevent them from bubbling up
@@ -225,47 +221,41 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                       ),
                       child: Column(
                         children: [
-                          InkWell(
-                            onTap: () {
-                              showModalBottomSheet(
-                                context: context,
-                                isScrollControlled: true,
-                                backgroundColor: Colors.transparent,
-                                builder:
-                                    (context) => const UploadSharesDialog(),
-                              );
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: kAccentColor,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Expanded(
-                                    child: Text(
-                                      "What's on your mind?",
-                                      style: TextStyle(color: Colors.white),
-                                    ),
+                          Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: kAccentColor,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                const Expanded(
+                                  child: Text(
+                                    "What's on your mind?",
+                                    style: TextStyle(color: Colors.white),
                                   ),
-                                  // We'll set the IconButton's onPressed to null since the InkWell handles the main tap.
-                                  // This prevents double actions and keeps the UI clean.
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.add,
-                                      color: Colors.white,
-                                    ),
-                                    onPressed: null, // Set to null
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.add,
+                                    color: Colors.white,
                                   ),
-                                ],
-                              ),
+                                  onPressed: () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder:
+                                          (context) =>
+                                              const UploadSharesDialog(),
+                                    );
+                                  },
+                                ),
+                              ],
                             ),
                           ),
                           // Additional content like shared posts could go here
@@ -412,6 +402,7 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
                 : _selectedAudience.startsWith('Sem ')
                 ? '${_selectedAudience.replaceAll('Sem ', '')} CST'
                 : _selectedAudience,
+        // On web, pass the XFile or its bytes instead of File
         photo: _selectedImage,
       );
 
@@ -991,12 +982,6 @@ class _ShowSharesDialogState extends State<ShowSharesDialog> {
                               _showMajors
                                   ? ScrollbarTheme(
                                     data: ScrollbarThemeData(
-                                      thumbVisibility: WidgetStateProperty.all(
-                                        true,
-                                      ),
-                                      trackVisibility: WidgetStateProperty.all(
-                                        true,
-                                      ),
                                       thumbVisibility: WidgetStateProperty.all(
                                         true,
                                       ),

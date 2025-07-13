@@ -150,7 +150,7 @@ class _ReactorAudioPageState extends State<ReactorAudioPage>
     final audio = audioList[index];
     final title = audio['title'] ?? 'No Title';
     final author = audio['teacherName'] ?? 'Unknown';
-    final audioUrl = ApiService.base + '/' + audio['fileUrl'];
+    final audioUrl = '${ApiService.base}/' + audio['fileUrl'];
     final time = audio['createdAt'] ?? '';
     return GestureDetector(
       onTap: () => _toggleCard(index),

@@ -6,7 +6,6 @@ import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
-import 'package:shweeshaungdaily/views/audio_player_widget.dart';
 
 class AudioRecorderScreen extends StatefulWidget {
   const AudioRecorderScreen({super.key});

@@ -113,7 +113,7 @@ class _ComposeLoveLetterScreenState extends State<ComposeLoveLetterScreen>
           ],
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-        child: Container(
+        child: SizedBox(
           height: 58,
 
           // Adjust this value to your preferred height
