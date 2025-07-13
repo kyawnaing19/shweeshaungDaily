@@ -1,4 +1,6 @@
-import 'dart:io';
+// import 'dart:io'; // Removed for web compatibility
+import 'dart:typed_data';
+
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -370,7 +372,8 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
                 : _selectedAudience.startsWith('Sem ')
                 ? '${_selectedAudience.replaceAll('Sem ', '')} CST'
                 : _selectedAudience,
-        photo: _selectedImage != null ? File(_selectedImage!.path) : null,
+        // On web, pass the XFile or its bytes instead of File
+        photo: _selectedImage,
       );
 
       if (mounted) {
@@ -615,11 +618,25 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: Image.file(
-                  File(_selectedImage!.path),
-                  width: double.infinity,
-                  height: 200,
-                  fit: BoxFit.cover,
+                child: FutureBuilder<Uint8List?>(
+                  future: _selectedImage!.readAsBytes(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+                      return Image.memory(
+                        snapshot.data!,
+                        width: double.infinity,
+                        height: 200,
+                        fit: BoxFit.cover,
+                      );
+                    } else {
+                      return Container(
+                        width: double.infinity,
+                        height: 200,
+                        color: Colors.grey[200],
+                        child: const Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                  },
                 ),
               ),
               Positioned(
@@ -1227,11 +1244,25 @@ class _UploadStoryDialogState extends State<UploadStoryDialog> {
                               children: [
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(16),
-                                  child: Image.file(
-                                    File(_selectedImage!.path),
-                                    width: mediaQuery.size.width * 0.7,
-                                    height: 180,
-                                    fit: BoxFit.cover,
+                                  child: FutureBuilder<Uint8List?>(
+                                    future: _selectedImage!.readAsBytes(),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+                                        return Image.memory(
+                                          snapshot.data!,
+                                          width: mediaQuery.size.width * 0.7,
+                                          height: 180,
+                                          fit: BoxFit.cover,
+                                        );
+                                      } else {
+                                        return Container(
+                                          width: mediaQuery.size.width * 0.7,
+                                          height: 180,
+                                          color: Colors.grey[200],
+                                          child: const Center(child: CircularProgressIndicator()),
+                                        );
+                                      }
+                                    },
                                   ),
                                 ),
                                 Positioned(
