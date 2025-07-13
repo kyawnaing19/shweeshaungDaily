@@ -33,7 +33,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget>
   Future<void> _initAudioPlayer() async {
     try {
       // Use AssetSource instead of UrlSource for local assets
-      await _audioPlayer.setSource(AssetSource(widget.audioUrl));
+      await _audioPlayer.setSource(UrlSource(widget.audioUrl));
       final duration = await _audioPlayer.getDuration();
       if (duration != null) {
         setState(() {

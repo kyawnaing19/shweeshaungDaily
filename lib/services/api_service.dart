@@ -7,7 +7,7 @@ import 'package:shweeshaungdaily/services/token_service.dart';
 import '../models/user_model.dart';
 
 class ApiService {
-  static const String base = 'http://localhost:8080';
+  static const String base = 'https://shweeshaung.mooo.com';
   static const baseUrl = '$base/api/auth';
   static const feedBaseUrl = '$base/feeds';
   static const secbaseUrl = '$base/admin/schedules';

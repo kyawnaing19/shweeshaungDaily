@@ -195,7 +195,7 @@ class _ReactorAudioPageState extends State<ReactorAudioPage>
               Column(
                 children: [
                   const SizedBox(height: 12),
-                  const AudioPlayerWidget(audioUrl: 'audio/ella.mp3'),
+                  const AudioPlayerWidget(audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'),
                 ],
               )
             else
