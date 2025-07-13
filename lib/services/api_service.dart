@@ -8,6 +8,7 @@ import '../models/user_model.dart';
 
 class ApiService {
   static const String base = 'https://shweeshaung.mooo.com';
+  static const voiceBaseUrl = '$base/voice';
   static const baseUrl = '$base/api/auth';
   static const feedBaseUrl = '$base/feeds';
   static const secbaseUrl = '$base/admin/schedules';
@@ -26,7 +27,7 @@ class ApiService {
   }
 
   static Future<String> getUserName() async {
-     try {
+    try {
       final url = Uri.parse('$baseUrl/getUsername');
       final response = await AuthorizedHttpService.sendAuthorizedRequest(
         url,
@@ -223,60 +224,108 @@ class ApiService {
     return null;
   }
 
-  static Future<void> uploadFeed({
-  required String text,
-  required String audience,
-  XFile? photo,
+
+  static Future<void> uploadAudio({
+    required XFile? voice,
   }) async {
-  Future<http.Response> sendMultipart(String accessToken) async {
-  final url = Uri.parse(feedBaseUrl);
-  var request = http.MultipartRequest('POST', url)
-  ..fields['text'] = text
-  ..fields['audience'] = audience
-  ..headers['Authorization'] = 'Bearer $accessToken';
-  
-  if (photo != null) {
-  final bytes = await photo.readAsBytes();
-  request.files.add(
-  http.MultipartFile.fromBytes(
-  'photo',
-  bytes,
-  filename: photo.name,
-  ),
-  );
+    Future<http.Response> sendMultipart(String accessToken) async {
+      final url = Uri.parse(voiceBaseUrl);
+      var request =
+          http.MultipartRequest('POST', url)
+            ..headers['Authorization'] = 'Bearer $accessToken';
+
+      if (voice != null) {
+        final bytes = await voice.readAsBytes();
+        request.files.add(
+          http.MultipartFile.fromBytes('voice', bytes, filename: voice.name),
+        );
+      }
+
+      final streamedResponse = await request.send();
+      return await http.Response.fromStream(streamedResponse);
+    }
+
+    var tokens = await TokenService.loadTokens();
+    if (tokens == null) throw Exception('Not authenticated');
+
+    var response = await sendMultipart(tokens.accessToken);
+
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      // Try to refresh token
+      final refreshed = await ApiService.refreshAccessToken(
+        tokens.refreshToken,
+      );
+      if (refreshed != null &&
+          refreshed['accessToken'] != null &&
+          refreshed['refreshToken'] != null) {
+        await TokenService.saveTokens(
+          refreshed['accessToken'],
+          refreshed['refreshToken'],
+        );
+        response = await sendMultipart(refreshed['accessToken']);
+      } else {
+        await TokenService.clearTokens();
+        throw Exception('Session expired. Please log in again.');
+      }
+    }
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to upload feed: [${response.body}');
+    }
   }
-  
-  final streamedResponse = await request.send();
-  return await http.Response.fromStream(streamedResponse);
-  }
-  
-  var tokens = await TokenService.loadTokens();
-  if (tokens == null) throw Exception('Not authenticated');
-  
-  var response = await sendMultipart(tokens.accessToken);
-  
-  if (response.statusCode == 401 || response.statusCode == 403) {
-  // Try to refresh token
-  final refreshed = await ApiService.refreshAccessToken(
-  tokens.refreshToken,
-  );
-  if (refreshed != null &&
-  refreshed['accessToken'] != null &&
-  refreshed['refreshToken'] != null) {
-  await TokenService.saveTokens(
-  refreshed['accessToken'],
-  refreshed['refreshToken'],
-  );
-  response = await sendMultipart(refreshed['accessToken']);
-  } else {
-  await TokenService.clearTokens();
-  throw Exception('Session expired. Please log in again.');
-  }
-  }
-  
-  if (response.statusCode != 200) {
-  throw Exception('Failed to upload feed: [${response.body}');
-  }
+
+
+  static Future<void> uploadFeed({
+    required String text,
+    required String audience,
+    XFile? photo,
+  }) async {
+    Future<http.Response> sendMultipart(String accessToken) async {
+      final url = Uri.parse(feedBaseUrl);
+      var request =
+          http.MultipartRequest('POST', url)
+            ..fields['text'] = text
+            ..fields['audience'] = audience
+            ..headers['Authorization'] = 'Bearer $accessToken';
+
+      if (photo != null) {
+        final bytes = await photo.readAsBytes();
+        request.files.add(
+          http.MultipartFile.fromBytes('photo', bytes, filename: photo.name),
+        );
+      }
+
+      final streamedResponse = await request.send();
+      return await http.Response.fromStream(streamedResponse);
+    }
+
+    var tokens = await TokenService.loadTokens();
+    if (tokens == null) throw Exception('Not authenticated');
+
+    var response = await sendMultipart(tokens.accessToken);
+
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      // Try to refresh token
+      final refreshed = await ApiService.refreshAccessToken(
+        tokens.refreshToken,
+      );
+      if (refreshed != null &&
+          refreshed['accessToken'] != null &&
+          refreshed['refreshToken'] != null) {
+        await TokenService.saveTokens(
+          refreshed['accessToken'],
+          refreshed['refreshToken'],
+        );
+        response = await sendMultipart(refreshed['accessToken']);
+      } else {
+        await TokenService.clearTokens();
+        throw Exception('Session expired. Please log in again.');
+      }
+    }
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to upload feed: [${response.body}');
+    }
   }
 
   //schedule data to fetch
