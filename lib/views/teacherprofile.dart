@@ -1,6 +1,4 @@
-// import 'dart:io'; // Removed for web compatibility
-import 'dart:typed_data';
-
+import 'dart:io';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
-import 'package:shweeshaungdaily/views/audio_upload_page.dart';
+import 'package:shweeshaungdaily/views/voice_recorder_view.dart';
 
 final Map<String, String> audienceValueMap = {
   'Public': 'Public',
@@ -120,7 +118,6 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                         curve: Curves.ease,
                       );
                     },
-
                     child: Text(
                       'Shares',
                       style: TextStyle(
@@ -160,24 +157,34 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                       ),
                     ),
                   ),
+                  const SizedBox(width: 20),
+
+                  // 🔊 Mic icon added here
                   GestureDetector(
                     onTap: () {
-                      showDialog(
-                        context: context,
-                        builder:
-                            (context) => Dialog(
-                              backgroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: SizedBox(
-                                height: 600,
-                                width: 300,
-                                child:
-                                    AudioRecorderScreen(), // Your custom voice UI inside dialog
-                              ),
-                            ),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => VoiceMessageUI(),
+                        ),
                       );
+
+                      // showDialog(
+                      //   context: context,
+                      //   builder:
+                      //       (context) => Dialog(
+                      //         backgroundColor: Colors.white,
+                      //         shape: RoundedRectangleBorder(
+                      //           borderRadius: BorderRadius.circular(16),
+                      //         ),
+                      //         child: SizedBox(
+                      //           height: 350,
+                      //           width: 300,
+                      //           child:
+                      //               VoiceMessageUI(), // Your custom voice UI inside dialog
+                      //         ),
+                      //       ),
+                      // );
                       print('Mic icon tapped');
                     },
                     child: Icon(Icons.mic, color: kPrimaryDarkColor, size: 24),
@@ -395,7 +402,6 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
                 : _selectedAudience.startsWith('Sem ')
                 ? '${_selectedAudience.replaceAll('Sem ', '')} CST'
                 : _selectedAudience,
-        // On web, pass the XFile or its bytes instead of File
         photo: _selectedImage,
       );
 
@@ -641,25 +647,11 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: FutureBuilder<Uint8List?>(
-                  future: _selectedImage!.readAsBytes(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-                      return Image.memory(
-                        snapshot.data!,
-                        width: double.infinity,
-                        height: 200,
-                        fit: BoxFit.cover,
-                      );
-                    } else {
-                      return Container(
-                        width: double.infinity,
-                        height: 200,
-                        color: Colors.grey[200],
-                        child: const Center(child: CircularProgressIndicator()),
-                      );
-                    }
-                  },
+                child: Image.file(
+                  File(_selectedImage!.path),
+                  width: double.infinity,
+                  height: 200,
+                  fit: BoxFit.cover,
                 ),
               ),
               Positioned(
@@ -974,10 +966,12 @@ class _ShowSharesDialogState extends State<ShowSharesDialog> {
                               _showMajors
                                   ? ScrollbarTheme(
                                     data: ScrollbarThemeData(
-                                      thumbVisibility:
-                                          WidgetStateProperty.all(true),
-                                      trackVisibility:
-                                          WidgetStateProperty.all(true),
+                                      thumbVisibility: WidgetStateProperty.all(
+                                        true,
+                                      ),
+                                      trackVisibility: WidgetStateProperty.all(
+                                        true,
+                                      ),
                                       thumbColor: WidgetStateProperty.all(
                                         const Color(0xFF48C4BC),
                                       ),
@@ -1267,25 +1261,11 @@ class _UploadStoryDialogState extends State<UploadStoryDialog> {
                               children: [
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(16),
-                                  child: FutureBuilder<Uint8List?>(
-                                    future: _selectedImage!.readAsBytes(),
-                                    builder: (context, snapshot) {
-                                      if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-                                        return Image.memory(
-                                          snapshot.data!,
-                                          width: mediaQuery.size.width * 0.7,
-                                          height: 180,
-                                          fit: BoxFit.cover,
-                                        );
-                                      } else {
-                                        return Container(
-                                          width: mediaQuery.size.width * 0.7,
-                                          height: 180,
-                                          color: Colors.grey[200],
-                                          child: const Center(child: CircularProgressIndicator()),
-                                        );
-                                      }
-                                    },
+                                  child: Image.file(
+                                    File(_selectedImage!.path),
+                                    width: mediaQuery.size.width * 0.7,
+                                    height: 180,
+                                    fit: BoxFit.cover,
                                   ),
                                 ),
                                 Positioned(
