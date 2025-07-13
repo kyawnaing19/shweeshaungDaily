@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
+import 'package:shweeshaungdaily/views/audio_upload_page.dart';
 
 final Map<String, String> audienceValueMap = {
   'Public': 'Public',
@@ -158,6 +159,28 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                                 : TextDecoration.none,
                       ),
                     ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder:
+                            (context) => Dialog(
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: SizedBox(
+                                height: 600,
+                                width: 300,
+                                child:
+                                    AudioRecorderScreen(), // Your custom voice UI inside dialog
+                              ),
+                            ),
+                      );
+                      print('Mic icon tapped');
+                    },
+                    child: Icon(Icons.mic, color: kPrimaryDarkColor, size: 24),
                   ),
                 ],
               ),

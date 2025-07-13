@@ -8,7 +8,6 @@ import '../models/user_model.dart';
 
 class ApiService {
   static const String base = 'https://shweeshaung.mooo.com';
-  static const voiceBaseUrl = '$base/voice';
   static const baseUrl = '$base/api/auth';
   static const feedBaseUrl = '$base/feeds';
   static const secbaseUrl = '$base/admin/schedules';
@@ -44,6 +43,8 @@ class ApiService {
       return '';
     }
   }
+
+
 
   static Future<bool> register(UserRegistrationData user) async {
     print(jsonEncode(user.toJson()));
@@ -229,7 +230,7 @@ class ApiService {
     required XFile? voice,
   }) async {
     Future<http.Response> sendMultipart(String accessToken) async {
-      final url = Uri.parse(voiceBaseUrl);
+      final url = Uri.parse("$feedBaseUrl/audio");
       var request =
           http.MultipartRequest('POST', url)
             ..headers['Authorization'] = 'Bearer $accessToken';
@@ -390,4 +391,26 @@ class ApiService {
       throw Exception('Failed to load subjects for note');
     }
   }
+
+
+  static Future<List<dynamic>> getAudios() async {
+    final uri = Uri.parse('$feedBaseUrl/audio');
+    try{
+    final response = await AuthorizedHttpService.sendAuthorizedRequest(
+      uri,
+      method: 'GET',
+    );
+
+    if (response != null && response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data;
+    } else {
+      return [];
+    }
+  
+  } catch (e) {
+      throw Exception('Error fetching audio files: $e');
+    }
+  }
+  
 }

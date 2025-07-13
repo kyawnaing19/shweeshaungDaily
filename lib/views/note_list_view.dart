@@ -4,7 +4,6 @@ import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/utils/note_database/note_database.dart';
 import 'note_editor_page.dart';
-import 'package:animations/animations.dart'; // Make sure to import this
 
 class NotePage extends StatefulWidget {
   final VoidCallback? onBack;
