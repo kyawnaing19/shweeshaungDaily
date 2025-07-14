@@ -34,12 +34,14 @@ class _ReactorAudioPageState extends State<ReactorAudioPage>
     _animations.clear();
     for (int i = 0; i < audioList.length; i++) {
       final delay = i * 300;
+      final start = (delay / 1500).clamp(0.0, 1.0);
       final animation = Tween<double>(begin: 0, end: 1).animate(
         CurvedAnimation(
           parent: _animationController,
-          curve: Interval(delay / 1500, 1.0, curve: Curves.elasticOut),
+          curve: Interval(start, 1.0, curve: Curves.elasticOut),
         ),
       );
+
       _animations.add(animation);
     }
     setState(() {
@@ -112,7 +114,7 @@ class _ReactorAudioPageState extends State<ReactorAudioPage>
               ),
               child:
                   isLoading
-                      ? const Center(child: CircularProgressIndicator(),)
+                      ? const Center(child: CircularProgressIndicator())
                       : audioList.isEmpty
                       ? const Center(child: Text('No audio found'))
                       : ListView.separated(

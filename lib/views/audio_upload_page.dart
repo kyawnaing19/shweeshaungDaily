@@ -1,11 +1,28 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
+
+final Map<String, String> audienceValueMap = {
+  'Public': 'Public',
+  'Teacher': 'Teacher',
+  'Sem 1': '1',
+  'Sem 2': '2',
+  'Sem 3': '3',
+  'Sem 4': '4',
+  'Sem 5': '5',
+  'Sem 6': '6',
+  'Sem 7': '7',
+  'Sem 8': '8',
+  'Majors': 'Majors',
+};
+
+const List<String> majorsList = ['CST', 'CS', 'CT'];
 
 class AudioRecorderScreen extends StatefulWidget {
   const AudioRecorderScreen({super.key});
@@ -20,6 +37,10 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
   String? _audioPath;
   bool _isUploading = false;
   String _statusText = "Press the microphone to start recording";
+  final ScrollController _scrollController = ScrollController();
+  String _selectedAudience = 'Public';
+  String? _selectedMajor;
+  String? _selectedSemester;
 
   String _formatTime(DateTime time) {
     // Implement your time formatting logic
@@ -140,7 +161,16 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
       await ApiService.uploadAudio(
         voice: audioFile,
         title: 'audiotitle',
-        audience: 'public',
+        audience:
+            _selectedAudience == 'Public'
+                ? 'public'
+                : _selectedAudience == 'Majors' &&
+                    _selectedMajor != null &&
+                    _selectedSemester != null
+                ? '${_selectedSemester?.replaceAll('Sem ', '') ?? ''} ${_selectedMajor ?? ''}'
+                : _selectedAudience.startsWith('Sem ')
+                ? '${_selectedAudience.replaceAll('Sem ', '')} CST'
+                : _selectedAudience,
       );
 
       // Handle success
@@ -178,14 +208,25 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Audio Recorder',
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
+        title: Padding(
+          padding: const EdgeInsets.only(left: 0), // Left padding for title
+          child: const Text(
+            'Audio Recorder',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
+          ),
         ),
-        centerTitle: true,
+        centerTitle: false,
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: Colors.black87,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(
+              right: 16.0,
+            ), // Right padding for actions
+            child: _buildAudienceSelector(),
+          ),
+        ],
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -195,98 +236,168 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
             colors: [Colors.white, Colors.grey[50]!],
           ),
         ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                // Your existing recording card
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 12,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
+        child: Column(
+          children: [
+            // Rest of your content
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
                   child: Column(
-                    children: [
-                      Text(
-                        _statusText,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 40),
-                      _buildRecordButton(),
-                      const SizedBox(height: 30),
-                      _buildUploadButton(),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 24), // Space between cards
-                // New audio history card
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 12,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Audio History",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF3A7A72),
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Loop through 5 audio history items
-                      ...List.generate(
-                        5,
-                        (index) => Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: _buildAudioHistoryItem(
-                            title: "Recording ${index + 1}",
-                            author: "User",
-                            time: DateTime.now().subtract(
-                              Duration(hours: index),
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      // Your existing recording card
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 12,
+                              spreadRadius: 2,
                             ),
-                          ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              _statusText,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 40),
+                            _buildRecordButton(),
+                            const SizedBox(height: 30),
+                            _buildUploadButton(),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20), // Space between cards
+                      // New audio history card
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 12,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Audio History",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF3A7A72),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Loop through 5 audio history items
+                            ...List.generate(
+                              5,
+                              (index) => Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: _buildAudioHistoryItem(
+                                  title: "Recording ${index + 1}",
+                                  author: "User",
+                                  time: DateTime.now().subtract(
+                                    Duration(hours: index),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
 
       // Helper method to build history item
+    );
+  }
+
+  Widget _buildAudienceSelector() {
+    return GestureDetector(
+      onTap: () async {
+        final selected = await showDialog<String>(
+          context: context,
+          builder: (context) => const ShowSharesDialog(),
+        );
+        if (selected != null) {
+          setState(() {
+            if (selected.contains('::')) {
+              final parts = selected.split('::');
+              _selectedSemester = parts[0];
+              _selectedMajor = parts[1];
+              _selectedAudience = 'Majors';
+            } else if (selected.startsWith('Majors-')) {
+              _selectedAudience = 'Majors';
+              _selectedMajor = selected.split('-')[1];
+              _selectedSemester = null;
+            } else {
+              _selectedAudience = selected;
+              _selectedMajor = null;
+              _selectedSemester = null;
+            }
+          });
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE8F7F6),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: const Color(0xFF48C4BC).withOpacity(0.4),
+            width: 1.2,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              _selectedAudience == 'Public' ? Icons.public : Icons.people_alt,
+              size: 18,
+              color: const Color(0xFF317575),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              _selectedAudience == 'Majors' &&
+                      _selectedMajor != null &&
+                      _selectedSemester != null
+                  ? '$_selectedSemester ($_selectedMajor)'
+                  : _selectedAudience,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF317575),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -445,6 +556,335 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ShowSharesDialog extends StatefulWidget {
+  const ShowSharesDialog({super.key});
+
+  @override
+  State<ShowSharesDialog> createState() => _ShowSharesDialogState();
+}
+
+class _ShowSharesDialogState extends State<ShowSharesDialog> {
+  bool _showMajors = false;
+  String? _pendingSem;
+
+  static const List<String> _audienceList = [
+    'Public',
+    'Teacher',
+    'Sem 1',
+    'Sem 2',
+    'Sem 3',
+    'Sem 4',
+    'Sem 5',
+    'Sem 6',
+    'Sem 7',
+    'Sem 8',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async {
+        if (_showMajors && _pendingSem != null) {
+          Navigator.pop(context, 'Public');
+          return false;
+        }
+        return true;
+      },
+      child: Dialog(
+        insetPadding: const EdgeInsets.all(24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 30,
+                spreadRadius: 5,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5FDFC),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
+                  ),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: const Color(0xFF48C4BC).withOpacity(0.2),
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    'Select Audience',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF317575),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Content
+              SizedBox(
+                height: 280,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Row(
+                    children: [
+                      // Left Column (Audiences)
+                      Expanded(
+                        child: ScrollbarTheme(
+                          data: ScrollbarThemeData(
+                            thumbVisibility: WidgetStateProperty.all(true),
+                            trackVisibility: WidgetStateProperty.all(true),
+                            thumbColor: WidgetStateProperty.all(
+                              const Color(0xFF48C4BC),
+                            ),
+                            trackColor: WidgetStateProperty.all(
+                              const Color(0xFFE8F7F6),
+                            ),
+                            thickness: WidgetStateProperty.all(6),
+                            radius: const Radius.circular(10),
+                            crossAxisMargin: 2,
+                          ),
+                          child: Scrollbar(
+                            child: ListView.separated(
+                              padding: const EdgeInsets.only(right: 4),
+                              itemCount: _audienceList.length,
+                              separatorBuilder:
+                                  (_, __) => Divider(
+                                    height: 1,
+                                    color: const Color(
+                                      0xFF48C4BC,
+                                    ).withOpacity(0.1),
+                                  ),
+                              itemBuilder: (context, index) {
+                                final item = _audienceList[index];
+                                final isSemWithMajors = index >= 3;
+                                return Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(10),
+                                    onTap: () {
+                                      if (!isSemWithMajors) {
+                                        Navigator.pop(context, item);
+                                      } else {
+                                        setState(() {
+                                          _showMajors = true;
+                                          _pendingSem = item;
+                                        });
+                                      }
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 14,
+                                        horizontal: 12,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            item == 'Public'
+                                                ? Icons.public
+                                                : Icons.school,
+                                            size: 20,
+                                            color: const Color(0xFF317575),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Text(
+                                            item,
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: const Color(0xFF317575),
+                                            ),
+                                          ),
+                                          if (isSemWithMajors) ...[
+                                            const Spacer(),
+                                            const Icon(
+                                              Icons.chevron_right,
+                                              size: 20,
+                                              color: Color(0xFF48C4BC),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Vertical divider
+                      Container(
+                        width: 1,
+                        height: double.infinity,
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        color: const Color(0xFF48C4BC).withOpacity(0.2),
+                      ),
+
+                      // Right Column (Majors)
+                      Expanded(
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          child:
+                              _showMajors
+                                  ? ScrollbarTheme(
+                                    data: ScrollbarThemeData(
+                                      thumbVisibility: WidgetStateProperty.all(
+                                        true,
+                                      ),
+                                      trackVisibility: WidgetStateProperty.all(
+                                        true,
+                                      ),
+                                      thumbColor: WidgetStateProperty.all(
+                                        const Color(0xFF48C4BC),
+                                      ),
+                                      trackColor: WidgetStateProperty.all(
+                                        const Color(0xFFE8F7F6),
+                                      ),
+                                      thickness: WidgetStateProperty.all(6),
+                                      radius: const Radius.circular(10),
+                                      crossAxisMargin: 2,
+                                    ),
+                                    child: Scrollbar(
+                                      child: ListView.separated(
+                                        padding: const EdgeInsets.only(left: 4),
+                                        itemCount: majorsList.length,
+                                        separatorBuilder:
+                                            (_, __) => Divider(
+                                              height: 1,
+                                              color: const Color(
+                                                0xFF48C4BC,
+                                              ).withOpacity(0.1),
+                                            ),
+                                        itemBuilder: (context, index) {
+                                          final major = majorsList[index];
+                                          return Material(
+                                            color: Colors.transparent,
+                                            child: InkWell(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              onTap: () {
+                                                if (_pendingSem != null) {
+                                                  Navigator.pop(
+                                                    context,
+                                                    '$_pendingSem::$major',
+                                                  );
+                                                }
+                                              },
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 14,
+                                                      horizontal: 12,
+                                                    ),
+                                                child: Row(
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.architecture,
+                                                      size: 20,
+                                                      color: Color(0xFF317575),
+                                                    ),
+                                                    const SizedBox(width: 12),
+                                                    Text(
+                                                      major,
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                            fontSize: 14,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color: const Color(
+                                                              0xFF317575,
+                                                            ),
+                                                          ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  )
+                                  : Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(16),
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: const Color(0xFFE8F7F6),
+                                          ),
+                                          child: const Icon(
+                                            Icons.people_alt,
+                                            size: 30,
+                                            color: Color(0xFF317575),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          'Select a semester\nfirst to see majors',
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 13,
+                                            color: const Color(
+                                              0xFF317575,
+                                            ).withOpacity(0.7),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Footer
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5FDFC),
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(20),
+                  ),
+                  border: Border(
+                    top: BorderSide(
+                      color: const Color(0xFF48C4BC).withOpacity(0.2),
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

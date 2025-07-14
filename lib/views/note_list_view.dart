@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/utils/note_database/note_database.dart';
+import 'package:shweeshaungdaily/views/animated_search_bar.dart';
 import 'note_editor_page.dart';
 
 class NotePage extends StatefulWidget {
@@ -15,6 +16,9 @@ class NotePage extends StatefulWidget {
 }
 
 class _NotePageState extends State<NotePage> {
+  TextEditingController _searchController = TextEditingController();
+  FocusNode _searchFocusNode = FocusNode();
+
   String formatToMMT(String? utcString) {
     if (utcString == null) return 'Unknown';
 
@@ -39,7 +43,18 @@ class _NotePageState extends State<NotePage> {
   @override
   void initState() {
     super.initState();
+    _searchFocusNode.addListener(() {
+      if (_searchFocusNode.hasFocus && _searchQuery.isEmpty) {
+        _searchFocusNode.unfocus();
+      }
+    });
     _loadNotes();
+  }
+
+  @override
+  void dispose() {
+    _searchFocusNode.dispose();
+    super.dispose();
   }
 
   Future<void> _loadNotes() async {
@@ -87,32 +102,14 @@ class _NotePageState extends State<NotePage> {
         child: Column(
           children: [
             // Search bar added for better functionality
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: TextField(
-                decoration: const InputDecoration(
-                  hintText: 'Search notes...',
-                  border: InputBorder.none,
-                  icon: Icon(Icons.search, color: Color(0xFF4DB6AC)),
-                  // suffixIcon: Icon(Icons.tune, color: Color(0xFF4DB6AC)),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value;
-                  });
-                },
-              ),
+            AnimatedSearchBar(
+              controller: _searchController,
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
+              hintText: 'Search notes...',
             ),
             const SizedBox(height: 16),
             Expanded(
@@ -157,19 +154,60 @@ class _NotePageState extends State<NotePage> {
                       onTap: () async {
                         final updatedNote = await Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder:
-                                (_) => NoteEditorPage(
-                                  title: note['subject'],
-                                  initialText: note['content'],
-                                ), // Added dynamic initial text
+                          PageRouteBuilder(
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) =>
+                                    NoteEditorPage(
+                                      title: note['subject'],
+                                      initialText: note['content'],
+                                    ),
+                            transitionsBuilder: (
+                              context,
+                              animation,
+                              secondaryAnimation,
+                              child,
+                            ) {
+                              return Stack(
+                                children: [
+                                  FadeTransition(
+                                    opacity: Tween<double>(
+                                      begin: 1.0,
+                                      end: 0.7,
+                                    ).animate(
+                                      CurvedAnimation(
+                                        parent: animation,
+                                        curve: Curves.easeOut,
+                                      ),
+                                    ),
+                                  ),
+                                  FadeTransition(
+                                    opacity: animation,
+                                    child: ScaleTransition(
+                                      scale: Tween<double>(
+                                        begin: 0.8,
+                                        end: 1.0,
+                                      ).animate(
+                                        CurvedAnimation(
+                                          parent: animation,
+                                          curve: Curves.fastOutSlowIn,
+                                        ),
+                                      ),
+                                      child: child,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                            transitionDuration: const Duration(
+                              milliseconds: 500,
+                            ),
                           ),
                         );
 
                         if (updatedNote != null) {
                           await NoteDatabase().updateNote(
                             note['subject'],
-                            updatedNote, // store as delta again
+                            updatedNote,
                           );
                           _loadNotes();
                         }
