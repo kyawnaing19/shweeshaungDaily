@@ -6,7 +6,10 @@ import 'package:http/http.dart' as http;
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:cross_file/cross_file.dart';
+import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
+import 'package:shweeshaungdaily/utils/audio_timeformat.dart';
+import 'package:shweeshaungdaily/views/audio_player_widget.dart';
 
 final Map<String, String> audienceValueMap = {
   'Public': 'Public',
@@ -31,16 +34,23 @@ class AudioRecorderScreen extends StatefulWidget {
   State<AudioRecorderScreen> createState() => _AudioRecorderScreenState();
 }
 
-class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
+class _AudioRecorderScreenState extends State<AudioRecorderScreen>
+    with SingleTickerProviderStateMixin {
   final AudioRecorder _audioRecorder = AudioRecorder();
+  final TextEditingController _titleController = TextEditingController();
+  final List<Animation<double>> _animations = [];
+  final ScrollController _scrollController = ScrollController();
   bool _isRecording = false;
   String? _audioPath;
   bool _isUploading = false;
   String _statusText = "Press the microphone to start recording";
-  final ScrollController _scrollController = ScrollController();
   String _selectedAudience = 'Public';
   String? _selectedMajor;
   String? _selectedSemester;
+  bool isLoading = true;
+  List<dynamic> audioList = [];
+  List<bool> cardExpanded = [];
+  late AnimationController _animationController;
 
   String _formatTime(DateTime time) {
     // Implement your time formatting logic
@@ -51,9 +61,57 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _titleController.addListener(() => setState(() {}));
+    _fetchAudios();
+
+  }
+
+  void _onTitleChanged() {
+    setState(() {});
+  }
+
+  @override
   void dispose() {
+    _titleController.removeListener(_onTitleChanged);
+    _titleController.dispose();
     _audioRecorder.dispose();
     super.dispose();
+  }
+
+  void _toggleCard(int index) {
+    setState(() {
+      for (int i = 0; i < cardExpanded.length; i++) {
+        cardExpanded[i] = i == index ? !cardExpanded[i] : false;
+      }
+    });
+  }
+
+  Future<void> _fetchAudios() async {
+    audioList = await ApiService.getAudios();
+    cardExpanded = List.generate(audioList.length, (index) => false);
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+    _animations.clear();
+    for (int i = 0; i < audioList.length; i++) {
+      final delay = i * 300;
+      final start = (delay / 1500).clamp(0.0, 1.0);
+      final animation = Tween<double>(begin: 0, end: 1).animate(
+        CurvedAnimation(
+          parent: _animationController,
+          curve: Interval(start, 1.0, curve: Curves.elasticOut),
+        ),
+      );
+
+      _animations.add(animation);
+    }
+    setState(() {
+      isLoading = false;
+    });
+    _animationController.forward();
   }
 
   /// Starts the audio recording process.
@@ -160,7 +218,7 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
       // Ensure ApiService and its methods are defined in your project.
       await ApiService.uploadAudio(
         voice: audioFile,
-        title: 'audiotitle',
+        title: _titleController.text,
         audience:
             _selectedAudience == 'Public'
                 ? 'public'
@@ -207,6 +265,8 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset:
+          true, // Default is true, but ensure it's not false
       appBar: AppBar(
         title: Padding(
           padding: const EdgeInsets.only(left: 0), // Left padding for title
@@ -262,18 +322,38 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
                         ),
                         child: Column(
                           children: [
+                            // Add TextField for audio title at the top
+                            TextField(
+                              controller: _titleController,
+                              decoration: InputDecoration(
+                                labelText: 'Audio Title',
+                                hintText: 'Enter your audio title',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 14,
+                                ),
+                              ),
+                              style: const TextStyle(fontSize: 14),
+                              maxLines: 1,
+                            ),
+                            const SizedBox(
+                              height: 15,
+                            ), // Add spacing between TextField and status text
                             Text(
                               _statusText,
                               style: const TextStyle(
-                                fontSize: 16,
+                                fontSize: 13,
                                 color: Colors.black54,
                                 fontWeight: FontWeight.w500,
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 40),
+                            const SizedBox(height: 10),
                             _buildRecordButton(),
-                            const SizedBox(height: 30),
+                            const SizedBox(height: 10),
                             _buildUploadButton(),
                           ],
                         ),
@@ -281,48 +361,63 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
 
                       const SizedBox(height: 20), // Space between cards
                       // New audio history card
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 12,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Audio History",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF3A7A72),
+                      Expanded(
+                        child: Container(
+                          // margin: const EdgeInsets.all(16),
+                           padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD3F4F3),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
                               ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Loop through 5 audio history items
-                            ...List.generate(
-                              5,
-                              (index) => Padding(
-                                padding: const EdgeInsets.only(bottom: 16),
-                                child: _buildAudioHistoryItem(
-                                  title: "Recording ${index + 1}",
-                                  author: "User",
-                                  time: DateTime.now().subtract(
-                                    Duration(hours: index),
+                            ],
+                          ),
+                          child:
+                              isLoading
+                                  ? const Center(
+                                    child: CircularProgressIndicator(),
+                                  )
+                                  : audioList.isEmpty
+                                  ? const Center(child: Text('No audio found'))
+                                  : ListView.separated(
+                                    itemCount: audioList.length,
+                                    separatorBuilder:
+                                        (_, __) => const SizedBox(height: 12),
+                                    itemBuilder: (context, index) {
+                                      return AnimatedBuilder(
+                                        animation: _animations[index],
+                                        builder: (context, child) {
+                                          final animationValue =
+                                              _animations[index].value.clamp(
+                                                0.0,
+                                                1.0,
+                                              );
+                                          return Transform.translate(
+                                            offset: Offset(
+                                              0,
+                                              (1 - animationValue) * 100,
+                                            ),
+                                            child: Opacity(
+                                              opacity: animationValue,
+                                              child: Transform.scale(
+                                                scale:
+                                                    0.8 + 0.2 * animationValue,
+                                                child: child,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        child: _buildAudioCard(
+                                          index,
+                                          cardExpanded[index],
+                                        ),
+                                      );
+                                    },
                                   ),
-                                ),
-                              ),
-                            ),
-                          ],
                         ),
                       ),
                     ],
@@ -333,8 +428,106 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
           ],
         ),
       ),
+    );
+  }
 
-      // Helper method to build history item
+  Widget _buildAudioCard(int index, bool isExpanded) {
+    final audio = audioList[index];
+    final title = audio['title'] ?? 'No Title';
+    final author = audio['teacherName'] ?? 'Unknown';
+    final audioUrl = '${ApiService.base}/' + audio['fileUrl'];
+    final time = audio['createdAt'] ?? '';
+    return GestureDetector(
+      onTap: () => _toggleCard(index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          gradient:
+              isExpanded
+                  ? LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white,
+                      const Color(0xFFD3F4F3).withOpacity(0.7),
+                    ],
+                  )
+                  : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isExpanded ? 0.15 : 0.1),
+              blurRadius: isExpanded ? 12 : 6,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF3A7A72),
+                        ),
+                        softWrap: true,
+                        overflow: TextOverflow.visible,
+                      ),
+                      Text(
+                        "By $author",
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF3A7A72),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                AnimatedRotation(
+                  turns: isExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 300),
+                  child: const Icon(
+                    Icons.keyboard_arrow_down,
+                    color: Color(0xFF3A7A72),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (isExpanded)
+              Column(
+                children: [
+                  const SizedBox(height: 12),
+                  AudioPlayerWidget(audioUrl: audioUrl),
+                ],
+              )
+            else
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  formatFacebookStyleTime(time),
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -401,93 +594,25 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
     );
   }
 
-  Widget _buildAudioHistoryItem({
-    required String title,
-    required String author,
-    required DateTime time,
-  }) {
-    bool isExpanded = true; // You'll need to manage this state properly
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF3A7A72),
-                  ),
-                ),
-                Text(
-                  "By $author",
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFF3A7A72),
-                  ),
-                ),
-              ],
-            ),
-            AnimatedRotation(
-              turns: isExpanded ? 0.5 : 0,
-              duration: const Duration(milliseconds: 300),
-              child: const Icon(
-                Icons.keyboard_arrow_down,
-                color: Color(0xFF3A7A72),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        // if (isExpanded)
-        //   Column(
-        //     children: [
-        //       const SizedBox(height: 12),
-        //       AudioPlayerWidget(audioUrl: "your_audio_url_here"),
-        //     ],
-        //   )
-        // else
-        //   Align(
-        //     alignment: Alignment.centerRight,
-        //     child: Text(
-        //       _formatTime(time), // Implement your time formatting
-        //       style: TextStyle(
-        //         color: Colors.grey[600],
-        //         fontWeight: FontWeight.bold,
-        //         fontSize: 11,
-        //       ),
-        //     ),
-        //   ),
-      ],
-    );
-  }
-
   Widget _buildRecordButton() {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: (_isRecording ? Colors.red[400]! : Colors.blue[400]!)
-                .withOpacity(0.3),
-            blurRadius: 10,
+            color: (_isRecording ? Colors.red : kShadowColor).withOpacity(0.5),
+            blurRadius: 12,
             spreadRadius: 2,
           ),
         ],
       ),
       child: FloatingActionButton.large(
         onPressed: _onRecordButtonPressed,
-        backgroundColor: _isRecording ? Colors.red[400] : Colors.blue[400],
+        backgroundColor: _isRecording ? Colors.red[400] : kPrimaryColor,
         elevation: 0,
         child: Icon(
           _isRecording ? Icons.stop : Icons.mic,
-          size: 36,
+          size: 45,
           color: Colors.white,
         ),
       ),
@@ -515,46 +640,67 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
       );
     }
 
-    return AnimatedContainer(
+    final isButtonEnabled =
+        _audioPath != null && _titleController.text.trim().isNotEmpty;
+
+    return AnimatedOpacity(
       duration: const Duration(milliseconds: 300),
-      width: _audioPath != null ? null : 0,
-      height: _audioPath != null ? null : 0,
-      child: Material(
-        borderRadius: BorderRadius.circular(12),
-        elevation: 0,
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: _audioPath != null ? _handleUpload : null,
-          child: Ink(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.blue[400]!, Colors.blue[600]!],
-              ),
+      opacity: _audioPath != null ? 1.0 : 0.0,
+      curve: Curves.easeInOut,
+      child: AnimatedScale(
+        duration: const Duration(milliseconds: 300),
+        scale: _audioPath != null ? 1.0 : 0.8,
+        curve: Curves.easeInOut,
+        child: AbsorbPointer(
+          absorbing: !isButtonEnabled, // Prevent tap when disabled
+          child: Opacity(
+            opacity: isButtonEnabled ? 1.0 : 0.4, // Visually dim when disabled
+            child: Material(
               borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.blue.withOpacity(0.2),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.cloud_upload, color: Colors.white),
-                SizedBox(width: 8),
-                Text(
-                  'Upload Audio',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+              elevation: isButtonEnabled ? 2 : 0,
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: isButtonEnabled ? _handleUpload : null,
+                child: Ink(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors:
+                          isButtonEnabled
+                              ? [Colors.blue[400]!, Colors.blue[600]!]
+                              : [Colors.grey[400]!, Colors.grey[500]!],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      if (isButtonEnabled)
+                        BoxShadow(
+                          color: Colors.blue.withOpacity(0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.cloud_upload, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        'Upload Audio',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),
