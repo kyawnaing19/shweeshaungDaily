@@ -219,7 +219,7 @@ class _HomePageState extends State<HomeScreenPage>
               .map((url) => '$baseUrl/$url')
               .toSet();
 
-      await ImageCacheManager.clearUnusedImages(imageUrls);
+      await ImageCacheManager.clearUnusedFeedImages(imageUrls);
     } catch (e) {
       // print("hhhhh");
       // API failed – try to reload cached feed

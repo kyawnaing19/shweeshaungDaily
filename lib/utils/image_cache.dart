@@ -14,9 +14,14 @@ class ImageCacheManager {
     return cacheDir.path;
   }
 
-  static String _generateFileName(String url) {
-    return md5.convert(utf8.encode(url)).toString(); // Use MD5 for unique ID
+ static String _generateFileName(String url) {
+  final hash = md5.convert(utf8.encode(url)).toString();
+  if (url.startsWith('https://shweeshaung.mooo.com/tfeedphoto/story')) {
+    return 'story_$hash';
   }
+  return 'feed_$hash';
+}
+
 
   static Future<File> _getFile(String url) async {
     final path = await _getCacheDirPath();
@@ -44,18 +49,49 @@ class ImageCacheManager {
     }
   }
 
-  static Future<void> clearUnusedImages(Set<String> activeUrls) async {
-    final dirPath = await _getCacheDirPath();
-    final dir = Directory(dirPath);
-    final files = dir.listSync();
-    for (final file in files) {
-      if (file is File) {
-        final fileName = file.path.split('/').last.split('.jpg').first;
-        final urlHash = activeUrls.map((url) => _generateFileName(url));
-        if (!urlHash.contains(fileName)) {
-          await file.delete();
-        }
+
+  static Future<void> clearUnusedStoryImages(Set<String> activeStoryUrls) async {
+  final dirPath = await _getCacheDirPath();
+  final dir = Directory(dirPath);
+  final files = dir.listSync();
+
+  final activeStoryHashes = activeStoryUrls
+      .map((url) => _generateFileName(url))
+      .where((name) => name.startsWith('story_')) // keep only feed hashes
+      .toSet();
+
+  for (final file in files) {
+    if (file is File) {
+      final fileName = file.path.split('/').last.split('.jpg').first;
+
+      // Only delete if it's a feed image and not active
+      if (fileName.startsWith('story_') && !activeStoryHashes.contains(fileName)) {
+        await file.delete();
       }
     }
   }
+}
+
+static Future<void> clearUnusedFeedImages(Set<String> activeStoryUrls) async {
+  final dirPath = await _getCacheDirPath();
+  final dir = Directory(dirPath);
+  final files = dir.listSync();
+
+  final activeStoryHashes = activeStoryUrls
+      .map((url) => _generateFileName(url))
+      .where((name) => name.startsWith('feed_')) // keep only feed hashes
+      .toSet();
+
+  for (final file in files) {
+    if (file is File) {
+      final fileName = file.path.split('/').last.split('.jpg').first;
+
+      // Only delete if it's a feed image and not active
+      if (fileName.startsWith('feed_') && !activeStoryHashes.contains(fileName)) {
+        await file.delete();
+      }
+    }
+  }
+}
+
 }

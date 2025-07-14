@@ -1,5 +1,13 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
-import 'package:dotted_border/dotted_border.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shweeshaungdaily/colors.dart';
+import 'package:shweeshaungdaily/utils/image_cache.dart';
+import '../services/api_service.dart';
+import 'package:shweeshaungdaily/services/authorize_image.dart';
 
 // List of story privacy/status options for backend integration
 final List<String> storyStatusOptions = [
@@ -24,6 +32,76 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final String baseUrl = ApiService.base;
+  Map<String, dynamic>? _profile;
+  bool _loading = true;
+  List<dynamic> _stories = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProfile();
+    _fetchStories();
+  }
+
+  Future<List<Map<String, dynamic>>> loadStoryItems() async {
+  final prefs = await SharedPreferences.getInstance();
+  final jsonString = prefs.getString('cached_story');
+
+  if (jsonString == null) return [];
+
+  try {
+    final List<dynamic> decodedList = jsonDecode(jsonString);
+    return decodedList.cast<Map<String, dynamic>>();
+  } catch (e) {
+    print('Error decoding feed items: $e');
+    return [];
+  }
+}
+
+  Future<void> _fetchProfile() async {
+    final profile = await ApiService.getProfile();
+    setState(() {
+      _profile = profile;
+      _loading = false;
+    });
+  }
+
+  Future<void> _fetchStories() async {
+    try {
+      final result = await ApiService.getStory();
+
+      // Save feed to local cache
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('cached_story', jsonEncode(result));
+
+      setState(() {
+        _stories = result;
+      });
+
+      final imageUrls =
+          _stories
+              .map((item) => item['url'])
+              .where((url) => url != null && url != '')
+              .map((url) => '$baseUrl/$url')
+              .toSet();
+
+      await ImageCacheManager.clearUnusedStoryImages(imageUrls);
+
+      // 🧹 Clean up cached images not in feed
+        
+    } catch (e) {
+      // print("hhhhh");
+      // API failed – try to reload cached feed
+      final cached = await loadStoryItems();
+      setState(() {
+        // print("hhhhh");
+        _stories = cached;
+        //feedErrorMessage = 'Failed to load feed: ${e.toString()}'
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,27 +138,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          'Mg Pyae Phyo Aung',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                    child: _loading
+                        ? const Center(child: CircularProgressIndicator())
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _profile?['userName'] ?? 'No Name',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              Text(
+                                _profile?['nickName'] != null ? '(${_profile?['nickName']})' : '',
+                                style: const TextStyle(color: Colors.white, fontSize: 14),
+                              ),
+                              Text(
+                                _profile?['bio'] ?? '',
+                                style: const TextStyle(color: Colors.white, fontSize: 12),
+                              ),
+                            ],
                           ),
-                        ),
-                        Text(
-                          '( Kyote Gyi )',
-                          style: TextStyle(color: Colors.white, fontSize: 14),
-                        ),
-                        Text(
-                          'I like playing efootball mobile game',
-                          style: TextStyle(color: Colors.white, fontSize: 12),
-                        ),
-                      ],
-                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.edit, color: Colors.white),
@@ -96,7 +176,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'Stories',
+                'Album',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 23,
@@ -109,88 +189,80 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // Grid
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: GridView.builder(
-                itemCount: 9,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 6,
-                  mainAxisSpacing: 6,
-                  childAspectRatio:
-                      0.63, // Adjust this value for width/height ratio
-                ),
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    return InkWell(
-                      borderRadius: BorderRadius.circular(5),
-                      onTap: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => const UploadStoryDialog(),
-                        );
-                      },
-                      child: SizedBox(
-                        width: 100, // Set your desired width
-                        height: 120, // Set your desired height
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFC9D4D4),
-                            borderRadius: BorderRadius.circular(
-                              5,
-                            ), // Customizable borderRadius
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.add,
-                              size: 30,
-                              color: Colors.grey,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: GridView.builder(
+                        itemCount: _stories.length + 1,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 6,
+                              mainAxisSpacing: 6,
+                              childAspectRatio: 0.63,
                             ),
-                          ),
-                        ),
-                      ),
-                    );
-                  } else {
-                    return SizedBox(
-                      width: 100, // Set your desired width
-                      height: 120, // Set your desired height
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF48C4BC),
-                          borderRadius: BorderRadius.circular(
-                            5,
-                          ), // Customizable borderRadius
-                        ),
-                        child: Stack(
-                          children: const [
-                            Positioned(
-                              bottom: 4,
-                              left: 4,
-                              child: Icon(
-                                Icons.play_arrow,
-                                size: 16,
-                                color: Colors.white,
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 4,
-                              left: 20,
-                              child: Text(
-                                '1:30',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            return InkWell(
+                              borderRadius: BorderRadius.circular(5),
+                              onTap: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  backgroundColor: Colors.transparent,
+                                  builder: (context) => UploadStoryDialog(
+                                    onUploadSuccess: _fetchStories,
+                                  ),
+                                );
+                              },
+                              child: SizedBox(
+                                width: 100,
+                                height: 120,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFC9D4D4),
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.add,
+                                      size: 30,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
+                            );
+                          } else {
+                            final story = _stories[index - 1];
+                            final String imageUrl = story['url'] != null
+                                ? (story['url'].startsWith('http')
+                                    ? story['url']
+                                    : '$baseUrl/${story['url']}')
+                                : '';
+                            return SizedBox(
+                              width: 100,
+                              height: 120,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF48C4BC),
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child: imageUrl.isNotEmpty
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(5),
+                                        child: AuthorizedImage(
+                                          imageUrl: imageUrl,
+                                          height: double.infinity,
+                                          width: double.infinity,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      )
+                                    : const Center(child: Icon(Icons.broken_image)),
+                              ),
+                            );
+                          }
+                        },
                       ),
-                    );
-                  }
-                },
-              ),
-            ),
+                    ),
           ),
         ],
       ),
@@ -202,220 +274,281 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-class UploadStoryDialog extends StatelessWidget {
-  const UploadStoryDialog({super.key});
+class UploadStoryDialog extends StatefulWidget {
+  final VoidCallback? onUploadSuccess;
+  const UploadStoryDialog({super.key, this.onUploadSuccess});
+
+  @override
+  State<UploadStoryDialog> createState() => _UploadStoryDialogState();
+}
+
+class _UploadStoryDialogState extends State<UploadStoryDialog> {
+  final TextEditingController _captionController = TextEditingController();
+  XFile? _selectedImage;
+  Uint8List? _selectedImageBytes;
+  bool _isUploading = false;
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      final bytes = await image.readAsBytes();
+      setState(() {
+        _selectedImage = image;
+        _selectedImageBytes = bytes;
+      });
+    }
+  }
+
+  void _removeImage() {
+    setState(() {
+      _selectedImage = null;
+      _selectedImageBytes = null;
+    });
+  }
+
+  Future<void> _uploadStory() async {
+    print('Upload button pressed');
+    setState(() {
+      _isUploading = true;
+    });
+    try {
+      await ApiService.uploadStory(
+        caption: _captionController.text,
+        photo: _selectedImage,
+      );
+  
+      if (mounted) {
+        if (widget.onUploadSuccess != null) {
+          widget.onUploadSuccess!();
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Album uploaded successfully!')),
+        );
+        Navigator.pop(context); 
+        // Optionally show a snackbar or other feedback here
+      }
+    } catch (e) {
+      
+      if (mounted) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('Failed to upload story: \\${e.toString()}')),
+  );
+  Navigator.pop(context);
+}
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.85, // 85% of screen width
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10), // 👈 Rounded corners
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Upload Your Story',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF317575),
-              ),
+    final mediaQuery = MediaQuery.of(context);
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final isKeyboardVisible = bottomInset > 0;
+    return DraggableScrollableSheet(
+      initialChildSize: isKeyboardVisible ? 0.80 : 0.55,
+      minChildSize: isKeyboardVisible ? 0.6 : 0.4,
+      maxChildSize: isKeyboardVisible ? 0.85 : 0.85,
+      expand: false,
+      builder:
+          (context, scrollController) => Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
-            const SizedBox(height: 5),
-            Text(
-              'Share your moment with the world.',
-              style: TextStyle(color: Color(0xFF317575)),
-            ),
-            const SizedBox(height: 20),
-            DottedBorder(
-              borderType: BorderType.RRect,
-              radius: Radius.circular(12),
-              dashPattern: [6, 3],
-              color: Color(0xFF317575),
-              child: Container(
-                height: 120,
-                width: double.infinity,
-                alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Padding(
+              padding: isKeyboardVisible
+                  ? const EdgeInsets.only(bottom: 8)
+                  : MediaQuery.of(context).viewInsets,
+              child: SingleChildScrollView(
+                controller: scrollController,
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.camera_alt, size: 60, color: Color(0xFF317575)),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF317575),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 10,
-                        ),
-                      ),
-                      onPressed: () {
-                        // TODO: Implement image picker
-                        print("Select Photo button pressed");
-                      },
-                      child: Text(
-                        "Select Photo",
-                        style: TextStyle(color: Colors.white),
+                    Container(
+                      width: 40,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(3),
                       ),
                     ),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        ElevatedButton(
+                          onPressed:
+                              (_selectedImage != null && !_isUploading)
+                                  ? _uploadStory
+                                  : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrimaryDarkColor,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 11,
+                              horizontal: 16,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                14,
+                              ), // Change 16 to your desired radius
+                            ),
+                          ),
+                          child:
+                              _isUploading
+                                  ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                  : const Text(
+                                    "Upload",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                        ),
+                      ],
+                    ),
+
+                    const Text(
+                      "Create Album",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: kPrimaryDarkColor,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    GestureDetector(
+                      onTap: _pickImage,
+                      child:
+                          _selectedImage == null
+                              ? Container(
+                                width: mediaQuery.size.width * 0.7,
+                                height: 180,
+                                decoration: BoxDecoration(
+                                  color: kBackgroundColor,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: kPrimaryDarkColor,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.add_a_photo,
+                                    size: 50,
+                                    color: kPrimaryDarkColor,
+                                  ),
+                                ),
+                              )
+                              : Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: _selectedImageBytes != null
+                                        ? Image.memory(
+                                            _selectedImageBytes!,
+                                            width: mediaQuery.size.width * 0.7,
+                                            height: 180,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : Container(
+                                            width: mediaQuery.size.width * 0.7,
+                                            height: 180,
+                                            color: Colors.grey[200],
+                                            child: const Center(
+                                              child: CircularProgressIndicator(),
+                                            ),
+                                          ),
+                                  ),
+                                  Positioned(
+                                    top: 8,
+                                    right: 8,
+                                    child: GestureDetector(
+                                      onTap: _removeImage,
+                                      child: Container(
+                                        decoration: const BoxDecoration(
+                                          color: Colors.black54,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                          size: 22,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                    ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: _captionController,
+                      minLines: 1,
+                      maxLines: 5,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: "Add a caption...",
+                        filled: true,
+                        fillColor: kAccentColor,
+                        hintStyle: const TextStyle(color: Colors.white),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // Row(
+                    //   children: [
+                    //     Expanded(
+                    //       child: OutlinedButton(
+                    //         onPressed:
+                    //             _isUploading
+                    //                 ? null
+                    //                 : () => Navigator.pop(context),
+                    //         style: OutlinedButton.styleFrom(
+                    //           backgroundColor: kBackgroundColor,
+                    //           foregroundColor: kPrimaryDarkColor,
+                    //           side: const BorderSide(color: Color(0xFF317575)),
+                    //           padding: const EdgeInsets.symmetric(vertical: 14),
+                    //         ),
+                    //         child: const Text("Cancel"),
+                    //       ),
+                    //     ),
+                    //     const SizedBox(width: 16),
+                    //   ],
+                    // ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => const ShowStoryDialog(),
-                    );
-                  },
-                  child: const CircleAvatar(
-                    radius: 23,
-                    backgroundColor: Color(0xFF48C4BC),
-                    child: Icon(
-                      Icons.lock_person_rounded,
-                      size: 25,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: "Add a caption ....",
-                      hintStyle: TextStyle(color: Colors.white),
-                      filled: true,
-                      fillColor: Color(0xFF48C4BC),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 15,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: Color(0xFFD4F7F5),
-                    side: BorderSide(color: Colors.teal),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
-                    ),
-                  ),
-                  child: Text(
-                    "Cancel",
-                    style: TextStyle(color: Color(0xFF317575)),
-                  ),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF317575),
-                  ),
-                  onPressed: () {
-                    // TODO: Handle upload logic
-                    print("Your story has been uploaded!");
-                    Navigator.pop(context);
-                  },
-                  child: Text("Upload", style: TextStyle(color: Colors.white)),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 }
 
-class ShowStoryDialog extends StatelessWidget {
-  const ShowStoryDialog({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        width: MediaQuery.of(context).size.width * 0.3,
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Select Story Status',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF317575),
-              ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 230, // Customize this height as needed
-              child: ScrollbarTheme(
-                data: ScrollbarThemeData(
-                  thumbColor: WidgetStateProperty.all(
-                    Color(0xFF317575),
-                  ), // Your custom color
-                  trackColor: WidgetStateProperty.all(Color(0xFFD4F7F5)),
-                  thickness: WidgetStateProperty.all(6),
-                  radius: Radius.circular(10),
-                ),
-                child: Scrollbar(
-                  thumbVisibility: true,
-                  trackVisibility: true,
-                  interactive: true,
-                  child: ListView(
-                    shrinkWrap: true,
-                    children:
-                        storyStatusOptions
-                            .map(
-                              (status) => ListTile(
-                                title: Text(
-                                  status,
-                                  style: const TextStyle(
-                                    color: Color(0xFF317575),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                onTap: () {
-                                  Navigator.pop(context, status);
-                                },
-                              ),
-                            )
-                            .toList(),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class SettingsCard extends StatelessWidget {
   const SettingsCard({super.key});
