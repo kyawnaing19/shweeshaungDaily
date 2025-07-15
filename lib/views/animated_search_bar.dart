@@ -6,11 +6,11 @@ class AnimatedSearchBar extends StatefulWidget {
   final String hintText;
 
   const AnimatedSearchBar({
-    Key? key,
+    super.key,
     required this.controller,
     required this.onChanged,
     this.hintText = 'Search...',
-  }) : super(key: key);
+  });
 
   @override
   _AnimatedSearchBarState createState() => _AnimatedSearchBarState();
@@ -20,7 +20,7 @@ class _AnimatedSearchBarState extends State<AnimatedSearchBar>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;
-  FocusNode _focusNode = FocusNode();
+  final FocusNode _focusNode = FocusNode();
   bool _isExpanded = false;
 
   @override

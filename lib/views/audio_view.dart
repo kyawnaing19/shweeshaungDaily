@@ -130,8 +130,8 @@ class _ReactorAudioPageState extends State<ReactorAudioPage>
               unselectedLabelColor: Colors.white70,
               indicatorColor: Colors.white,
               tabs: const [
-                Tab(text: "Rector's Address"),
-                Tab(text: "Faculty Addresses"),
+                Tab(text: "Rector"),
+                Tab(text: "Faculty"),
               ],
             ),
           ),

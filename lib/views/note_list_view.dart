@@ -16,8 +16,8 @@ class NotePage extends StatefulWidget {
 }
 
 class _NotePageState extends State<NotePage> {
-  TextEditingController _searchController = TextEditingController();
-  FocusNode _searchFocusNode = FocusNode();
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
 
   String formatToMMT(String? utcString) {
     if (utcString == null) return 'Unknown';

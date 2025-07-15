@@ -3,6 +3,7 @@ import 'dart:convert'; // Add this for JSON encoding/decoding
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shweeshaungdaily/miniApp/mini_app_widget.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:intl/intl.dart';
 import 'package:shweeshaungdaily/colors.dart';
@@ -32,6 +33,7 @@ class _HomePageState extends State<HomeScreenPage>
   String? feedErrorMessage;
   Map<String, Map<int, dynamic>>? timetableData;
   bool isLoading = true;
+  String? userName;
   String? errorMessage;
 
   // Audio player state
@@ -155,7 +157,7 @@ class _HomePageState extends State<HomeScreenPage>
       duration: const Duration(milliseconds: 900),
     );
     _loadTimetableFromPrefs();
-
+    getUserName();
     _fetchFeed();
 
     _pageController = PageController(
@@ -171,6 +173,9 @@ class _HomePageState extends State<HomeScreenPage>
       }
       setState(() {});
     });
+  }
+  Future<void> getUserName() async {
+    userName = await TokenService.getUserName();
   }
 
   // Update loadCachedFeed to return the feed list
@@ -1094,13 +1099,34 @@ class _HomePageState extends State<HomeScreenPage>
                                   setState(() {
                                     isLiked = false;
                                     likeCount = likeCount! - 1;
+                                    final idx = feedItems?.indexWhere(
+                                      (item) => item['id'] == feedId,
+                                    );
+                                    if (idx != null && idx >= 0) {
+                                      final likes = feedItems![idx]['likes'];
+                                      if (likes is List && likes.isNotEmpty) {
+                                        likes.removeLast();
+                                        feedItems![idx]['likes'] = List.from(
+                                          likes,
+                                        );
+                                      }
+                                    }
                                   });
                                 }
                               } else {
                                 final success = await ApiService.like(feedId!);
                                 if (success) {
                                   setState(() {
-                                    isLiked = true;
+                            
+                                    final idx = feedItems?.indexWhere(
+                                      (item) => item['id'] == feedId,
+                                    );
+                                    if (idx != null && idx >= 0) {
+                                      feedItems![idx]['likes'] = List.from(
+                                        feedItems![idx]['likes'] ?? [],
+                                      )..add(userName);
+                                    }
+                                     isLiked = true;
                                     likeCount = likeCount! + 1;
                                   });
                                 }
