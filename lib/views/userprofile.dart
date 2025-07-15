@@ -61,10 +61,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _fetchProfile() async {
     final profile = await ApiService.getProfile();
-    setState(() {
-      _profile = profile;
-      _loading = false;
-    });
+    if(mounted){
+      setState(() {
+        _profile = profile;
+        _loading = false;
+      });
+    }
   }
 
   Future<void> _fetchStories() async {
@@ -244,13 +246,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     );
                   } else {
-                    final story = _stories[index - 1];
+                    final story = _stories[index -1];
                     final String imageUrl =
                         story['url'] != null
                             ? (story['url'].startsWith('http')
                                 ? story['url']
                                 : '$baseUrl/${story['url']}')
                             : '';
+                    print(imageUrl);
                     return SizedBox(
                       width: 100,
                       height: 120,
@@ -337,8 +340,15 @@ class _UploadStoryDialogState extends State<UploadStoryDialog> {
 
       if (!mounted) return;
 
-      widget.onUploadSuccess?.call();
+      // widget.onUploadSuccess?.call();
+       // Close the dialog
+       Navigator.pop(context); // Close dialog
 
+Future.delayed(Duration(milliseconds: 300), () {
+  if (mounted) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => ()));
+  }
+});
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Album uploaded successfully!')),
       );
