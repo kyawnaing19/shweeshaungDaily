@@ -440,56 +440,57 @@ class ApiService {
 
 
   
-  static Future<void> uploadStory({
-    required String caption,
-    required XFile? photo,
-  }) async {
-    Future<http.Response> sendMultipart(String accessToken) async {
-      final url = Uri.parse(storyUrl);
-      var request =
-          http.MultipartRequest('POST', url)
-            ..fields['caption'] = caption
-            ..headers['Authorization'] = 'Bearer $accessToken';
+  static Future<Map<String, dynamic>> uploadStory({
+  required String caption,
+  required XFile? photo,
+}) async {
+  Future<http.Response> sendMultipart(String accessToken) async {
+    final url = Uri.parse(storyUrl);
+    var request = http.MultipartRequest('POST', url)
+      ..fields['caption'] = caption
+      ..headers['Authorization'] = 'Bearer $accessToken';
 
-      if (photo != null) {
-        final bytes = await photo.readAsBytes();
-        request.files.add(
-          http.MultipartFile.fromBytes('photo', bytes, filename: photo.name),
-        );
-      }
-
-      final streamedResponse = await request.send();
-      return await http.Response.fromStream(streamedResponse);
-    }
-
-    var tokens = await TokenService.loadTokens();
-    if (tokens == null) throw Exception('Not authenticated');
-
-    var response = await sendMultipart(tokens.accessToken);
-
-    if (response.statusCode == 401 || response.statusCode == 403) {
-      // Try to refresh token
-      final refreshed = await ApiService.refreshAccessToken(
-        tokens.refreshToken,
+    if (photo != null) {
+      final bytes = await photo.readAsBytes();
+      request.files.add(
+        http.MultipartFile.fromBytes('photo', bytes, filename: photo.name),
       );
-      if (refreshed != null &&
-          refreshed['accessToken'] != null &&
-          refreshed['refreshToken'] != null) {
-        await TokenService.saveTokens(
-          refreshed['accessToken'],
-          refreshed['refreshToken'],
-        );
-        response = await sendMultipart(refreshed['accessToken']);
-      } else {
-        await TokenService.clearTokens();
-        throw Exception('Session expired. Please log in again.');
-      }
     }
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to upload story: [${response.body}');
+    final streamedResponse = await request.send();
+    return await http.Response.fromStream(streamedResponse);
+  }
+
+  var tokens = await TokenService.loadTokens();
+  if (tokens == null) throw Exception('Not authenticated');
+
+  var response = await sendMultipart(tokens.accessToken);
+
+  if (response.statusCode == 401 || response.statusCode == 403) {
+    // Try to refresh token
+    final refreshed = await ApiService.refreshAccessToken(tokens.refreshToken);
+    if (refreshed != null &&
+        refreshed['accessToken'] != null &&
+        refreshed['refreshToken'] != null) {
+      await TokenService.saveTokens(
+        refreshed['accessToken'],
+        refreshed['refreshToken'],
+      );
+      response = await sendMultipart(refreshed['accessToken']);
+    } else {
+      await TokenService.clearTokens();
+      throw Exception('Session expired. Please log in again.');
     }
   }
+
+  if (response.statusCode != 200) {
+    throw Exception('Failed to upload story: ${response.body}');
+  }
+
+  // Return entire parsed JSON object
+  return jsonDecode(response.body) as Map<String, dynamic>;
+}
+
 
 
   static Future<List<dynamic>> getStory() async {

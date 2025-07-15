@@ -45,19 +45,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<List<Map<String, dynamic>>> loadStoryItems() async {
-  final prefs = await SharedPreferences.getInstance();
-  final jsonString = prefs.getString('cached_story');
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString('cached_story');
 
-  if (jsonString == null) return [];
+    if (jsonString == null) return [];
 
-  try {
-    final List<dynamic> decodedList = jsonDecode(jsonString);
-    return decodedList.cast<Map<String, dynamic>>();
-  } catch (e) {
-    print('Error decoding feed items: $e');
-    return [];
+    try {
+      final List<dynamic> decodedList = jsonDecode(jsonString);
+      return decodedList.cast<Map<String, dynamic>>();
+    } catch (e) {
+      print('Error decoding feed items: $e');
+      return [];
+    }
   }
-}
 
   Future<void> _fetchProfile() async {
     final profile = await ApiService.getProfile();
@@ -68,39 +68,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _fetchStories() async {
-    try {
-      final result = await ApiService.getStory();
+  try {
+    final result = await ApiService.getStory();
 
-      // Save feed to local cache
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('cached_story', jsonEncode(result));
+    // Save to local cache
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('cached_story', jsonEncode(result));
 
+    // Extract valid URLs and convert to full URL
+    final imageUrls = result
+        .map((item) => item['url'] as String?)
+        .where((url) => url != null && url.isNotEmpty)
+        .map((url) => '$baseUrl/$url')
+        .toSet();
+
+    // Clean up unused cached images
+    await ImageCacheManager.clearUnusedStoryImages(imageUrls);
+
+    if (mounted) {
       setState(() {
         _stories = result;
       });
+    }
+  } catch (e) {
+    // On failure, load from local cache
+    final cached = await loadStoryItems();
 
-      final imageUrls =
-          _stories
-              .map((item) => item['url'])
-              .where((url) => url != null && url != '')
-              .map((url) => '$baseUrl/$url')
-              .toSet();
-
-      await ImageCacheManager.clearUnusedStoryImages(imageUrls);
-
-      // 🧹 Clean up cached images not in feed
-        
-    } catch (e) {
-      // print("hhhhh");
-      // API failed – try to reload cached feed
-      final cached = await loadStoryItems();
+    if (mounted) {
       setState(() {
-        // print("hhhhh");
         _stories = cached;
-        //feedErrorMessage = 'Failed to load feed: ${e.toString()}'
       });
     }
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -138,29 +139,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _loading
-                        ? const Center(child: CircularProgressIndicator())
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _profile?['userName'] ?? 'No Name',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                    child:
+                        _loading
+                            ? const Center(child: CircularProgressIndicator())
+                            : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _profile?['userName'] ?? 'No Name',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                _profile?['nickName'] != null ? '(${_profile?['nickName']})' : '',
-                                style: const TextStyle(color: Colors.white, fontSize: 14),
-                              ),
-                              Text(
-                                _profile?['bio'] ?? '',
-                                style: const TextStyle(color: Colors.white, fontSize: 12),
-                              ),
-                            ],
-                          ),
+                                Text(
+                                  _profile?['nickName'] != null
+                                      ? '(${_profile?['nickName']})'
+                                      : '',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                Text(
+                                  _profile?['bio'] ?? '',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.edit, color: Colors.white),
@@ -189,80 +199,84 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // Grid
           Expanded(
             child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: GridView.builder(
-                        itemCount: _stories.length + 1,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              crossAxisSpacing: 6,
-                              mainAxisSpacing: 6,
-                              childAspectRatio: 0.63,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: GridView.builder(
+                itemCount: _stories.length + 1,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 6,
+                  mainAxisSpacing: 6,
+                  childAspectRatio: 0.63,
+                ),
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(5),
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder:
+                              (context) => UploadStoryDialog(
+                                onUploadSuccess: () async {
+                                  await _fetchStories(); // this should call setState inside
+                                },
+                              ),
+                        );
+                      },
+                      child: SizedBox(
+                        width: 100,
+                        height: 120,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFC9D4D4),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.add,
+                              size: 30,
+                              color: Colors.grey,
                             ),
-                        itemBuilder: (context, index) {
-                          if (index == 0) {
-                            return InkWell(
-                              borderRadius: BorderRadius.circular(5),
-                              onTap: () {
-                                showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  backgroundColor: Colors.transparent,
-                                  builder: (context) => UploadStoryDialog(
-                                    onUploadSuccess: _fetchStories,
-                                  ),
-                                );
-                              },
-                              child: SizedBox(
-                                width: 100,
-                                height: 120,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFC9D4D4),
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.add,
-                                      size: 30,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          } else {
-                            final story = _stories[index - 1];
-                            final String imageUrl = story['url'] != null
-                                ? (story['url'].startsWith('http')
-                                    ? story['url']
-                                    : '$baseUrl/${story['url']}')
-                                : '';
-                            return SizedBox(
-                              width: 100,
-                              height: 120,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF48C4BC),
-                                  borderRadius: BorderRadius.circular(5),
-                                ),
-                                child: imageUrl.isNotEmpty
-                                    ? ClipRRect(
-                                        borderRadius: BorderRadius.circular(5),
-                                        child: AuthorizedImage(
-                                          imageUrl: imageUrl,
-                                          height: double.infinity,
-                                          width: double.infinity,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      )
-                                    : const Center(child: Icon(Icons.broken_image)),
-                              ),
-                            );
-                          }
-                        },
+                          ),
+                        ),
                       ),
-                    ),
+                    );
+                  } else {
+                    final story = _stories[index - 1];
+                    final String imageUrl =
+                        story['url'] != null
+                            ? (story['url'].startsWith('http')
+                                ? story['url']
+                                : '$baseUrl/${story['url']}')
+                            : '';
+                    return SizedBox(
+                      width: 100,
+                      height: 120,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF48C4BC),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child:
+                            imageUrl.isNotEmpty
+                                ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(5),
+                                  child: AuthorizedImage(
+                                    imageUrl: imageUrl,
+                                    height: double.infinity,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                                : const Center(child: Icon(Icons.broken_image)),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ),
           ),
         ],
       ),
@@ -308,34 +322,36 @@ class _UploadStoryDialogState extends State<UploadStoryDialog> {
   }
 
   Future<void> _uploadStory() async {
-    print('Upload button pressed');
+    debugPrint('Upload button pressed');
+
     setState(() {
       _isUploading = true;
     });
+
     try {
-      await ApiService.uploadStory(
+       await ApiService.uploadStory(
         caption: _captionController.text,
         photo: _selectedImage,
       );
-  
-      if (mounted) {
-        if (widget.onUploadSuccess != null) {
-          widget.onUploadSuccess!();
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Album uploaded successfully!')),
-        );
-        Navigator.pop(context); 
-        // Optionally show a snackbar or other feedback here
-      }
+
+
+      if (!mounted) return;
+
+      widget.onUploadSuccess?.call();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Album uploaded successfully!')),
+      );
+
+      Navigator.pop(context);
     } catch (e) {
-      
-      if (mounted) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('Failed to upload story: \\${e.toString()}')),
-  );
-  Navigator.pop(context);
-}
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to upload story: ${e.toString()}')),
+      );
+
+      Navigator.pop(context);
     } finally {
       if (mounted) {
         setState(() {
@@ -344,6 +360,7 @@ class _UploadStoryDialogState extends State<UploadStoryDialog> {
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -363,9 +380,10 @@ class _UploadStoryDialogState extends State<UploadStoryDialog> {
             ),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Padding(
-              padding: isKeyboardVisible
-                  ? const EdgeInsets.only(bottom: 8)
-                  : MediaQuery.of(context).viewInsets,
+              padding:
+                  isKeyboardVisible
+                      ? const EdgeInsets.only(bottom: 8)
+                      : MediaQuery.of(context).viewInsets,
               child: SingleChildScrollView(
                 controller: scrollController,
                 child: Column(
@@ -458,21 +476,25 @@ class _UploadStoryDialogState extends State<UploadStoryDialog> {
                                 children: [
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(16),
-                                    child: _selectedImageBytes != null
-                                        ? Image.memory(
-                                            _selectedImageBytes!,
-                                            width: mediaQuery.size.width * 0.7,
-                                            height: 180,
-                                            fit: BoxFit.cover,
-                                          )
-                                        : Container(
-                                            width: mediaQuery.size.width * 0.7,
-                                            height: 180,
-                                            color: Colors.grey[200],
-                                            child: const Center(
-                                              child: CircularProgressIndicator(),
+                                    child:
+                                        _selectedImageBytes != null
+                                            ? Image.memory(
+                                              _selectedImageBytes!,
+                                              width:
+                                                  mediaQuery.size.width * 0.7,
+                                              height: 180,
+                                              fit: BoxFit.cover,
+                                            )
+                                            : Container(
+                                              width:
+                                                  mediaQuery.size.width * 0.7,
+                                              height: 180,
+                                              color: Colors.grey[200],
+                                              child: const Center(
+                                                child:
+                                                    CircularProgressIndicator(),
+                                              ),
                                             ),
-                                          ),
                                   ),
                                   Positioned(
                                     top: 8,
@@ -548,7 +570,6 @@ class _UploadStoryDialogState extends State<UploadStoryDialog> {
     );
   }
 }
-
 
 class SettingsCard extends StatelessWidget {
   const SettingsCard({super.key});
