@@ -186,8 +186,9 @@ class _HomePageState extends State<HomePage> {
               },
             ),
             ProfileRouterPage(
-              onBack: () {
-                _onItemTapped(2);
+              onBack: () => _onItemTapped(2),
+              onGoToProfileTab: () {
+                _pageController.jumpToPage(3); // Jump to ProfileRouterPage tab
               },
             ),
           ],

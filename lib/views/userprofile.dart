@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/utils/image_cache.dart';
+import 'package:shweeshaungdaily/views/main_screen.dart';
 import '../services/api_service.dart';
 import 'package:shweeshaungdaily/services/authorize_image.dart';
 
@@ -24,8 +25,13 @@ final List<String> storyStatusOptions = [
 
 class ProfileScreen extends StatefulWidget {
   final VoidCallback? onBack;
+  final VoidCallback? onGoToProfileTab; // 👈 Add this
 
-  const ProfileScreen({super.key, this.onBack});
+  const ProfileScreen({
+    super.key,
+    this.onBack,
+    this.onGoToProfileTab, // 👈 Add this
+  });
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -33,6 +39,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final String baseUrl = ApiService.base;
+
   Map<String, dynamic>? _profile;
   bool _loading = true;
   List<dynamic> _stories = [];
@@ -61,7 +68,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _fetchProfile() async {
     final profile = await ApiService.getProfile();
-    if(mounted){
+    if (mounted) {
       setState(() {
         _profile = profile;
         _loading = false;
@@ -70,40 +77,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _fetchStories() async {
-  try {
-    final result = await ApiService.getStory();
+    try {
+      final result = await ApiService.getStory();
 
-    // Save to local cache
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('cached_story', jsonEncode(result));
+      // Save to local cache
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('cached_story', jsonEncode(result));
 
-    // Extract valid URLs and convert to full URL
-    final imageUrls = result
-        .map((item) => item['url'] as String?)
-        .where((url) => url != null && url.isNotEmpty)
-        .map((url) => '$baseUrl/$url')
-        .toSet();
+      // Extract valid URLs and convert to full URL
+      final imageUrls =
+          result
+              .map((item) => item['url'] as String?)
+              .where((url) => url != null && url.isNotEmpty)
+              .map((url) => '$baseUrl/$url')
+              .toSet();
 
-    // Clean up unused cached images
-    await ImageCacheManager.clearUnusedStoryImages(imageUrls);
+      // Clean up unused cached images
+      await ImageCacheManager.clearUnusedStoryImages(imageUrls);
 
-    if (mounted) {
-      setState(() {
-        _stories = result;
-      });
-    }
-  } catch (e) {
-    // On failure, load from local cache
-    final cached = await loadStoryItems();
+      if (mounted) {
+        setState(() {
+          _stories = result;
+        });
+      }
+    } catch (e) {
+      // On failure, load from local cache
+      final cached = await loadStoryItems();
 
-    if (mounted) {
-      setState(() {
-        _stories = cached;
-      });
+      if (mounted) {
+        setState(() {
+          _stories = cached;
+        });
+      }
     }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -222,11 +229,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           builder:
                               (context) => UploadStoryDialog(
                                 onUploadSuccess: () async {
-                                  await _fetchStories(); // this should call setState inside
+                                  await _fetchStories(); // ✅ Refresh stories
+
+                                  if (widget.onGoToProfileTab != null) {
+                                    widget
+                                        .onGoToProfileTab!(); // ✅ Jump to ProfileRouterPage
+                                  }
                                 },
                               ),
                         );
                       },
+
                       child: SizedBox(
                         width: 100,
                         height: 120,
@@ -246,7 +259,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     );
                   } else {
-                    final story = _stories[index -1];
+                    final story = _stories[index - 1];
                     final String imageUrl =
                         story['url'] != null
                             ? (story['url'].startsWith('http')
@@ -332,36 +345,17 @@ class _UploadStoryDialogState extends State<UploadStoryDialog> {
     });
 
     try {
-       await ApiService.uploadStory(
+      await ApiService.uploadStory(
         caption: _captionController.text,
         photo: _selectedImage,
       );
 
-
       if (!mounted) return;
 
-      // widget.onUploadSuccess?.call();
-       // Close the dialog
-       Navigator.pop(context); // Close dialog
-
-Future.delayed(Duration(milliseconds: 300), () {
-  if (mounted) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => ()));
-  }
-});
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Album uploaded successfully!')),
-      );
-
-      Navigator.pop(context);
+      widget.onUploadSuccess?.call(); // ✅ Call parent callback
+      Navigator.pop(context); // ✅ Close dialog
     } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to upload story: ${e.toString()}')),
-      );
-
-      Navigator.pop(context);
+      // handle errors if needed
     } finally {
       if (mounted) {
         setState(() {
@@ -370,7 +364,6 @@ Future.delayed(Duration(milliseconds: 300), () {
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {

@@ -5,8 +5,9 @@ import 'package:shweeshaungdaily/views/userprofile.dart';
 
 class ProfileRouterPage extends StatelessWidget {
   final VoidCallback? onBack;
+  final VoidCallback? onGoToProfileTab; // NEW callback
 
-  const ProfileRouterPage({super.key, this.onBack});
+  const ProfileRouterPage({super.key, this.onBack, this.onGoToProfileTab});
 
   Future<bool> _checkIfTeacher() async {
     final role = await TokenService.getRole();
@@ -27,8 +28,14 @@ class ProfileRouterPage extends StatelessWidget {
 
           // ✅ Pass onBack down to the actual screen
           return isTeacher
-              ? TeacherProfilePage(onBack: onBack)
-              : ProfileScreen(onBack: onBack);
+              ? TeacherProfilePage(
+                onBack: onBack,
+                //onGoToProfileTab: onGoToProfileTab,   // Pass down
+              )
+              : ProfileScreen(
+                onBack: onBack,
+                onGoToProfileTab: onGoToProfileTab, // Pass down
+              );
         }
       },
     );

@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
 import '../services/api_service.dart';
+
 class CommentSection extends StatefulWidget {
   final List<dynamic> comments;
   final int? feedId;
   final VoidCallback? onCommentSuccess;
-  const CommentSection({super.key, required this.comments, required this.feedId, this.onCommentSuccess});
+  const CommentSection({
+    super.key,
+    required this.comments,
+    required this.feedId,
+    this.onCommentSuccess,
+  });
 
   @override
   State<CommentSection> createState() => _CommentSectionState();
 }
 
-class _CommentSectionState extends State<CommentSection> {
+class _CommentSectionState extends State<CommentSection>
+    with SingleTickerProviderStateMixin {
   final FocusNode _focusNode = FocusNode();
   final TextEditingController _controller = TextEditingController();
   List<dynamic>? _comments;
@@ -21,14 +27,25 @@ class _CommentSectionState extends State<CommentSection> {
   bool _showUserSuggestions = false;
   List<String> _userSuggestions = [];
   int _selectedSuggestionIndex = 0;
+  late AnimationController _animationController;
+  late Animation<double> _opacityAnimation;
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _opacityAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
     _controller.addListener(_onTextChanged);
     _fetchComments();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
+      _animationController.forward();
     });
   }
 
@@ -36,7 +53,6 @@ class _CommentSectionState extends State<CommentSection> {
     final text = _controller.text;
     setState(() {
       _hasText = text.trim().isNotEmpty;
-      // Show suggestions if text starts with '@'
       if (text.startsWith('@')) {
         _userSuggestions = _getUniqueUserNames();
         _showUserSuggestions = _userSuggestions.isNotEmpty;
@@ -49,11 +65,12 @@ class _CommentSectionState extends State<CommentSection> {
 
   List<String> _getUniqueUserNames() {
     if (_comments == null) return [];
-    final names = _comments!
-        .map((c) => c['userName']?.toString() ?? '')
-        .where((name) => name.isNotEmpty)
-        .toSet()
-        .toList();
+    final names =
+        _comments!
+            .map((c) => c['userName']?.toString() ?? '')
+            .where((name) => name.isNotEmpty)
+            .toSet()
+            .toList();
     return names;
   }
 
@@ -81,6 +98,7 @@ class _CommentSectionState extends State<CommentSection> {
 
   @override
   void dispose() {
+    _animationController.dispose();
     _focusNode.dispose();
     _controller.removeListener(_onTextChanged);
     _controller.dispose();
@@ -96,115 +114,242 @@ class _CommentSectionState extends State<CommentSection> {
     }
   }
 
+  Widget _buildCommentItem(dynamic comment) {
+    final userName = comment['userName'] ?? 'User';
+    final text = comment['text'] ?? '';
+    final createdAt = comment['createdAt'] ?? '';
+    final profileUrl = comment['authorProfileUrl'] ?? '';
+
+    return FadeTransition(
+      opacity: _opacityAnimation,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundImage:
+                  profileUrl.isNotEmpty ? NetworkImage(profileUrl) : null,
+              child:
+                  profileUrl.isEmpty
+                      ? const Icon(Icons.person, size: 20)
+                      : null,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(text, style: const TextStyle(fontSize: 14)),
+                      ],
+                    ),
+                  ),
+                  if (createdAt.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4, left: 8),
+                      child: Text(
+                        _formatDate(createdAt),
+                        style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
     return DraggableScrollableSheet(
-      initialChildSize: 1.0,
+      initialChildSize: 0.7,
       minChildSize: 0.5,
-      maxChildSize: 1.0,
-      expand: false,
+      maxChildSize: 0.9,
+      snap: true,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 16,
+                spreadRadius: 0,
+                offset: const Offset(0, -4),
+              ),
+            ],
           ),
           child: Column(
             children: [
-              Container(
-                width: 40,
-                height: 5,
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(10),
+              // Drag handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 5,
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[400],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
+
+              // Header
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
-                    const Icon(Icons.comment, color: Colors.black54),
+                    Icon(Icons.comment, color: theme.primaryColor),
                     const SizedBox(width: 8),
-                    const Text(
+                    Text(
                       'Comments',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        color: theme.textTheme.titleLarge?.color,
                       ),
                     ),
                     const Spacer(),
-                    Text(
-                      (_comments?.length ?? 0).toString(),
-                      style: const TextStyle(fontSize: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        (_comments?.length ?? 0).toString(),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: theme.primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
-              const Divider(height: 1),
+
+              const Divider(height: 1, thickness: 0.5),
+
+              // Comments list
               Expanded(
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : (_comments == null || _comments!.isEmpty)
-                        ? const Center(child: Text('No comments yet.'))
-                        : ListView.builder(
-                            controller: scrollController,
-                            itemCount: _comments!.length,
-                            itemBuilder: (context, index) {
-                              final comment = _comments![index];
-                              final userName = comment['userName'] ?? 'User';
-                              final text = comment['text'] ?? '';
-                              final createdAt = comment['createdAt'] ?? '';
-                              final profileUrl = comment['authorProfileUrl'] ?? '';
-                              return ListTile(
-                                leading: CircleAvatar(
-                                  backgroundImage: (profileUrl != null && profileUrl.isNotEmpty)
-                                      ? NetworkImage(profileUrl)
-                                      : null,
-                                  child: (profileUrl == null || profileUrl.isEmpty)
-                                      ? const Icon(Icons.person)
-                                      : null,
-                                ),
-                                title: Text(userName),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(text),
-                                    if (createdAt.isNotEmpty)
-                                      Text(
-                                        _formatDate(createdAt),
-                                        style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                      ),
-                                  ],
-                                ),
-                              );
-                            },
+                child:
+                    _loading
+                        ? Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation(
+                              theme.primaryColor,
+                            ),
                           ),
+                        )
+                        : (_comments == null || _comments!.isEmpty)
+                        ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.mode_comment_outlined,
+                                size: 48,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'No comments yet',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Be the first to comment!',
+                                style: TextStyle(
+                                  color: Colors.grey[500],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                        : ListView.builder(
+                          controller: scrollController,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          itemCount: _comments!.length,
+                          itemBuilder:
+                              (context, index) =>
+                                  _buildCommentItem(_comments![index]),
+                        ),
               ),
-              const Divider(height: 1),
+
+              // Bottom input area
               SafeArea(
                 top: false,
-                child: AnimatedPadding(
+                child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeOut,
-                  padding: EdgeInsets.only(bottom: bottomInset, left: 16, right: 8, top: 8),
+                  padding: EdgeInsets.only(
+                    bottom: bottomInset,
+                    left: 16,
+                    right: 16,
+                    top: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (_showUserSuggestions)
                         Container(
                           constraints: const BoxConstraints(maxHeight: 150),
-                          margin: const EdgeInsets.only(bottom: 4),
+                          margin: const EdgeInsets.only(bottom: 8),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            border: Border.all(color: Colors.grey.shade300),
-                            borderRadius: BorderRadius.circular(8),
+                            color: theme.cardColor,
+                            borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 4,
-                                offset: Offset(0, 2),
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                spreadRadius: 1,
                               ),
                             ],
                           ),
@@ -213,19 +358,43 @@ class _CommentSectionState extends State<CommentSection> {
                             itemCount: _userSuggestions.length,
                             itemBuilder: (context, index) {
                               final user = _userSuggestions[index];
-                              return ListTile(
-                                dense: true,
-                                tileColor: index == _selectedSuggestionIndex ? Colors.blue.shade50 : null,
-                                title: Text(user),
-                                onTap: () {
-                                  setState(() {
-                                    _controller.text = '$user ';
-                                    _controller.selection = TextSelection.fromPosition(
-                                      TextPosition(offset: _controller.text.length),
-                                    );
-                                    _showUserSuggestions = false;
-                                  });
-                                },
+                              return Material(
+                                color:
+                                    index == _selectedSuggestionIndex
+                                        ? theme.primaryColor.withOpacity(0.1)
+                                        : Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                                child: ListTile(
+                                  dense: true,
+                                  leading: CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: theme.primaryColor
+                                        .withOpacity(0.2),
+                                    child: Icon(
+                                      Icons.person,
+                                      size: 16,
+                                      color: theme.primaryColor,
+                                    ),
+                                  ),
+                                  title: Text(
+                                    user,
+                                    style: TextStyle(
+                                      color: theme.textTheme.bodyMedium?.color,
+                                    ),
+                                  ),
+                                  onTap: () {
+                                    setState(() {
+                                      _controller.text = '@$user ';
+                                      _controller.selection =
+                                          TextSelection.fromPosition(
+                                            TextPosition(
+                                              offset: _controller.text.length,
+                                            ),
+                                          );
+                                      _showUserSuggestions = false;
+                                    });
+                                  },
+                                ),
                               );
                             },
                           ),
@@ -233,51 +402,93 @@ class _CommentSectionState extends State<CommentSection> {
                       Row(
                         children: [
                           Expanded(
-                            child: TextField(
-                              focusNode: _focusNode,
-                              controller: _controller,
-                              keyboardType: TextInputType.multiline,
-                              maxLines: null,
-                              minLines: 1,
-                              decoration: InputDecoration(
-                                hintText: 'Write a comment...',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                  borderSide: BorderSide.none,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: theme.cardColor,
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color:
+                                      _hasText
+                                          ? theme.primaryColor.withOpacity(0.3)
+                                          : Colors.grey.withOpacity(0.2),
                                 ),
-                                filled: true,
-                                fillColor: Colors.grey[200],
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: TextField(
+                                focusNode: _focusNode,
+                                controller: _controller,
+                                keyboardType: TextInputType.multiline,
+                                maxLines: null,
+                                minLines: 1,
+                                style: TextStyle(
+                                  color: theme.textTheme.bodyMedium?.color,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: 'Write a comment...',
+                                  hintStyle: TextStyle(color: Colors.grey[500]),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  suffixIcon:
+                                      _hasText
+                                          ? IconButton(
+                                            icon: const Icon(Icons.close),
+                                            onPressed: () {
+                                              _controller.clear();
+                                              _focusNode.requestFocus();
+                                            },
+                                          )
+                                          : null,
+                                ),
                               ),
                             ),
                           ),
-                          IconButton(
-                            icon: Icon(
-                              Icons.send_rounded,
-                              color: _hasText ? Colors.blue : const Color.fromARGB(255, 230, 159, 159),
+                          const SizedBox(width: 8),
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color:
+                                  _hasText
+                                      ? theme.primaryColor
+                                      : Colors.grey[300],
                             ),
-                            onPressed: _hasText
-                                ? () async {
-                                    if (widget.feedId != null) {
-                                      final text = _controller.text.trim();
-                                      if (text.isNotEmpty) {
-                                        final success = await ApiService.comment(widget.feedId!, text);
-                                        if (success) {
-                                          _controller.clear();
-                                          FocusScope.of(context).unfocus();
-                                          await _fetchComments();
-                                          if (widget.onCommentSuccess != null) {
-                                            widget.onCommentSuccess!();
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.send_rounded,
+                                color:
+                                    _hasText ? Colors.white : Colors.grey[600],
+                              ),
+                              onPressed:
+                                  _hasText
+                                      ? () async {
+                                        if (widget.feedId != null) {
+                                          final text = _controller.text.trim();
+                                          if (text.isNotEmpty) {
+                                            final success =
+                                                await ApiService.comment(
+                                                  widget.feedId!,
+                                                  text,
+                                                );
+                                            if (success) {
+                                              _controller.clear();
+                                              FocusScope.of(context).unfocus();
+                                              await _fetchComments();
+                                              widget.onCommentSuccess?.call();
+                                            }
                                           }
-                                        } else {
-                                          // ScaffoldMessenger.of(context).showSnackBar(
-                                          //   const SnackBar(content: Text('Failed to post comment.')),
-                                          // );
                                         }
                                       }
-                                    }
-                                  }
-                                : null,
+                                      : null,
+                            ),
                           ),
                         ],
                       ),
