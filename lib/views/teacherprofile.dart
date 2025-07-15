@@ -8,7 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
-import 'package:shweeshaungdaily/views/audio_upload_page.dart';
+import 'package:shweeshaungdaily/views/audio_post/audio_upload_page.dart';
 
 final Map<String, String> audienceValueMap = {
   'Public': 'Public',

@@ -92,6 +92,7 @@ class _TimeTablePageState extends State<TimeTablePage> {
         elevation: 4,
         shadowColor: kShadowColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        color: kWhite,
         margin: const EdgeInsets.symmetric(vertical: 8),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -100,20 +101,48 @@ class _TimeTablePageState extends State<TimeTablePage> {
             children: [
               Text(
                 periodData['subjectName'] ?? '',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 15,
+                  fontSize: 16,
                   color: kPrimaryDarkColor,
+                  letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(height: 5),
-              Text(
-                periodData['subjectCode'] ?? '',
-                style: const TextStyle(color: kPrimaryDarkColor),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(
+                    Icons.class_,
+                    size: 14,
+                    color: kPrimaryDarkColor.withOpacity(0.7),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    periodData['subjectCode'] ?? '',
+                    style: TextStyle(
+                      color: kPrimaryDarkColor.withOpacity(0.7),
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                periodData['teacherName'] ?? '',
-                style: const TextStyle(color: kPrimaryDarkColor),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(
+                    Icons.person,
+                    size: 14,
+                    color: kPrimaryDarkColor.withOpacity(0.7),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    periodData['teacherName'] ?? '',
+                    style: TextStyle(
+                      color: kPrimaryDarkColor.withOpacity(0.7),
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

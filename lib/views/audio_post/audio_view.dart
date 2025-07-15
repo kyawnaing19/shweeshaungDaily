@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
+import '../../services/api_service.dart';
 import 'audio_player_widget.dart';
-import '../utils/audio_timeformat.dart';
+import '../../utils/audio_timeformat.dart';
 
 class ReactorAudioPage extends StatefulWidget {
   const ReactorAudioPage({super.key});
@@ -46,8 +46,14 @@ class _ReactorAudioPageState extends State<ReactorAudioPage>
       setState(() {
         rectorAudioList = rector;
         teacherAudioList = teacher;
-        rectorCardExpanded = List.generate(rectorAudioList.length, (_) => false);
-        teacherCardExpanded = List.generate(teacherAudioList.length, (_) => false);
+        rectorCardExpanded = List.generate(
+          rectorAudioList.length,
+          (_) => false,
+        );
+        teacherCardExpanded = List.generate(
+          teacherAudioList.length,
+          (_) => false,
+        );
         isLoading = false;
       });
       _animations.clear();
@@ -129,10 +135,7 @@ class _ReactorAudioPageState extends State<ReactorAudioPage>
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white70,
               indicatorColor: Colors.white,
-              tabs: const [
-                Tab(text: "Rector"),
-                Tab(text: "Faculty"),
-              ],
+              tabs: const [Tab(text: "Rector"), Tab(text: "Faculty")],
             ),
           ),
           // TabBarView
@@ -170,7 +173,9 @@ class _ReactorAudioPageState extends State<ReactorAudioPage>
       return const Center(child: CircularProgressIndicator());
     }
     if (errorMessage != null) {
-      return Center(child: Text(errorMessage!, style: const TextStyle(color: Colors.red)));
+      return Center(
+        child: Text(errorMessage!, style: const TextStyle(color: Colors.red)),
+      );
     }
     if (list.isEmpty) {
       return const Center(child: Text('No audio found'));

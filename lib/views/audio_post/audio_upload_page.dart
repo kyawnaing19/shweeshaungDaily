@@ -9,7 +9,7 @@ import 'package:cross_file/cross_file.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/utils/audio_timeformat.dart';
-import 'package:shweeshaungdaily/views/audio_player_widget.dart';
+import 'package:shweeshaungdaily/views/audio_post/audio_player_widget.dart';
 
 final Map<String, String> audienceValueMap = {
   'Public': 'Public',
@@ -65,7 +65,6 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen>
     super.initState();
     _titleController.addListener(() => setState(() {}));
     _fetchAudios();
-
   }
 
   void _onTitleChanged() {
@@ -364,7 +363,7 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen>
                       Expanded(
                         child: Container(
                           // margin: const EdgeInsets.all(16),
-                           padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: const Color(0xFFD3F4F3),
                             borderRadius: BorderRadius.circular(16),

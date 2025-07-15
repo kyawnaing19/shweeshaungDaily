@@ -11,7 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shweeshaungdaily/services/authorize_image.dart';
 import 'package:shweeshaungdaily/services/token_service.dart';
 import 'package:shweeshaungdaily/utils/image_cache.dart';
-import 'package:shweeshaungdaily/views/audio_view.dart';
+import 'package:shweeshaungdaily/views/audio_post/audio_view.dart';
 import 'package:shweeshaungdaily/views/mail/mail_view.dart';
 
 import 'package:shweeshaungdaily/views/comment_section.dart';

@@ -3,7 +3,7 @@ import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/views/bottomNavBar.dart';
 import 'package:shweeshaungdaily/views/teacherprofile.dart';
 import 'Home.dart';
-import 'note_list_view.dart';
+import 'note/note_list_view.dart';
 import 'profile_router.dart';
 import 'timetablepage.dart';
 
