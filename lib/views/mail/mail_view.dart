@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shweeshaungdaily/views/compose_mail.dart';
-import 'package:shweeshaungdaily/views/letter_view.dart';
+import 'package:shweeshaungdaily/views/mail/compose_mail.dart';
+import 'package:shweeshaungdaily/views/mail/letter_view.dart';
 
 class MailBoxHome extends StatefulWidget {
   const MailBoxHome({super.key});

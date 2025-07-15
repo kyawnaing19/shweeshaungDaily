@@ -123,7 +123,7 @@ class _ComposeLoveLetterScreenState extends State<ComposeLoveLetterScreen>
                 CrossAxisAlignment.center, // This centers vertically
             children: [
               Text(
-                'Choose mode to send: ',
+                'send as: ',
                 style: TextStyle(
                   fontSize: 16,
                   fontFamily: GoogleFonts.dancingScript().fontFamily,

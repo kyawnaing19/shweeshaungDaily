@@ -12,7 +12,7 @@ import 'package:shweeshaungdaily/services/authorize_image.dart';
 import 'package:shweeshaungdaily/services/token_service.dart';
 import 'package:shweeshaungdaily/utils/image_cache.dart';
 import 'package:shweeshaungdaily/views/audio_view.dart';
-import 'package:shweeshaungdaily/views/mail_view.dart';
+import 'package:shweeshaungdaily/views/mail/mail_view.dart';
 
 import 'package:shweeshaungdaily/views/comment_section.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -174,6 +174,7 @@ class _HomePageState extends State<HomeScreenPage>
       setState(() {});
     });
   }
+
   Future<void> getUserName() async {
     userName = await TokenService.getUserName();
   }
@@ -1117,7 +1118,6 @@ class _HomePageState extends State<HomeScreenPage>
                                 final success = await ApiService.like(feedId!);
                                 if (success) {
                                   setState(() {
-                            
                                     final idx = feedItems?.indexWhere(
                                       (item) => item['id'] == feedId,
                                     );
@@ -1126,7 +1126,7 @@ class _HomePageState extends State<HomeScreenPage>
                                         feedItems![idx]['likes'] ?? [],
                                       )..add(userName);
                                     }
-                                     isLiked = true;
+                                    isLiked = true;
                                     likeCount = likeCount! + 1;
                                   });
                                 }
