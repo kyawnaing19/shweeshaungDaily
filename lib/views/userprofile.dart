@@ -1,12 +1,11 @@
 import 'dart:convert';
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/utils/image_cache.dart';
-import 'package:shweeshaungdaily/views/main_screen.dart';
+import 'package:shweeshaungdaily/views/user_profile_update.dart';
 import '../services/api_service.dart';
 import 'package:shweeshaungdaily/services/authorize_image.dart';
 
@@ -580,7 +579,7 @@ class SettingsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 180,
+      width: 150,
       padding: const EdgeInsets.all(15.0),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -595,15 +594,30 @@ class SettingsCard extends StatelessWidget {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: const [
+        children: [
+          _SettingsItem(
+            icon: Icons.person,
+            text: 'Edit Profile',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ProfileUpdateScreen(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
           _SettingsItem(
             icon: Icons.headset_mic_outlined,
             text: 'Customer Support',
+            onTap: () {},
           ),
-          SizedBox(height: 12),
-          _SettingsItem(
+          const SizedBox(height: 12),
+         _SettingsItem(
             icon: Icons.power_settings_new_rounded,
             text: 'Log out',
+            onTap: () {},
           ),
         ],
       ),
@@ -615,18 +629,22 @@ class _SettingsItem extends StatelessWidget {
   final IconData icon;
   final String text;
 
-  const _SettingsItem({required this.icon, required this.text});
+  const _SettingsItem({
+    required this.icon,
+    required this.text,
+    required Null Function() onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         CircleAvatar(
-          radius: 14,
+          radius: 16,
           backgroundColor: const Color(0xFF317575),
-          child: Icon(icon, size: 16, color: Colors.white),
+          child: Icon(icon, size: 18, color: Colors.white),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         Flexible(
           child: Text(
             text,
@@ -634,7 +652,7 @@ class _SettingsItem extends StatelessWidget {
               color: Color(0xFF317575),
               fontWeight: FontWeight.w600,
             ),
-            overflow: TextOverflow.ellipsis,
+            // overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
