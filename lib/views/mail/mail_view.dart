@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/views/mail/compose_mail.dart';
 import 'package:shweeshaungdaily/views/mail/letter_view.dart';
 import 'package:shweeshaungdaily/services/api_service.dart'; // Make sure this path is correct
@@ -20,71 +21,69 @@ class _MailBoxHomeState extends State<MailBoxHome> {
   late Future<List<Map<String, dynamic>>?> _getInboxMessages;
 
   // Keep mock data for inbox for now, as you only provided getSentMails
-  
 
   @override
-void initState() {
-  super.initState();
-  _fetchSentMails();
-  _fetchAllMails();
-   // This will now fetch real data in production
-  // For testing, you can override it like this:
-  _sentMailsFuture = Future.value([
-    {
-      'text': 'This is the body of the test email.',
-      'recipientId': 123,
-      'recipientName': 'Test Recipient',
-      'semester': '2025 Fall',
-      'major': 'Computer Science',
-      'senderId': 456,
-      'senderName': 'Test Sender',
-      // No 'isDelivered' or 'time' in this sample
-    },
-    {
-      'text': 'Another test email about a project.',
-      'recipientId': 789,
-      'recipientName': 'Project Collaborator',
-      'semester': '2026 Spring',
-      'major': 'Electrical Engineering',
-      'senderId': null, // Anonymous
-      'senderName': null, // Anonymous
-    },
-  ]);
+  void initState() {
+    super.initState();
+    _fetchSentMails();
+    _fetchAllMails();
+    // This will now fetch real data in production
+    // For testing, you can override it like this:
+    _sentMailsFuture = Future.value([
+      {
+        'text': 'This is the body of the test email.',
+        'recipientId': 123,
+        'recipientName': 'Test Recipient',
+        'semester': '2025 Fall',
+        'major': 'Computer Science',
+        'senderId': 456,
+        'senderName': 'Test Sender',
+        // No 'isDelivered' or 'time' in this sample
+      },
+      {
+        'text': 'Another test email about a project.',
+        'recipientId': 789,
+        'recipientName': 'Project Collaborator',
+        'semester': '2026 Spring',
+        'major': 'Electrical Engineering',
+        'senderId': null, // Anonymous
+        'senderName': null, // Anonymous
+      },
+    ]);
 
-  _getInboxMessages = Future.value([
-    {
-      'text': 'Inbox.',
-      'recipientId': 123,
-      'recipientName': 'Recipient',
-      'semester': '2025 Fall',
-      'major': 'Computer Science',
-      'senderId': 456,
-      'senderName': 'Test Sender',
-      // No 'isDelivered' or 'time' in this sample
-    },
-    {
-      'text': 'Another test email about a project.',
-      'recipientId': 789,
-      'recipientName': 'Project Collaborator',
-      'semester': '2026 Spring',
-      'major': 'Electrical Engineering',
-      'senderId': null, // Anonymous
-      'senderName': null, // Anonymous
-    },
-  ]);
-
-}
+    _getInboxMessages = Future.value([
+      {
+        'text': 'Inbox.',
+        'recipientId': 123,
+        'recipientName': 'Recipient',
+        'semester': '2025 Fall',
+        'major': 'Computer Science',
+        'senderId': 456,
+        'senderName': 'Test Sender',
+        // No 'isDelivered' or 'time' in this sample
+      },
+      {
+        'text': 'Another test email about a project.',
+        'recipientId': 789,
+        'recipientName': 'Project Collaborator',
+        'semester': '2026 Spring',
+        'major': 'Electrical Engineering',
+        'senderId': null, // Anonymous
+        'senderName': null, // Anonymous
+      },
+    ]);
+  }
 
   // A method to fetch sent mails
   void _fetchSentMails() {
     setState(() {
-     // _sentMailsFuture = ApiService.getSentMails();
+      // _sentMailsFuture = ApiService.getSentMails();
     });
   }
 
   void _fetchAllMails() {
     setState(() {
-     // _sentMailsFuture = ApiService.getSentMails();
+      // _sentMailsFuture = ApiService.getSentMails();
     });
   }
 
@@ -102,168 +101,172 @@ void initState() {
   //     (Consider updating LoveLetterScreen to accept message data later)
 
   Widget _buildInboxCard(Map<String, dynamic> message) {
-  // Extract the relevant fields from the message map
-  final String recipientName = message['recipientName'] ?? 'Unknown Recipient';
-  final String semester = message['semester'] ?? 'N/A';
-  final String major = message['major'] ?? 'N/A';
-  // Removed 'time' as it's not in PublicMailDTO and you only want specified fields
-  // If you still want to show a time, you'd need to add it to your DTO or determine how it's sent from the API.
+    // Extract the relevant fields from the message map
+    final String recipientName =
+        message['recipientName'] ?? 'Unknown Recipient';
+    final String semester = message['semester'] ?? 'N/A';
+    final String major = message['major'] ?? 'N/A';
+    // Removed 'time' as it's not in PublicMailDTO and you only want specified fields
+    // If you still want to show a time, you'd need to add it to your DTO or determine how it's sent from the API.
 
-  return GestureDetector(
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LoveLetterScreen(message: message, isSent: true),
-          // You might want to pass the full message to LoveLetterScreen if it needs all details
-          // builder: (context) => LoveLetterScreen(message: message, isSent: true),
-        ),
-      );
-    },
-    child: Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        image: const DecorationImage(
-          image: AssetImage('assets/images/noinfomail.png'),
-          fit: BoxFit.cover,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 6,
-            offset: Offset(0, 2),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => LoveLetterScreen(message: message, isSent: true),
+            // You might want to pass the full message to LoveLetterScreen if it needs all details
+            // builder: (context) => LoveLetterScreen(message: message, isSent: true),
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          const SizedBox(width: 12),
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: Colors.pink.withOpacity(0.2),
-            // Removed isDelivered logic. Using a static send icon now.
-            child: const Icon(
-              Icons.send, // Static send icon
-              color: Colors.pink,
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          image: const DecorationImage(
+            image: AssetImage('assets/images/noinfomail.png'),
+            fit: BoxFit.cover,
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 6,
+              offset: Offset(0, 2),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 40, bottom: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'To: $recipientName', // Display recipientName
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Semester: $semester', // Display semester
-                    style: const TextStyle(color: Colors.black),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Major: $major', // Display major
-                    style: const TextStyle(color: Colors.black),
-                  ),
-                  // Removed the Text for 'time' as it's not in your DTO
-                ],
+          ],
+        ),
+        child: Row(
+          children: [
+            const SizedBox(width: 12),
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: Colors.pink.withOpacity(0.2),
+              // Removed isDelivered logic. Using a static send icon now.
+              child: const Icon(
+                Icons.send, // Static send icon
+                color: Colors.pink,
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 16),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 40, bottom: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'To: $recipientName', // Display recipientName
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Semester: $semester', // Display semester
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Major: $major', // Display major
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                    // Removed the Text for 'time' as it's not in your DTO
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildSentCard(Map<String, dynamic> message) {
-  // Extract the relevant fields from the message map
-  final String recipientName = message['recipientName'] ?? 'Unknown Recipient';
-  final String semester = message['semester'] ?? 'N/A';
-  final String major = message['major'] ?? 'N/A';
-  // Removed 'time' as it's not in PublicMailDTO and you only want specified fields
-  // If you still want to show a time, you'd need to add it to your DTO or determine how it's sent from the API.
+    // Extract the relevant fields from the message map
+    final String recipientName =
+        message['recipientName'] ?? 'Unknown Recipient';
+    final String semester = message['semester'] ?? 'N/A';
+    final String major = message['major'] ?? 'N/A';
+    // Removed 'time' as it's not in PublicMailDTO and you only want specified fields
+    // If you still want to show a time, you'd need to add it to your DTO or determine how it's sent from the API.
 
-  return GestureDetector(
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LoveLetterScreen(message: message, isSent: true),
-          // You might want to pass the full message to LoveLetterScreen if it needs all details
-          // builder: (context) => LoveLetterScreen(message: message, isSent: true),
-        ),
-      );
-    },
-    child: Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        image: const DecorationImage(
-          image: AssetImage('assets/images/noinfomail.png'),
-          fit: BoxFit.cover,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 6,
-            offset: Offset(0, 2),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => LoveLetterScreen(message: message, isSent: true),
+            // You might want to pass the full message to LoveLetterScreen if it needs all details
+            // builder: (context) => LoveLetterScreen(message: message, isSent: true),
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          const SizedBox(width: 12),
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: Colors.pink.withOpacity(0.2),
-            // Removed isDelivered logic. Using a static send icon now.
-            child: const Icon(
-              Icons.send, // Static send icon
-              color: Colors.pink,
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          image: const DecorationImage(
+            image: AssetImage('assets/images/noinfomail.png'),
+            fit: BoxFit.cover,
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 6,
+              offset: Offset(0, 2),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 40, bottom: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'To: $recipientName', // Display recipientName
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Semester: $semester', // Display semester
-                    style: const TextStyle(color: Colors.black),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Major: $major', // Display major
-                    style: const TextStyle(color: Colors.black),
-                  ),
-                  // Removed the Text for 'time' as it's not in your DTO
-                ],
+          ],
+        ),
+        child: Row(
+          children: [
+            const SizedBox(width: 12),
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: Colors.pink.withOpacity(0.2),
+              // Removed isDelivered logic. Using a static send icon now.
+              child: const Icon(
+                Icons.send, // Static send icon
+                color: Colors.pink,
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 16),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 40, bottom: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'To: $recipientName', // Display recipientName
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Semester: $semester', // Display semester
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Major: $major', // Display major
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                    // Removed the Text for 'time' as it's not in your DTO
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildTabBar() {
     return Container(
@@ -379,9 +382,9 @@ void initState() {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: kBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.teal,
+        backgroundColor: kAccentColor,
         elevation: 0,
         centerTitle: true,
         title: Text(
@@ -456,7 +459,8 @@ void initState() {
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: sentMessages.length,
-            itemBuilder: (context, index) => _buildInboxCard(sentMessages[index]),
+            itemBuilder:
+                (context, index) => _buildInboxCard(sentMessages[index]),
           );
         } else {
           // No data available (e.g., API returned null, or empty list if no error)
@@ -499,7 +503,8 @@ void initState() {
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: sentMessages.length,
-            itemBuilder: (context, index) => _buildSentCard(sentMessages[index]),
+            itemBuilder:
+                (context, index) => _buildSentCard(sentMessages[index]),
           );
         } else {
           // No data available (e.g., API returned null, or empty list if no error)

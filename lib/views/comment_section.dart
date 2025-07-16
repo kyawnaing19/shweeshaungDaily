@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shweeshaungdaily/widget/copyable_text.dart';
 
 import '../services/api_service.dart';
 
@@ -187,7 +188,7 @@ class _CommentSectionState extends State<CommentSection> {
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(text),
+                                  CopyableText(text: text),
                                   if (createdAt.isNotEmpty)
                                     Text(
                                       _formatDate(createdAt),

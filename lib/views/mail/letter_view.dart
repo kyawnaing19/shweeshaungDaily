@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shweeshaungdaily/colors.dart';
 
 class LoveLetterScreen extends StatelessWidget {
   // 1. Define fields to hold the data
   final Map<String, dynamic> message;
-  final bool isSent; // To differentiate between inbox and sent messages if needed for display logic
+  final bool
+  isSent; // To differentiate between inbox and sent messages if needed for display logic
 
   // 2. Update the constructor to require these fields
   const LoveLetterScreen({
@@ -16,12 +18,19 @@ class LoveLetterScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Extract data from the message map, providing fallback values
-    final String recipientName = isSent ? message['recipientName'] ?? 'Recipient' : message['sender'] ?? 'Sender';
-    final String letterContent = message['text'] ?? 'No content available.'; // Assuming 'text' holds the full letter content
-    final String date = message['time'] ?? 'Unknown Date'; // Assuming 'time' is available for date display
+    final String recipientName =
+        isSent
+            ? message['recipientName'] ?? 'Recipient'
+            : message['sender'] ?? 'Sender';
+    final String letterContent =
+        message['text'] ??
+        'No content available.'; // Assuming 'text' holds the full letter content
+    final String date =
+        message['time'] ??
+        'Unknown Date'; // Assuming 'time' is available for date display
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: kBackgroundColor,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -33,9 +42,12 @@ class LoveLetterScreen extends StatelessWidget {
               // Implement favorite logic
             },
           ),
-          IconButton(icon: const Icon(Icons.share, size: 24), onPressed: () {
-            // Implement share logic
-          }),
+          IconButton(
+            icon: const Icon(Icons.share, size: 24),
+            onPressed: () {
+              // Implement share logic
+            },
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -45,7 +57,9 @@ class LoveLetterScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                isSent ? 'To My Dearest,' : 'My Dearest,', // Adjust greeting based on sent/received
+                isSent
+                    ? 'To My Dearest,'
+                    : 'My Dearest,', // Adjust greeting based on sent/received
                 style: GoogleFonts.playfairDisplay(
                   fontSize: 32,
                   fontWeight: FontWeight.w600,
@@ -95,7 +109,9 @@ class LoveLetterScreen extends StatelessWidget {
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text(
-                        isSent ? 'Sent by you,' : 'Forever yours,', // Adjust closing based on sent/received
+                        isSent
+                            ? 'Sent by you,'
+                            : 'Forever yours,', // Adjust closing based on sent/received
                         style: GoogleFonts.dancingScript(
                           fontSize: 28,
                           color: Colors.pink[600],

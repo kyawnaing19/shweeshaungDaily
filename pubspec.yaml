@@ -60,6 +60,7 @@ dependencies:
   webview_flutter_android: ^4.7.0
   flutter_typeahead: ^5.2.0
   comment_box: ^0.0.18
+  flutter_svg: ^2.2.0
 
 dev_dependencies:
   flutter_test:
@@ -80,6 +81,7 @@ flutter:
   assets:
     - assets/images/
     - assets/audio/
+    - assets/icons/
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

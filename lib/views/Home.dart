@@ -11,10 +11,12 @@ import 'package:shweeshaungdaily/services/authorize_image.dart';
 import 'package:shweeshaungdaily/services/token_service.dart';
 import 'package:shweeshaungdaily/utils/image_cache.dart';
 import 'package:shweeshaungdaily/views/audio_post/audio_view.dart';
+import 'package:shweeshaungdaily/views/image_full_view.dart';
 import 'package:shweeshaungdaily/views/mail/mail_view.dart';
 
 import 'package:shweeshaungdaily/views/comment_section.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:shweeshaungdaily/widget/copyable_text.dart';
 
 class HomeScreenPage extends StatefulWidget {
   const HomeScreenPage({super.key});
@@ -1049,31 +1051,44 @@ class _HomePageState extends State<HomeScreenPage>
             // Message Text
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Text(
-                message,
+              child: CopyableText(
+                text: message,
                 style: const TextStyle(color: Colors.white, fontSize: 15),
               ),
             ),
 
             // Conditionally display the image section
-            if (hasImage)
+            if (hasImage) // Use widget.imageUrl to check for image existence
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: AuthorizedImage(
-                    imageUrl: imageUrl,
-                    height: 180,
-                    width: double.infinity,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ImageFullView(imageUrl: imageUrl),
+                      ),
+                    );
+                  },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: AuthorizedImage(
+                      imageUrl: imageUrl,
+                      height: 280,
+                      width: double.infinity,
+                      // Add this line
+                    ),
                   ),
                 ),
-              ),
+              )
+            else
+              const SizedBox.shrink(),
 
-            if (!hasImage) const SizedBox(height: 12),
+            //if (!hasImage) const SizedBox(height: 12),
 
             // Action Bar
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(5),
               child: Row(
                 children: [
                   StatefulBuilder(

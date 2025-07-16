@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shweeshaungdaily/colors.dart';
 import 'dart:async'; // For debounce
 import 'dart:convert'; // Import for jsonEncode/jsonDecode (needed for API service)
 
@@ -27,7 +28,8 @@ class _ComposeLoveLetterScreenState extends State<ComposeLoveLetterScreen>
   bool _isAnonymous = true;
 
   final TextEditingController _recipientController = TextEditingController();
-  final TextEditingController _contentController = TextEditingController(); // Added content controller
+  final TextEditingController _contentController =
+      TextEditingController(); // Added content controller
   int? _selectedRecipientId; // To store the recipient's ID
 
   List<String> _suggestedRecipients = [];
@@ -81,10 +83,11 @@ class _ComposeLoveLetterScreenState extends State<ComposeLoveLetterScreen>
       // Extract names. If your API returns IDs, store them too.
       // Assuming your API response for searchUserNames includes 'name' and 'id'
       // Example: [{'id': 1, 'name': 'Alice'}, {'id': 2, 'name': 'Bob'}]
-      final List<String> names = results
-          .map((item) => item['name']?.toString() ?? '')
-          .where((name) => name.isNotEmpty)
-          .toList();
+      final List<String> names =
+          results
+              .map((item) => item['name']?.toString() ?? '')
+              .where((name) => name.isNotEmpty)
+              .toList();
 
       setState(() {
         _suggestedRecipients = names;
@@ -105,11 +108,12 @@ class _ComposeLoveLetterScreenState extends State<ComposeLoveLetterScreen>
   // New function to handle sending the mail
   void _sendMailAction() async {
     final String letterContent = _contentController.text;
-    final String recipientName = _recipientController.text; // The text in the recipient field
+    final String recipientName =
+        _recipientController.text; // The text in the recipient field
     final bool anonymous = _isAnonymous;
 
     // --- IMPORTANT ---
-    
+
     // You need a way to get the `recipientId` when a user types a name
     // or selects from suggestions. Currently, `_selectedRecipientId`
     // is set only when a suggestion is tapped. If the user types a full name
@@ -120,7 +124,10 @@ class _ComposeLoveLetterScreenState extends State<ComposeLoveLetterScreen>
     // 1. Fetch recipient ID based on the typed name before sending.
     // 2. Only allow sending if a valid recipient (with an ID) is selected/typed.
     if (_selectedRecipientId == null || recipientName.isEmpty) {
-      _showSnackBar('Please select a recipient from the suggestions or ensure a valid recipient is entered.', Colors.red);
+      _showSnackBar(
+        'Please select a recipient from the suggestions or ensure a valid recipient is entered.',
+        Colors.red,
+      );
       return;
     }
 
@@ -149,7 +156,6 @@ class _ComposeLoveLetterScreenState extends State<ComposeLoveLetterScreen>
       anonymous: anonymous,
       recipientId: _selectedRecipientId!, // Use the stored ID
     );
- 
 
     // Hide the loading indicator
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -170,23 +176,19 @@ class _ComposeLoveLetterScreenState extends State<ComposeLoveLetterScreen>
   }
 
   void _showSnackBar(String message, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: color,
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message), backgroundColor: color));
   }
-
 
   @override
   Widget build(BuildContext context) {
     return Theme(
       data: ThemeData(
         primaryColor: primaryDarkColor,
-        scaffoldBackgroundColor: backgroundColor,
+        scaffoldBackgroundColor: kBackgroundColor,
         appBarTheme: const AppBarTheme(
-          color: accentColor,
+          color: kAccentColor,
           elevation: 4,
           titleTextStyle: TextStyle(
             color: Colors.white,
@@ -198,8 +200,10 @@ class _ComposeLoveLetterScreenState extends State<ComposeLoveLetterScreen>
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16.0,
+            vertical: 14.0,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.0),
             borderSide: BorderSide.none,
@@ -219,21 +223,12 @@ class _ComposeLoveLetterScreenState extends State<ComposeLoveLetterScreen>
           ),
         ),
         textTheme: TextTheme(
-          bodyLarge: GoogleFonts.lato(
-            color: textColor,
-            fontSize: 16,
-          ),
-          bodyMedium: GoogleFonts.lato(
-            color: textColor,
-            fontSize: 14,
-          ),
+          bodyLarge: GoogleFonts.lato(color: textColor, fontSize: 16),
+          bodyMedium: GoogleFonts.lato(color: textColor, fontSize: 14),
         ),
         colorScheme: ColorScheme.fromSwatch().copyWith(secondary: accentColor),
       ),
-      child: Scaffold(
-        appBar: _buildAppBar(context),
-        body: _buildBody(),
-      ),
+      child: Scaffold(appBar: _buildAppBar(context), body: _buildBody()),
     );
   }
 
@@ -335,14 +330,16 @@ class _ComposeLoveLetterScreenState extends State<ComposeLoveLetterScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: _isAnonymous == isAnonymousMode
-              ? accentColor.withOpacity(0.2)
-              : Colors.transparent,
+          color:
+              _isAnonymous == isAnonymousMode
+                  ? accentColor.withOpacity(0.2)
+                  : Colors.transparent,
           borderRadius: BorderRadius.circular(25),
           border: Border.all(
-            color: _isAnonymous == isAnonymousMode
-                ? accentColor
-                : Colors.transparent,
+            color:
+                _isAnonymous == isAnonymousMode
+                    ? accentColor
+                    : Colors.transparent,
             width: 1.5,
           ),
         ),
@@ -376,20 +373,21 @@ class _ComposeLoveLetterScreenState extends State<ComposeLoveLetterScreen>
         controller: _recipientController,
         decoration: InputDecoration(
           hintText: 'To:',
-          prefixIcon: Icon(Icons.person_outline,
-              color: primaryDarkColor.withOpacity(0.7)),
+          prefixIcon: Icon(
+            Icons.person_outline,
+            color: primaryDarkColor.withOpacity(0.7),
+          ),
           suffixIcon: IconButton(
-            icon: Icon(Icons.contacts_outlined,
-                color: primaryDarkColor.withOpacity(0.7)),
+            icon: Icon(
+              Icons.contacts_outlined,
+              color: primaryDarkColor.withOpacity(0.7),
+            ),
             onPressed: () {
               // Potentially open contacts picker
             },
           ),
         ),
-        style: GoogleFonts.lato(
-          color: textColor,
-          fontSize: 16,
-        ),
+        style: GoogleFonts.lato(color: textColor, fontSize: 16),
       ),
     );
   }
@@ -430,26 +428,27 @@ class _ComposeLoveLetterScreenState extends State<ComposeLoveLetterScreen>
                 ListTile(
                   title: Text(
                     name,
-                    style: GoogleFonts.lato(
-                      color: textColor,
-                      fontSize: 16,
-                    ),
+                    style: GoogleFonts.lato(color: textColor, fontSize: 16),
                   ),
                   onTap: () async {
                     // Find the corresponding ID from the original API results
                     final List<Map<String, dynamic>>? allResults =
-                        await ApiService.searchUserNames(_recipientController.text); // Re-fetch or cache results
-                    final Map<String, dynamic>? selectedUser = allResults?.firstWhere(
-                      (item) => item['name'] == name,
-                      orElse: () => {}, // Provide an empty map if not found
-                    );
+                        await ApiService.searchUserNames(
+                          _recipientController.text,
+                        ); // Re-fetch or cache results
+                    final Map<String, dynamic>? selectedUser = allResults
+                        ?.firstWhere(
+                          (item) => item['name'] == name,
+                          orElse: () => {}, // Provide an empty map if not found
+                        );
 
                     _ignoreTextChanges = true;
                     _recipientController.text = name;
                     setState(() {
                       _suggestedRecipients = []; // Clear suggestions
                       // Set the recipient ID here
-                      _selectedRecipientId = selectedUser?['id'] as int?; // Cast to int?
+                      _selectedRecipientId =
+                          selectedUser?['id'] as int?; // Cast to int?
                     });
                     Future.delayed(const Duration(milliseconds: 50), () {
                       _ignoreTextChanges = false;
@@ -491,11 +490,7 @@ class _ComposeLoveLetterScreenState extends State<ComposeLoveLetterScreen>
           hintText: 'Compose your message...',
           contentPadding: const EdgeInsets.all(16),
         ),
-        style: GoogleFonts.lato(
-          color: textColor,
-          fontSize: 16,
-          height: 1.5,
-        ),
+        style: GoogleFonts.lato(color: textColor, fontSize: 16, height: 1.5),
       ),
     );
   }
