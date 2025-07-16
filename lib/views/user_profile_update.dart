@@ -5,6 +5,7 @@ import 'dart:io' as io;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
 import 'package:shweeshaungdaily/colors.dart';
+import 'package:shweeshaungdaily/services/api_service.dart'; // Assuming api_service.dart is here
 
 class ProfileUpdateScreen extends StatefulWidget {
   const ProfileUpdateScreen({super.key});
@@ -15,25 +16,69 @@ class ProfileUpdateScreen extends StatefulWidget {
 
 class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _nameController =
-      TextEditingController(text: 'Pyae Phyo Aung');
-  final TextEditingController _nicknameController =
-      TextEditingController(text: 'Kyote Gyi');
-  final TextEditingController _emailController =
-      TextEditingController(text: 'pyaephyoedung@ucstt.edu.mm');
-  final TextEditingController _semesterController =
-      TextEditingController(text: 'VIII');
-  final TextEditingController _classController =
-      TextEditingController(text: 'Fourth Year (Senior)');
-  final TextEditingController _majorController =
-      TextEditingController(text: 'Computer Science (CS)');
-  final TextEditingController _bioController =
-      TextEditingController(text: 'I like playing efootball mobile game');
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _nicknameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _semesterController = TextEditingController();
+  final TextEditingController _classController = TextEditingController();
+  final TextEditingController _majorController = TextEditingController();
+  final TextEditingController _bioController = TextEditingController();
+  final String baseUrl = ApiService.base;
 
   bool _isSaving = false;
+  bool _isLoading = true; // Added for initial data loading
 
   Uint8List? _webImage;
   io.File? _profileImage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileData(); // Call this to fetch profile data
+  }
+
+  Future<void> _loadProfileData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      final profileData = await ApiService.getProfile(); // Fetching data from your API service
+
+      if (profileData != null && profileData.isNotEmpty) {
+        // Populate controllers with fetched data
+        _nameController.text = profileData['userName'] ?? '';
+        _nicknameController.text = profileData['nickName'] ?? '';
+        _emailController.text = profileData['email'] ?? '';
+        _semesterController.text = profileData['semester'] ?? '';
+        _classController.text = profileData['userClass'] ?? '';
+        _majorController.text = profileData['major'] ?? '';
+        _bioController.text = profileData['bio'] ?? '';
+
+         final String profileImageUrl = profileData['profilePictureUrl'] != null
+        ? '$baseUrl/${profileData!['profilePictureUrl']}'
+        : 'assets/images/tpo.jpg';
+
+        // Handle profile image if your API returns a URL or base64 string
+        // For simplicity, this example doesn't fetch the image,
+        // you'd typically load it from a URL here.
+      }
+    } catch (e) {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load profile: $e'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -94,45 +139,42 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kBackgroundColor, // Manual color
+      backgroundColor: kBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Edit Profile',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: IconButton(
-              icon: const Icon(Icons.more_vert),
-              onPressed: () {},
-            ),
-          ),
-        ],
-        backgroundColor: Colors.transparent, // Manual color
-        foregroundColor: kAccentColor, // Manual color
+        backgroundColor: kAccentColor,
+        foregroundColor: kAccentColor,
         elevation: 0,
         centerTitle: true,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
       ),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            children: [
-              _buildProfileHeader(),
-              const SizedBox(height: 24),
-              _buildFormSection(),
-              const SizedBox(height: 24),
-              _buildActionButtons(),
-            ],
-          ),
-        ),
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                color: kPrimaryColor,
+              )) // Show loading indicator
+            : SingleChildScrollView(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                child: Column(
+                  children: [
+                    _buildProfileHeader(),
+                    const SizedBox(height: 24),
+                    _buildFormSection(),
+                    const SizedBox(height: 24),
+                    _buildActionButtons(),
+                  ],
+                ),
+              ),
       ),
     );
   }
@@ -171,16 +213,15 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: (_profileImage != null || _webImage != null)
-                        ? Border.all(color: Colors.green, width: 4)
+                        ? Border.all(color: Colors.white, width: 4)
                         : null,
                     gradient: (_profileImage == null && _webImage == null)
                         ? const LinearGradient(
-                            // Manual color
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              kPrimaryColor, // Manual color
-                              kPrimaryDarkColor, // Manual color
+                              kPrimaryColor,
+                              kPrimaryDarkColor,
                             ],
                           )
                         : null,
@@ -217,11 +258,10 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: kAccentColor, // Manual color
+                    color: kAccentColor,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        // ignore: deprecated_member_use
                         color: Colors.black.withOpacity(0.1),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
@@ -231,7 +271,7 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                   child: const Icon(
                     Icons.camera_alt_rounded,
                     size: 20,
-                    color: kPrimaryColor, // Manual color
+                    color: kWhite,
                   ),
                 ),
               ),
@@ -240,20 +280,22 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          _nameController.text,
+          _nameController.text.isNotEmpty
+              ? _nameController.text
+              : 'Loading Name...', // Display placeholder while loading
           style: const TextStyle(
-            // Manual TextStyle
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: kPrimaryDarkColor, // Manual color
+            color: kPrimaryDarkColor,
           ),
         ),
         Text(
-          _emailController.text,
+          _emailController.text.isNotEmpty
+              ? _emailController.text
+              : 'Loading Email...', // Display placeholder while loading
           style: const TextStyle(
-            // Manual TextStyle
             fontSize: 14,
-            color: kGrey, // Manual color
+            color: kGrey,
           ),
         ),
       ],
@@ -265,13 +307,8 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
       key: _formKey,
       child: Column(
         children: [
-          _buildTextField('Full Name', _nameController, Icons.person_outline),
-          const SizedBox(height: 16),
           _buildTextField('Nickname', _nicknameController,
               Icons.face_retouching_natural_outlined),
-          const SizedBox(height: 16),
-          _buildTextField('Email', _emailController, Icons.email_outlined,
-              keyboardType: TextInputType.emailAddress),
           const SizedBox(height: 16),
           _buildTextField(
               'Semester', _semesterController, Icons.school_outlined),
@@ -296,31 +333,25 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
       maxLines: maxLines,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon:
-            Icon(icon, color: kPrimaryColor), // Manual color
+        prefixIcon: Icon(icon, color: kPrimaryColor),
         floatingLabelBehavior: FloatingLabelBehavior.never,
-        filled: true, // Manual
-        fillColor: Colors.white, // Manual
+        filled: true,
+        fillColor: Colors.white,
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 16), // Manual
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         border: OutlineInputBorder(
-          // Manual
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          // Manual
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          // Manual
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-              color: kPrimaryColor, width: 2),
+          borderSide: const BorderSide(color: kPrimaryColor, width: 2),
         ),
         labelStyle: const TextStyle(
-          // Manual
           color: kGrey,
           fontSize: 14,
         ),
@@ -351,11 +382,20 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                     if (_formKey.currentState!.validate()) {
                       setState(() => _isSaving = true);
 
+                      // Here you would call your API to save the profile data
+                      // For example:
+                      // final success = await ApiService.updateProfile(
+                      //   name: _nameController.text,
+                      //   nickname: _nicknameController.text,
+                      //   email: _emailController.text,
+                      //   // ... other fields
+                      // );
+
+                      // Simulating API call for update
                       await Future.delayed(const Duration(seconds: 2));
+                      final bool success = Random().nextBool(); // Replace with actual API response
 
                       setState(() => _isSaving = false);
-
-                      final bool success = Random().nextBool();
 
                       // ignore: use_build_context_synchronously
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -363,9 +403,7 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                           content: Text(success
                               ? 'Profile updated successfully!'
                               : 'Failed to update profile'),
-                          backgroundColor: success
-                              ? Colors.green
-                              : kErrorColor, // Manual color
+                          backgroundColor: success ? Colors.green : kErrorColor,
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -375,15 +413,14 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                     }
                   },
             style: ElevatedButton.styleFrom(
-              backgroundColor: kPrimaryColor, // Manual color
-              foregroundColor:
-                  kWhite, // Manual color
+              backgroundColor: kPrimaryColor,
+              foregroundColor: kWhite,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),
-              elevation: 0, // Manual
-              shadowColor: Colors.transparent, // Manual
+              elevation: 0,
+              shadowColor: Colors.transparent,
             ),
             child: _isSaving
                 ? const SizedBox(
@@ -416,7 +453,7 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
 class FullscreenImageViewer extends StatelessWidget {
   final String tag;
   final dynamic image; // File or Uint8List
-  final VoidCallback onDelete; // 👈 Add this
+  final VoidCallback onDelete;
 
   const FullscreenImageViewer({
     super.key,
@@ -440,8 +477,8 @@ class FullscreenImageViewer extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.delete, color: Colors.white),
             onPressed: () {
-              onDelete(); // 👈 Call the delete callback
-              Navigator.pop(context); // Go back
+              onDelete();
+              Navigator.pop(context);
             },
           ),
         ],

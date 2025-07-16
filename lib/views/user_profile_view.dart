@@ -1,28 +1,10 @@
 import 'package:flutter/material.dart';
 
-// void main() {
-//   runApp(const MyProfileApp());
-// }
-
-// class MyProfileApp extends StatelessWidget {
-//   const MyProfileApp({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       debugShowCheckedModeBanner: false,
-//       title: 'My Flutter App',
-//       theme: ThemeData(
-//         primarySwatch: Colors.blue,
-//         fontFamily: 'Poppins', // Make sure your theme is set up
-//       ),
-//       home: const ProfilePage(), // <-- Use the ProfilePage here
-//     );
-//   }
-// }
 
 class UserProfileView extends StatefulWidget {
-  const UserProfileView({super.key});
+    final VoidCallback? onBack;
+
+  const UserProfileView({super.key,  this.onBack});
 
   @override
   State<UserProfileView> createState() => _UserProfileViewState();
@@ -40,16 +22,7 @@ class _UserProfileViewState extends State<UserProfileView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Profile',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        centerTitle: true,
-        backgroundColor: const Color(0xFF48C4BC),
-        elevation: 0,
-        foregroundColor: Colors.black,
-      ),
+      
       backgroundColor: const Color(0xFFE0F7FA),
       body: SingleChildScrollView(
         child: Padding(

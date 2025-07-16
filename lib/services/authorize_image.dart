@@ -39,6 +39,7 @@ class _AuthorizedImageState extends State<AuthorizedImage> {
       final cached = await ImageCacheManager.getCachedImage(widget.imageUrl);
       if (cached != null) {
         if (!mounted) return;
+
         setState(() {
           _imageBytes = cached;
           _isLoading = false;

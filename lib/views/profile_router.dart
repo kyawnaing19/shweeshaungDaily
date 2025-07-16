@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shweeshaungdaily/services/token_service.dart';
 import 'package:shweeshaungdaily/views/teacherprofile.dart';
+import 'package:shweeshaungdaily/views/user_profile.dart';
+import 'package:shweeshaungdaily/views/user_profile_view.dart';
 import 'package:shweeshaungdaily/views/userprofile.dart';
 
 class ProfileRouterPage extends StatelessWidget {
@@ -32,9 +34,8 @@ class ProfileRouterPage extends StatelessWidget {
                 onBack: onBack,
                 //onGoToProfileTab: onGoToProfileTab,   // Pass down
               )
-              : ProfileScreen(
-                onBack: onBack,
-                onGoToProfileTab: onGoToProfileTab, // Pass down
+              : UserProfile(
+                onBack: onBack, // Pass down
               );
         }
       },

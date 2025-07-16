@@ -128,46 +128,18 @@ class _HomePageState extends State<HomePage> {
               color: Colors.white,
             ),
           ),
-
           actions: [
-            Builder(
-              builder:
-                  (context) => IconButton(
-                    icon: const Icon(
-                      Icons.settings,
-                      color: Colors.white,
-                      size: 30,
-                    ),
-                    onPressed: () {
-                      final RenderBox overlay =
-                          Overlay.of(context).context.findRenderObject()
-                              as RenderBox;
-                      final Offset topRight = overlay.localToGlobal(
-                        Offset(overlay.size.width, 0),
-                      );
-                      showMenu(
-                        context: context,
-                        position: RelativeRect.fromLTRB(
-                          topRight.dx - 200, // 200 = width of SettingsCard
-                          topRight.dy + kToolbarHeight + 8, // below appbar
-                          10, // right margin
-                          0,
-                        ),
-                        items: [
-                          PopupMenuItem(
-                            enabled: false,
-                            padding: EdgeInsets.zero,
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 250),
-                              child: SettingsCard(),
-                            ),
-                          ),
-                        ],
-                        elevation: 8,
-                        color: Colors.transparent,
-                      );
-                    },
-                  ),
+            IconButton(
+              padding: const EdgeInsets.only(right: 20),
+              icon: const Icon(Icons.power_settings_new_outlined, color: Colors.white),
+              onPressed: () {
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //     builder: (context) => const SettingsCard(),
+                //   ),
+                // );
+              },
             ),
           ],
         );

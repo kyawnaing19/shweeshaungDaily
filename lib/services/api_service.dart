@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:shweeshaungdaily/models/user_reg_model.dart';
@@ -484,9 +485,11 @@ class ApiService {
       throw Exception('Session expired. Please log in again.');
     }
   }
+  
 
   if (response.statusCode != 200) {
-    throw Exception('Failed to upload story: ${response.body}');
+    final body = jsonDecode(response.body);
+    throw Exception('Failed to upload story: ${body['message']}');
   }
 
   // Return entire parsed JSON object
