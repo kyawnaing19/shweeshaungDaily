@@ -3,7 +3,6 @@ import 'dart:convert'; // Add this for JSON encoding/decoding
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shweeshaungdaily/miniApp/mini_app_widget.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:intl/intl.dart';
 import 'package:shweeshaungdaily/colors.dart';

@@ -227,10 +227,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           backgroundColor: Colors.transparent,
                           builder:
                               (context) => UploadStoryDialog(
-                                onUploadSuccess: () async {
-                                  await _fetchStories(); // ✅ Refresh stories
+                                onUploadSuccess: ()  async{
+                                   await _fetchStories(); // ✅ Refresh stories
 
                                   if (widget.onGoToProfileTab != null) {
+                                  
                                     widget
                                         .onGoToProfileTab!(); // ✅ Jump to ProfileRouterPage
                                   }

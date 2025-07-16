@@ -13,6 +13,8 @@ class ApiService {
   static const secbaseUrl = '$base/admin/schedules';
   static const subbaseUrl = '$base/admin/subjects';
   static const storyUrl = '$base/story';
+  static const mailbaseUrl = '$base/mailbox';
+  static const userbaseUrl = '$base/user';
 
   static Future<Map<String, dynamic>?> login(UserModel user) async {
     final response = await http.post(
@@ -514,5 +516,121 @@ class ApiService {
   }
 
 
-  
+
+
+  static Future<List<Map<String, dynamic>>> getAllMails() async {
+  final url = Uri.parse('$mailbaseUrl/all');
+
+  final response = await AuthorizedHttpService.sendAuthorizedRequest(
+    url,
+    method: 'GET',
+  );
+
+  if (response == null) {
+    throw Exception('No response from server');
+  }
+
+  if (response.statusCode == 200) {
+    final List<dynamic> jsonList = jsonDecode(response.body);
+    return jsonList.cast<Map<String, dynamic>>();
+  }
+
+  if (response.statusCode == 403) {
+    try {
+      final Map<String, dynamic> errorJson = jsonDecode(response.body);
+      throw Exception(errorJson['message'] ?? 'Forbidden access');
+    } catch (_) {
+      throw Exception('Forbidden access');
+    }
+  }
+
+  throw Exception('Failed with status code: ${response.statusCode}');
 }
+
+
+
+static Future<String?> sendMail({
+  required String text,
+  required bool anonymous,
+  required int recipientId,
+}) async {
+  final url = Uri.parse(mailbaseUrl);
+
+  final Map<String, dynamic> requestBody = {
+    'text': text,
+    'anonymous': anonymous,
+    'recipientId': recipientId,
+  };
+
+  final response = await AuthorizedHttpService.sendAuthorizedRequest(
+    url,
+    method: 'POST',
+    body: requestBody, // ✅ Don't jsonEncode here!
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  );
+
+  if (response == null) return 'No response from server';
+  if (response.statusCode == 200) return null;
+
+  if (response.statusCode == 403) {
+    try {
+      final Map<String, dynamic> errorJson = jsonDecode(response.body);
+      return errorJson['message'] ?? 'Forbidden access';
+    } catch (_) {
+      return 'Forbidden access';
+    }
+  }
+
+  try {
+    final body = jsonDecode(response.body);
+    return 'Failed: ${body['message'] ?? response.body}';
+  } catch (e) {
+    return 'Failed: ${response.body}';
+  }
+}
+
+
+
+
+static Future<List<Map<String, dynamic>>?> getSentMails() async {
+  final url = Uri.parse('$baseUrl/sent');
+
+  final response = await AuthorizedHttpService.sendAuthorizedRequest(
+    url,
+    method: 'GET',
+  );
+
+  if (response != null && response.statusCode == 200) {
+    final List<dynamic> jsonList = jsonDecode(response.body);
+    return jsonList.cast<Map<String, dynamic>>();
+  }
+
+  return null; // Handle token expiry, error, etc.
+}
+
+
+static Future<List<Map<String, dynamic>>> searchUserNames(String query) async {
+  final url = Uri.parse('$userbaseUrl/search/usernames?q=$query');
+
+  final response = await AuthorizedHttpService.sendAuthorizedRequest(
+    url,
+    method: 'GET',
+  );
+
+  if (response != null && response.statusCode == 200) {
+    final List<dynamic> data = jsonDecode(response.body);
+
+    // Convert each item to Map<String, dynamic>
+    return data.map((item) => item as Map<String, dynamic>).toList();
+  } else {
+    throw Exception('Failed to load search results');
+  }
+  }
+}
+
+
+
+  
+

@@ -2,10 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class LoveLetterScreen extends StatelessWidget {
-  const LoveLetterScreen({super.key});
+  // 1. Define fields to hold the data
+  final Map<String, dynamic> message;
+  final bool isSent; // To differentiate between inbox and sent messages if needed for display logic
+
+  // 2. Update the constructor to require these fields
+  const LoveLetterScreen({
+    super.key,
+    required this.message,
+    required this.isSent,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // Extract data from the message map, providing fallback values
+    final String recipientName = isSent ? message['recipientName'] ?? 'Recipient' : message['sender'] ?? 'Sender';
+    final String letterContent = message['text'] ?? 'No content available.'; // Assuming 'text' holds the full letter content
+    final String date = message['time'] ?? 'Unknown Date'; // Assuming 'time' is available for date display
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -15,9 +29,13 @@ class LoveLetterScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.favorite_border, size: 24),
-            onPressed: () {},
+            onPressed: () {
+              // Implement favorite logic
+            },
           ),
-          IconButton(icon: const Icon(Icons.share, size: 24), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.share, size: 24), onPressed: () {
+            // Implement share logic
+          }),
         ],
       ),
       body: SingleChildScrollView(
@@ -27,7 +45,7 @@ class LoveLetterScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'My Dearest,',
+                isSent ? 'To My Dearest,' : 'My Dearest,', // Adjust greeting based on sent/received
                 style: GoogleFonts.playfairDisplay(
                   fontSize: 32,
                   fontWeight: FontWeight.w600,
@@ -37,7 +55,7 @@ class LoveLetterScreen extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                "recipientName",
+                recipientName, // Use the extracted recipient/sender name
                 style: GoogleFonts.playfairDisplay(
                   fontSize: 36,
                   fontWeight: FontWeight.w700,
@@ -66,7 +84,7 @@ class LoveLetterScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     Text(
-                      "letterContent",
+                      letterContent, // Use the extracted letter content
                       style: GoogleFonts.cormorantGaramond(
                         fontSize: 20,
                         height: 1.8,
@@ -77,7 +95,7 @@ class LoveLetterScreen extends StatelessWidget {
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text(
-                        'Forever yours,',
+                        isSent ? 'Sent by you,' : 'Forever yours,', // Adjust closing based on sent/received
                         style: GoogleFonts.dancingScript(
                           fontSize: 28,
                           color: Colors.pink[600],
@@ -101,7 +119,7 @@ class LoveLetterScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: Text(
-                    "date",
+                    date, // Use the extracted date
                     style: GoogleFonts.roboto(
                       fontSize: 14,
                       color: Colors.white,
@@ -111,34 +129,6 @@ class LoveLetterScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              // const SizedBox(height: 40),
-              // Center(
-              //   child: ElevatedButton.icon(
-              //     onPressed: () {},
-              //     style: ElevatedButton.styleFrom(
-              //       backgroundColor: Colors.pink[600],
-              //       foregroundColor: Colors.white,
-              //       elevation: 0,
-              //       shape: RoundedRectangleBorder(
-              //         borderRadius: BorderRadius.circular(24),
-              //       ),
-              //       padding: const EdgeInsets.symmetric(
-              //         horizontal: 36,
-              //         vertical: 18,
-              //       ),
-              //       shadowColor: Colors.pink.withOpacity(0.3),
-              //     ),
-              //     icon: const Icon(Icons.favorite, size: 20),
-              //     label: Text(
-              //       'Send Heart',
-              //       style: GoogleFonts.roboto(
-              //         fontSize: 16,
-              //         fontWeight: FontWeight.w500,
-              //         letterSpacing: 0.5,
-              //       ),
-              //     ),
-              //   ),
-              // ),
               const SizedBox(height: 20),
             ],
           ),

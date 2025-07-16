@@ -43,14 +43,17 @@ class AuthorizedHttpService {
         // Second failure: clear tokens
         await TokenService.clearTokens();
         return null;
-      } else {
+      }else {
         await TokenService.clearTokens();
         return null;
       }
     }
 
     return response;
-  }
+  } 
+
+ 
+
 
   static Future<http.Response> _sendRequest(
     String method,
