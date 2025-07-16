@@ -6,6 +6,7 @@ import 'Home.dart';
 import 'note/note_list_view.dart';
 import 'profile_router.dart';
 import 'timetablepage.dart';
+import 'package:shweeshaungdaily/widget/settings_card.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
