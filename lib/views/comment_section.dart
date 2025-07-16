@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import '../services/api_service.dart';
 
 class CommentSection extends StatefulWidget {
+  final String? profileUrl;
   final List<dynamic> comments;
   final int? feedId;
   final VoidCallback? onCommentSuccess;
@@ -11,14 +13,14 @@ class CommentSection extends StatefulWidget {
     required this.comments,
     required this.feedId,
     this.onCommentSuccess,
+    this.profileUrl = '',
   });
 
   @override
   State<CommentSection> createState() => _CommentSectionState();
 }
 
-class _CommentSectionState extends State<CommentSection>
-    with SingleTickerProviderStateMixin {
+class _CommentSectionState extends State<CommentSection> {
   final FocusNode _focusNode = FocusNode();
   final TextEditingController _controller = TextEditingController();
   List<dynamic>? _comments;
@@ -27,25 +29,14 @@ class _CommentSectionState extends State<CommentSection>
   bool _showUserSuggestions = false;
   List<String> _userSuggestions = [];
   int _selectedSuggestionIndex = 0;
-  late AnimationController _animationController;
-  late Animation<double> _opacityAnimation;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _opacityAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-
     _controller.addListener(_onTextChanged);
     _fetchComments();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
-      _animationController.forward();
     });
   }
 
@@ -53,6 +44,7 @@ class _CommentSectionState extends State<CommentSection>
     final text = _controller.text;
     setState(() {
       _hasText = text.trim().isNotEmpty;
+      // Show suggestions if text starts with '@'
       if (text.startsWith('@')) {
         _userSuggestions = _getUniqueUserNames();
         _showUserSuggestions = _userSuggestions.isNotEmpty;
@@ -98,7 +90,6 @@ class _CommentSectionState extends State<CommentSection>
 
   @override
   void dispose() {
-    _animationController.dispose();
     _focusNode.dispose();
     _controller.removeListener(_onTextChanged);
     _controller.dispose();
@@ -114,111 +105,31 @@ class _CommentSectionState extends State<CommentSection>
     }
   }
 
-  Widget _buildCommentItem(dynamic comment) {
-    final userName = comment['userName'] ?? 'User';
-    final text = comment['text'] ?? '';
-    final createdAt = comment['createdAt'] ?? '';
-    final profileUrl = comment['authorProfileUrl'] ?? '';
-
-    return FadeTransition(
-      opacity: _opacityAnimation,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundImage:
-                  profileUrl.isNotEmpty ? NetworkImage(profileUrl) : null,
-              child:
-                  profileUrl.isEmpty
-                      ? const Icon(Icons.person, size: 20)
-                      : null,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          userName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(text, style: const TextStyle(fontSize: 14)),
-                      ],
-                    ),
-                  ),
-                  if (createdAt.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4, left: 8),
-                      child: Text(
-                        _formatDate(createdAt),
-                        style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-
     return DraggableScrollableSheet(
-      initialChildSize: 0.7,
+      initialChildSize: 1.0,
       minChildSize: 0.5,
-      maxChildSize: 0.9,
-      snap: true,
+      maxChildSize: 1.0,
+      expand: false,
       builder: (context, scrollController) {
         return Container(
-          decoration: BoxDecoration(
-            color: theme.cardColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 16,
-                spreadRadius: 0,
-                offset: const Offset(0, -4),
-              ),
-            ],
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             children: [
-              // Drag handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 5,
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[400],
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+              Container(
+                width: 40,
+                height: 5,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-
-              // Header
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -226,114 +137,82 @@ class _CommentSectionState extends State<CommentSection>
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.comment, color: theme.primaryColor),
+                    const Icon(Icons.comment, color: Colors.black54),
                     const SizedBox(width: 8),
-                    Text(
+                    const Text(
                       'Comments',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: theme.textTheme.titleLarge?.color,
                       ),
                     ),
                     const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.primaryColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        (_comments?.length ?? 0).toString(),
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: theme.primaryColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                    Text(
+                      (_comments?.length ?? 0).toString(),
+                      style: const TextStyle(fontSize: 16),
                     ),
                   ],
                 ),
               ),
-
-              const Divider(height: 1, thickness: 0.5),
-
-              // Comments list
+              const Divider(height: 1),
               Expanded(
                 child:
                     _loading
-                        ? Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation(
-                              theme.primaryColor,
-                            ),
-                          ),
-                        )
+                        ? const Center(child: CircularProgressIndicator())
                         : (_comments == null || _comments!.isEmpty)
-                        ? Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.mode_comment_outlined,
-                                size: 48,
-                                color: Colors.grey[400],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'No comments yet',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Be the first to comment!',
-                                style: TextStyle(
-                                  color: Colors.grey[500],
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
+                        ? const Center(child: Text('No comments yet.'))
                         : ListView.builder(
                           controller: scrollController,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
                           itemCount: _comments!.length,
-                          itemBuilder:
-                              (context, index) =>
-                                  _buildCommentItem(_comments![index]),
+                          itemBuilder: (context, index) {
+                            final comment = _comments![index];
+                            final userName = comment['userName'] ?? 'User';
+                            final text = comment['text'] ?? '';
+                            final createdAt = comment['createdAt'] ?? '';
+                            final profileUrl =
+                                comment['authorProfileUrl'] ?? '';
+                            return ListTile(
+                              leading: CircleAvatar(
+                                backgroundImage:
+                                    (profileUrl != null &&
+                                            profileUrl.isNotEmpty)
+                                        ? NetworkImage(profileUrl)
+                                        : null,
+                                child:
+                                    (profileUrl == null || profileUrl.isEmpty)
+                                        ? const Icon(Icons.person)
+                                        : null,
+                              ),
+                              title: Text(userName),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(text),
+                                  if (createdAt.isNotEmpty)
+                                    Text(
+                                      _formatDate(createdAt),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
               ),
-
-              // Bottom input area
+              const Divider(height: 1),
               SafeArea(
                 top: false,
-                child: AnimatedContainer(
+                child: AnimatedPadding(
                   duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
                   padding: EdgeInsets.only(
                     bottom: bottomInset,
                     left: 16,
-                    right: 16,
+                    right: 8,
                     top: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.cardColor,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, -2),
-                      ),
-                    ],
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -341,15 +220,16 @@ class _CommentSectionState extends State<CommentSection>
                       if (_showUserSuggestions)
                         Container(
                           constraints: const BoxConstraints(maxHeight: 150),
-                          margin: const EdgeInsets.only(bottom: 8),
+                          margin: const EdgeInsets.only(bottom: 4),
                           decoration: BoxDecoration(
-                            color: theme.cardColor,
-                            borderRadius: BorderRadius.circular(12),
+                            color: Colors.white,
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 8,
-                                spreadRadius: 1,
+                                color: Colors.black12,
+                                blurRadius: 4,
+                                offset: Offset(0, 2),
                               ),
                             ],
                           ),
@@ -358,114 +238,94 @@ class _CommentSectionState extends State<CommentSection>
                             itemCount: _userSuggestions.length,
                             itemBuilder: (context, index) {
                               final user = _userSuggestions[index];
-                              return Material(
-                                color:
+                              return ListTile(
+                                dense: true,
+                                tileColor:
                                     index == _selectedSuggestionIndex
-                                        ? theme.primaryColor.withOpacity(0.1)
-                                        : Colors.transparent,
-                                borderRadius: BorderRadius.circular(8),
-                                child: ListTile(
-                                  dense: true,
-                                  leading: CircleAvatar(
-                                    radius: 16,
-                                    backgroundColor: theme.primaryColor
-                                        .withOpacity(0.2),
-                                    child: Icon(
-                                      Icons.person,
-                                      size: 16,
-                                      color: theme.primaryColor,
-                                    ),
-                                  ),
-                                  title: Text(
-                                    user,
-                                    style: TextStyle(
-                                      color: theme.textTheme.bodyMedium?.color,
-                                    ),
-                                  ),
-                                  onTap: () {
-                                    setState(() {
-                                      _controller.text = '@$user ';
-                                      _controller.selection =
-                                          TextSelection.fromPosition(
-                                            TextPosition(
-                                              offset: _controller.text.length,
-                                            ),
-                                          );
-                                      _showUserSuggestions = false;
-                                    });
-                                  },
-                                ),
+                                        ? Colors.blue.shade50
+                                        : null,
+                                title: Text(user),
+                                onTap: () {
+                                  setState(() {
+                                    _controller.text = '$user ';
+                                    _controller
+                                        .selection = TextSelection.fromPosition(
+                                      TextPosition(
+                                        offset: _controller.text.length,
+                                      ),
+                                    );
+                                    _showUserSuggestions = false;
+                                  });
+                                },
                               );
                             },
                           ),
                         ),
                       Row(
                         children: [
+                          // Leading CircleAvatar
+                          Padding(
+                            padding: EdgeInsets.only(
+                              left: 8.0,
+                              right: 8.0,
+                              bottom: 10,
+                            ),
+                            child: CircleAvatar(
+                              backgroundImage:
+                                  widget.profileUrl?.isNotEmpty ?? false
+                                      ? NetworkImage(widget.profileUrl!)
+                                      : null,
+                              child:
+                                  widget.profileUrl?.isEmpty ?? true
+                                      ? const Icon(Icons.person)
+                                      : null,
+                            ),
+                          ),
+                          // Expanded TextField
                           Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: theme.cardColor,
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(
-                                  color:
-                                      _hasText
-                                          ? theme.primaryColor.withOpacity(0.3)
-                                          : Colors.grey.withOpacity(0.2),
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
+                            child: Padding(
+                              padding: EdgeInsets.only(right: 4.0, bottom: 10),
                               child: TextField(
                                 focusNode: _focusNode,
                                 controller: _controller,
                                 keyboardType: TextInputType.multiline,
                                 maxLines: null,
                                 minLines: 1,
-                                style: TextStyle(
-                                  color: theme.textTheme.bodyMedium?.color,
-                                ),
                                 decoration: InputDecoration(
                                   hintText: 'Write a comment...',
-                                  hintStyle: TextStyle(color: Colors.grey[500]),
-                                  border: InputBorder.none,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.grey[200],
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 16,
-                                    vertical: 12,
+                                    vertical: 0,
                                   ),
-                                  suffixIcon:
-                                      _hasText
-                                          ? IconButton(
-                                            icon: const Icon(Icons.close),
-                                            onPressed: () {
-                                              _controller.clear();
-                                              _focusNode.requestFocus();
-                                            },
-                                          )
-                                          : null,
                                 ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color:
-                                  _hasText
-                                      ? theme.primaryColor
-                                      : Colors.grey[300],
+                          // Send IconButton
+                          Padding(
+                            padding: EdgeInsets.only(
+                              left: 4.0,
+                              right: 8.0,
+                              bottom: 10,
                             ),
                             child: IconButton(
                               icon: Icon(
                                 Icons.send_rounded,
                                 color:
-                                    _hasText ? Colors.white : Colors.grey[600],
+                                    _hasText
+                                        ? Colors.blue
+                                        : const Color.fromARGB(
+                                          255,
+                                          230,
+                                          159,
+                                          159,
+                                        ),
                               ),
                               onPressed:
                                   _hasText
@@ -482,7 +342,10 @@ class _CommentSectionState extends State<CommentSection>
                                               _controller.clear();
                                               FocusScope.of(context).unfocus();
                                               await _fetchComments();
-                                              widget.onCommentSuccess?.call();
+                                              if (widget.onCommentSuccess !=
+                                                  null) {
+                                                widget.onCommentSuccess!();
+                                              }
                                             }
                                           }
                                         }
