@@ -21,6 +21,9 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
   bool _obscureText1 = true;
   bool _obscureText2 = true;
 
+  String? _passwordError;
+  String? _conPasswordError;
+
   @override
   void dispose() {
     _passwordController.dispose();
@@ -28,8 +31,34 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
     super.dispose();
   }
 
-  String? _passwordError;
-  String? _conPasswordError;
+  // Define the custom slide route for navigation
+  PageRouteBuilder _createSlideRoute(Widget page) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        // Define the offset for the slide transition.
+        // From Offset(1.0, 0.0) means the page starts completely off-screen to the right.
+        // To Offset(0.0, 0.0) means the page ends at its normal position.
+        const begin = Offset(1.0, 0.0); // Starts from the right
+        const end = Offset.zero; // Ends at the center
+
+        // Define the curve for the animation (e.g., easeOutBack for a slight bounce).
+        const curve =
+            Curves.easeOutCubic; // Smooth acceleration and deceleration
+
+        // Create a Tween for the offset.
+        var tween = Tween(
+          begin: begin,
+          end: end,
+        ).chain(CurveTween(curve: curve));
+
+        // Use SlideTransition to apply the animation to the child page.
+        return SlideTransition(position: animation.drive(tween), child: child);
+      },
+      transitionDuration: const Duration(milliseconds: 700),
+      reverseTransitionDuration: const Duration(milliseconds: 500),
+    );
+  }
 
   // Password validation function
   bool _isPasswordValid(String password) {
@@ -39,7 +68,17 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
     return passwordRegExp.hasMatch(password);
   }
 
-  // Show error message
+  // Set error message for password fields
+  void _setPasswordError(String? message) {
+    setState(() {
+      _passwordError = message;
+      _conPasswordError = message; // Apply to both for consistency
+    });
+    // Removed Timer for error message auto-clearance to match no-animation request.
+    // Error will only clear on next valid input or explicit null.
+  }
+
+  // Show general error message (Snackbar)
   void _showErrorMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -54,17 +93,28 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
     final String password = _passwordController.text;
     final String confirmPassword = _conPasswordController.text;
 
+    // Reset errors before validation
+    _setPasswordError(null);
+
+    bool hasError = false;
+
     if (!_isPasswordValid(password)) {
-      _showErrorMessage(
-        'Password must be at least 8 characters, include uppercase, lowercase, and a number.',
+      _setPasswordError(
+        'Password must be at least 8 characters. Include uppercase, lowercase, and number.',
       );
-      return;
+      hasError = true;
     }
 
     if (password != confirmPassword) {
-      _showErrorMessage('Passwords do not match.');
+      _setPasswordError('Passwords do not match.');
+      hasError = true;
+    }
+
+    if (hasError) {
       return;
     }
+
+    FocusScope.of(context).unfocus(); // Dismiss keyboard
 
     Provider.of<RegistratinViewModel>(
       context,
@@ -76,65 +126,85 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
     final String email =
         Provider.of<RegistratinViewModel>(context, listen: false).email;
 
-    if (await ApiService.isTeacher(email)) {
-      print(
-        "Teacher account detected, proceeding with teacher registration...",
-      );
-      print("Email: $email, Password: $password");
-
-      final regViewModel = Provider.of<RegistratinViewModel>(
-        context,
-        listen: false,
-      );
-      bool success = false;
-      try {
-        success = await authViewModel.register(regViewModel.user);
-      } catch (e) {
-        success = false;
-      }
-      if (!success) {
-        _showErrorMessage('Registration failed. Please try again.');
-        return;
-      }
-      await authViewModel.login(email, password);
-      print("Login successful, navigating to HomePage...");
-      if (!mounted) return;
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreenPage()),
-        (Route<dynamic> route) => false, // This removes all previous routes
-      );
-      return; // Prevent navigating to StudentInfoPage for teachers
-    }
-
-    // Navigate to the next page (dummy here)
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const StudendInfoPage()),
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            CircularProgressIndicator(color: Colors.white),
+            SizedBox(width: 16),
+            Text('Creating account...', style: TextStyle(color: Colors.white)),
+          ],
+        ),
+        backgroundColor: Color(0xFF317575),
+        duration: Duration(minutes: 1), // Long duration for ongoing process
+      ),
     );
-  }
 
-  void _setPasswordError(String? message) {
-    setState(() {
-      _passwordError = message;
-      _conPasswordError = message;
-    });
+    bool success = false;
+    try {
+      if (await ApiService.isTeacher(email)) {
+        print(
+          "Teacher account detected, proceeding with teacher registration...",
+        );
+        print("Email: $email, Password: $password");
 
-    if (message != null) {
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) {
-          setState(() {
-            _passwordError = null;
-          });
+        final regViewModel = Provider.of<RegistratinViewModel>(
+          context,
+          listen: false,
+        );
+        success = await authViewModel.register(regViewModel.user);
+
+        if (success) {
+          await authViewModel.login(email, password);
+          print("Login successful, navigating to HomePage...");
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          Navigator.pushAndRemoveUntil(
+            context,
+            _createSlideRoute(HomeScreenPage()), // Use custom route
+            (Route<dynamic> route) => false,
+          );
+          return;
         }
-      });
+      } else {
+        // Assume this path is for students or general users
+        final regViewModel = Provider.of<RegistratinViewModel>(
+          context,
+          listen: false,
+        );
+        success = await authViewModel.register(regViewModel.user);
+
+        if (success) {
+          await authViewModel.login(
+            email,
+            password,
+          ); // Log in after successful registration
+          print(
+            "Registration and Login successful, navigating to StudentInfoPage...",
+          );
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          Navigator.pushReplacement(
+            context,
+            _createSlideRoute(const StudentInfoPage()), // Use custom route
+          );
+          return;
+        }
+      }
+    } catch (e) {
+      print('Registration/Login error: $e');
+    } finally {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
     }
+
+    // If we reach here, something failed
+    _showErrorMessage('Account creation failed. Please try again.');
   }
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async => false,
+      onWillPop: () async => false, // Prevents going back
       child: Scaffold(
         resizeToAvoidBottomInset: true,
         backgroundColor: const Color(0xFFD4F7F5),
@@ -143,232 +213,106 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
             children: [
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(25.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 25.0,
+                    vertical: 40.0,
+                  ),
                   child: Form(
                     key: _formKey,
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              SizedBox(height: 50),
-                              Text(
-                                'Creat New Password',
-                                style: TextStyle(
-                                  color: Color(0xFF317575),
-                                  fontSize: 34,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                'Create a Legend. Or at least a legendary password.',
-                                style: TextStyle(
-                                  color: Color(0xFF317575),
-                                  fontSize: 16,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              SizedBox(height: 30),
-                            ],
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Create New Password',
+                          style: TextStyle(
+                            color: Color(0xFF317575),
+                            fontSize: 38,
+                            fontWeight: FontWeight.bold,
                           ),
+                          textAlign: TextAlign.start, // Align left
                         ),
-                        // ...existing code for fields and button...
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            AnimatedOpacity(
-                              opacity: _passwordError == null ? 0.0 : 1.0,
-                              duration: const Duration(milliseconds: 300),
-                              child: Padding(
-                                padding: const EdgeInsets.only(
-                                  left: 12.0,
-                                  bottom: 6.0,
-                                ),
-                                child: Text(
-                                  _passwordError ?? '',
-                                  style: const TextStyle(
-                                    color: Colors.redAccent,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF57C5BE),
-                                borderRadius: BorderRadius.circular(15),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.4),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: TextFormField(
-                                controller: _passwordController,
-                                obscureText: _obscureText1,
-                                decoration: InputDecoration(
-                                  hintText: 'Password',
-                                  hintStyle: const TextStyle(
-                                    color: Colors.white,
-                                  ),
-                                  prefixIcon: const Icon(
-                                    Icons.vpn_key_outlined,
-                                    color: Colors.white,
-                                  ),
-                                  border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 18.0,
-                                    horizontal: 10.0,
-                                  ),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _obscureText1
-                                          ? Icons.visibility_off
-                                          : Icons.visibility,
-                                      color: Colors.white,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _obscureText1 = !_obscureText1;
-                                      });
-                                    },
-                                  ),
-                                ),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                ),
-                                cursorColor: Colors.white,
-                                onChanged: (value) {
-                                  if (value.length < 8) {
-                                    _setPasswordError(
-                                      'Password must be at least 8 characters',
-                                    );
-                                  } else {
-                                    _setPasswordError(null);
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            AnimatedOpacity(
-                              opacity: _conPasswordError == null ? 0.0 : 1.0,
-                              duration: const Duration(milliseconds: 300),
-                              child: Padding(
-                                padding: const EdgeInsets.only(
-                                  left: 12.0,
-                                  bottom: 6.0,
-                                ),
-                                child: Text(
-                                  _conPasswordError ?? '',
-                                  style: const TextStyle(
-                                    color: Colors.redAccent,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF57C5BE),
-                                borderRadius: BorderRadius.circular(15),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.4),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: TextFormField(
-                                controller: _conPasswordController,
-                                obscureText: _obscureText2,
-                                decoration: InputDecoration(
-                                  hintText: 'confirm Password',
-                                  hintStyle: const TextStyle(
-                                    color: Colors.white,
-                                  ),
-                                  prefixIcon: const Icon(
-                                    Icons.key,
-                                    color: Colors.white,
-                                  ),
-                                  border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 18.0,
-                                    horizontal: 10.0,
-                                  ),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _obscureText2
-                                          ? Icons.visibility_off
-                                          : Icons.visibility,
-                                      color: Colors.white,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _obscureText2 = !_obscureText2;
-                                      });
-                                    },
-                                  ),
-                                ),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                ),
-                                cursorColor: Colors.white,
-                                onChanged: (value) {
-                                  if (value.length < 8) {
-                                    _setPasswordError(
-                                      'Password must be at least 8 characters',
-                                    );
-                                  } else {
-                                    _setPasswordError(null);
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 35),
-                        ElevatedButton(
-                          onPressed: _onCreateAccount,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF317575),
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size(double.infinity, 55),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            elevation: 8,
-                            shadowColor: Colors.black.withOpacity(1),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'Create a strong, secure password for your account.',
+                          style: TextStyle(
+                            color: Color(0xFF317575),
+                            fontSize: 18,
                           ),
-                          child: const Text(
-                            'Continue',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          textAlign: TextAlign.start, // Align left
                         ),
                         const SizedBox(height: 40),
+
+                        /// Password Input Field
+                        _buildErrorText(
+                          _passwordError,
+                        ), // Non-animated error text
+                        _buildModernInputField(
+                          controller: _passwordController,
+                          hintText: 'New Password',
+                          icon: Icons.lock_outline,
+                          obscureText: _obscureText1,
+                          onToggleVisibility: () {
+                            setState(() {
+                              _obscureText1 = !_obscureText1;
+                            });
+                          },
+                          onChanged: (value) {
+                            if (value.isEmpty) {
+                              _setPasswordError('Password is required!');
+                            } else if (!_isPasswordValid(value)) {
+                              _setPasswordError(
+                                'Password must be at least 8 characters, include uppercase, lowercase, and a number.',
+                              );
+                            } else if (value != _conPasswordController.text &&
+                                _conPasswordController.text.isNotEmpty) {
+                              _setPasswordError('Passwords do not match.');
+                            } else {
+                              _setPasswordError(null);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 20),
+
+                        /// Confirm Password Input Field
+                        _buildErrorText(
+                          _conPasswordError,
+                        ), // Non-animated error text
+                        _buildModernInputField(
+                          controller: _conPasswordController,
+                          hintText: 'Confirm Password',
+                          icon: Icons.lock,
+                          obscureText: _obscureText2,
+                          onToggleVisibility: () {
+                            setState(() {
+                              _obscureText2 = !_obscureText2;
+                            });
+                          },
+                          onChanged: (value) {
+                            if (value.isEmpty) {
+                              _setPasswordError(
+                                'Confirm password is required!',
+                              );
+                            } else if (value != _passwordController.text) {
+                              _setPasswordError('Passwords do not match.');
+                            } else {
+                              _setPasswordError(null);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 40),
+
+                        /// Continue Button
+                        _buildModernContinueButton(onPressed: _onCreateAccount),
                       ],
                     ),
                   ),
                 ),
               ),
+
+              /// Already have an account text
               Padding(
-                padding: const EdgeInsets.only(bottom: 10.0),
+                padding: const EdgeInsets.only(bottom: 20.0),
                 child: TextButton(
                   onPressed: () {
                     Navigator.push(
@@ -378,6 +322,10 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
                       ),
                     );
                   },
+                  style: TextButton.styleFrom(
+                    splashFactory: NoSplash.splashFactory,
+                    foregroundColor: const Color(0xFF4C878B),
+                  ),
                   child: const Text.rich(
                     TextSpan(
                       text: 'Already have an account? ',
@@ -386,8 +334,8 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
                         TextSpan(
                           text: 'Sign in',
                           style: TextStyle(
-                            color: Color(0xFF4C878B),
                             fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.underline,
                           ),
                         ),
                       ],
@@ -402,40 +350,102 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
     );
   }
 
-  // Reusable input field widget
-  Widget _buildInputField({
+  // Reusable input field widget adapted from RegisterPage
+  Widget _buildModernInputField({
     required TextEditingController controller,
     required String hintText,
     required IconData icon,
     bool obscureText = false,
+    VoidCallback? onToggleVisibility,
+    required ValueChanged<String> onChanged,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFA5E6DD),
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: TextFormField(
-        controller: controller,
-        obscureText: obscureText,
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: const TextStyle(color: Colors.white70),
-          prefixIcon: Icon(icon, color: Colors.white),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 18.0,
-            horizontal: 10.0,
-          ),
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: TextStyle(color: const Color(0xFF317575).withOpacity(0.7)),
+        prefixIcon: Icon(icon, color: const Color(0xFF317575)),
+        suffixIcon:
+            onToggleVisibility != null
+                ? IconButton(
+                  icon: Icon(
+                    obscureText ? Icons.visibility_off : Icons.visibility,
+                    color: const Color(0xFF317575),
+                  ),
+                  onPressed: onToggleVisibility,
+                )
+                : null,
+        fillColor: Colors.white,
+        filled: true,
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 18.0,
+          horizontal: 10.0,
         ),
-        style: const TextStyle(color: Colors.white, fontSize: 18),
-        cursorColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF57C5BE), width: 1.5),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF317575), width: 2.0),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.redAccent, width: 2.0),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2.5),
+        ),
+      ),
+      style: const TextStyle(color: Color(0xFF317575), fontSize: 18),
+      cursorColor: const Color(0xFF317575),
+      onChanged: onChanged,
+    );
+  }
+
+  // Reusable button widget adapted from RegisterPage
+  Widget _buildModernContinueButton({required VoidCallback? onPressed}) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF317575),
+        foregroundColor: Colors.white,
+        minimumSize: const Size(double.infinity, 60),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 8,
+        shadowColor: const Color(0xFF317575).withOpacity(0.5),
+        // No disabled state for this button in the original logic,
+        // but adding for consistency if needed later.
+        // disabledBackgroundColor: const Color(0xFF317575).withOpacity(0.6),
+        // disabledForegroundColor: Colors.white.withOpacity(0.7),
+      ),
+      child: const Text(
+        'Continue',
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  // Non-animated error text widget
+  Widget _buildErrorText(String? error) {
+    if (error == null) {
+      return const SizedBox(height: 0); // No height when no error
+    }
+    return Padding(
+      padding: const EdgeInsets.only(left: 12.0, bottom: 8.0),
+      child: Text(
+        error,
+        style: const TextStyle(
+          color: Colors.redAccent,
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }

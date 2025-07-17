@@ -436,7 +436,7 @@ class _ComposeLoveLetterScreenState extends State<ComposeLoveLetterScreen>
                         await ApiService.searchUserNames(
                           _recipientController.text,
                         ); // Re-fetch or cache results
-                    final Map<String, dynamic>? selectedUser = allResults
+                    final Map<String, dynamic> selectedUser = allResults
                         .firstWhere(
                           (item) => item['name'] == name,
                           orElse: () => {}, // Provide an empty map if not found

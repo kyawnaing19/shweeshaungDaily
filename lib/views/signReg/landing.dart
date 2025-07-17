@@ -7,6 +7,35 @@ import 'package:shweeshaungdaily/views/signReg/register.dart';
 class LandingPage extends StatelessWidget {
   const LandingPage({super.key});
 
+  // Define the custom slide route for navigation
+  PageRouteBuilder _createSlideRoute(Widget page) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        // Define the offset for the slide transition.
+        // From Offset(1.0, 0.0) means the page starts completely off-screen to the right.
+        // To Offset(0.0, 0.0) means the page ends at its normal position.
+        const begin = Offset(1.0, 0.0); // Starts from the right
+        const end = Offset.zero; // Ends at the center
+
+        // Define the curve for the animation (e.g., easeOutBack for a slight bounce).
+        const curve =
+            Curves.easeOutCubic; // Smooth acceleration and deceleration
+
+        // Create a Tween for the offset.
+        var tween = Tween(
+          begin: begin,
+          end: end,
+        ).chain(CurveTween(curve: curve));
+
+        // Use SlideTransition to apply the animation to the child page.
+        return SlideTransition(position: animation.drive(tween), child: child);
+      },
+      transitionDuration: const Duration(milliseconds: 700),
+      reverseTransitionDuration: const Duration(milliseconds: 500),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,11 +72,12 @@ class LandingPage extends StatelessWidget {
                   const SizedBox(height: 50),
                   ElevatedButton(
                     onPressed: () {
+                      // Apply the custom slide transition to RegisterPage
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => const RegisterPage(),
-                        ),
+                        _createSlideRoute(
+                          const RegisterPage(),
+                        ), // Use the custom route
                       );
                     },
                     style: ElevatedButton.styleFrom(

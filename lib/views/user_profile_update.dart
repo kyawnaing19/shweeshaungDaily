@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:math'; // For simulating random success/failure
+// For simulating random success/failure
 import 'dart:io' as io;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
@@ -42,7 +42,8 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
       _isLoading = true;
     });
     try {
-      final profileData = await ApiService.getProfile(); // Fetching data from your API service
+      final profileData =
+          await ApiService.getProfile(); // Fetching data from your API service
 
       if (profileData != null && profileData.isNotEmpty) {
         // Populate controllers with fetched data
@@ -54,9 +55,10 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
         _majorController.text = profileData['major'] ?? '';
         _bioController.text = profileData['bio'] ?? '';
 
-         final String profileImageUrl = profileData['profilePictureUrl'] != null
-        ? '$baseUrl/${profileData['profilePictureUrl']}'
-        : 'assets/images/tpo.jpg';
+        final String profileImageUrl =
+            profileData['profilePictureUrl'] != null
+                ? '$baseUrl/${profileData['profilePictureUrl']}'
+                : 'assets/images/tpo.jpg';
 
         // Handle profile image if your API returns a URL or base64 string
         // For simplicity, this example doesn't fetch the image,
@@ -157,24 +159,26 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
       ),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
-        child: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(
-                color: kPrimaryColor,
-              )) // Show loading indicator
-            : SingleChildScrollView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                child: Column(
-                  children: [
-                    _buildProfileHeader(),
-                    const SizedBox(height: 24),
-                    _buildFormSection(),
-                    const SizedBox(height: 24),
-                    _buildActionButtons(),
-                  ],
+        child:
+            _isLoading
+                ? const Center(
+                  child: CircularProgressIndicator(color: kPrimaryColor),
+                ) // Show loading indicator
+                : SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                  child: Column(
+                    children: [
+                      _buildProfileHeader(),
+                      const SizedBox(height: 24),
+                      _buildFormSection(),
+                      const SizedBox(height: 24),
+                      _buildActionButtons(),
+                    ],
+                  ),
                 ),
-              ),
       ),
     );
   }
@@ -191,16 +195,17 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => FullscreenImageViewer(
-                        tag: 'profile-image',
-                        image: _webImage ?? _profileImage,
-                        onDelete: () {
-                          setState(() {
-                            _webImage = null;
-                            _profileImage = null;
-                          });
-                        },
-                      ),
+                      builder:
+                          (_) => FullscreenImageViewer(
+                            tag: 'profile-image',
+                            image: _webImage ?? _profileImage,
+                            onDelete: () {
+                              setState(() {
+                                _webImage = null;
+                                _profileImage = null;
+                              });
+                            },
+                          ),
                     ),
                   );
                 }
@@ -212,40 +217,40 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                   height: 120,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: (_profileImage != null || _webImage != null)
-                        ? Border.all(color: Colors.white, width: 4)
-                        : null,
-                    gradient: (_profileImage == null && _webImage == null)
-                        ? const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              kPrimaryColor,
-                              kPrimaryDarkColor,
-                            ],
-                          )
-                        : null,
+                    border:
+                        (_profileImage != null || _webImage != null)
+                            ? Border.all(color: Colors.white, width: 4)
+                            : null,
+                    gradient:
+                        (_profileImage == null && _webImage == null)
+                            ? const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [kPrimaryColor, kPrimaryDarkColor],
+                            )
+                            : null,
                   ),
                   child: ClipOval(
-                    child: _webImage != null
-                        ? Image.memory(
-                            _webImage!,
-                            width: 120,
-                            height: 120,
-                            fit: BoxFit.cover,
-                          )
-                        : _profileImage != null
+                    child:
+                        _webImage != null
+                            ? Image.memory(
+                              _webImage!,
+                              width: 120,
+                              height: 120,
+                              fit: BoxFit.cover,
+                            )
+                            : _profileImage != null
                             ? Image.file(
-                                _profileImage!,
-                                width: 120,
-                                height: 120,
-                                fit: BoxFit.cover,
-                              )
+                              _profileImage!,
+                              width: 120,
+                              height: 120,
+                              fit: BoxFit.cover,
+                            )
                             : const Icon(
-                                Icons.person,
-                                size: 60,
-                                color: Colors.white,
-                              ),
+                              Icons.person,
+                              size: 60,
+                              color: Colors.white,
+                            ),
                   ),
                 ),
               ),
@@ -293,10 +298,7 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
           _emailController.text.isNotEmpty
               ? _emailController.text
               : 'Loading Email...', // Display placeholder while loading
-          style: const TextStyle(
-            fontSize: 14,
-            color: kGrey,
-          ),
+          style: const TextStyle(fontSize: 14, color: kGrey),
         ),
       ],
     );
@@ -307,26 +309,52 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
       key: _formKey,
       child: Column(
         children: [
-          _buildTextField('Nickname', _nicknameController,
-              Icons.face_retouching_natural_outlined),
+          _buildTextField(
+            'Nickname',
+            _nicknameController,
+            Icons.face_retouching_natural_outlined,
+          ),
           const SizedBox(height: 16),
           _buildTextField(
-              'Semester', _semesterController, Icons.school_outlined, enabled: false),
+            'Semester',
+            _semesterController,
+            Icons.school_outlined,
+            enabled: false,
+          ),
           const SizedBox(height: 16),
-          _buildTextField('Class', _classController, Icons.class_outlined, enabled: false),
+          _buildTextField(
+            'Class',
+            _classController,
+            Icons.class_outlined,
+            enabled: false,
+          ),
           const SizedBox(height: 16),
-          _buildTextField('Major', _majorController, Icons.work_outline, enabled: false),
+          _buildTextField(
+            'Major',
+            _majorController,
+            Icons.work_outline,
+            enabled: false,
+          ),
           const SizedBox(height: 16),
-          _buildTextField('Bio', _bioController, Icons.info_outline,
-              maxLines: 3),
+          _buildTextField(
+            'Bio',
+            _bioController,
+            Icons.info_outline,
+            maxLines: 3,
+          ),
         ],
       ),
     );
   }
 
   Widget _buildTextField(
-      String label, TextEditingController controller, IconData icon, 
-      {TextInputType? keyboardType, int maxLines = 1, bool enabled = true}) {
+    String label,
+    TextEditingController controller,
+    IconData icon, {
+    TextInputType? keyboardType,
+    int maxLines = 1,
+    bool enabled = true,
+  }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
@@ -337,8 +365,10 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
         floatingLabelBehavior: FloatingLabelBehavior.never,
         filled: true,
         fillColor: Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -351,10 +381,7 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: kPrimaryColor, width: 2),
         ),
-        labelStyle: const TextStyle(
-          color: kGrey,
-          fontSize: 14,
-        ),
+        labelStyle: const TextStyle(color: kGrey, fontSize: 14),
       ),
       // validator: (value) {
       //   if (value == null || value.isEmpty) {
@@ -377,42 +404,49 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: _isSaving
-                ? null
-                : () async {
-                    if (_formKey.currentState!.validate()) {
-                      setState(() => _isSaving = true);
+            onPressed:
+                _isSaving
+                    ? null
+                    : () async {
+                      if (_formKey.currentState!.validate()) {
+                        setState(() => _isSaving = true);
 
-                      // Here you would call your API to save the profile data
-                      // For example:
-                      // final success = await ApiService.updateProfile(
-                      //   name: _nameController.text,
-                      //   nickname: _nicknameController.text,
-                      //   email: _emailController.text,
-                      //   // ... other fields
-                      // );
+                        // Here you would call your API to save the profile data
+                        // For example:
+                        // final success = await ApiService.updateProfile(
+                        //   name: _nameController.text,
+                        //   nickname: _nicknameController.text,
+                        //   email: _emailController.text,
+                        //   // ... other fields
+                        // );
 
-                      // Simulating API call for update
-                     
-                      final bool success = await ApiService.updateProfile(_nicknameController.text,_bioController.text);// Replace with actual API response
+                        // Simulating API call for update
 
-                      setState(() => _isSaving = false);
+                        final bool success = await ApiService.updateProfile(
+                          _nicknameController.text,
+                          _bioController.text,
+                        ); // Replace with actual API response
 
-                      // ignore: use_build_context_synchronously
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(success
-                              ? 'Profile updated successfully!'
-                              : 'Failed to update profile'),
-                          backgroundColor: success ? Colors.green : kErrorColor,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                        setState(() => _isSaving = false);
+
+                        // ignore: use_build_context_synchronously
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              success
+                                  ? 'Profile updated successfully!'
+                                  : 'Failed to update profile',
+                            ),
+                            backgroundColor:
+                                success ? Colors.green : kErrorColor,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
-                        ),
-                      );
-                    }
-                  },
+                        );
+                      }
+                    },
             style: ElevatedButton.styleFrom(
               backgroundColor: kPrimaryColor,
               foregroundColor: kWhite,
@@ -423,19 +457,20 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
               elevation: 0,
               shadowColor: Colors.transparent,
             ),
-            child: _isSaving
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 3,
-                      color: kWhite,
+            child:
+                _isSaving
+                    ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                        color: kWhite,
+                      ),
+                    )
+                    : const Text(
+                      'Save Changes',
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                  )
-                : const Text(
-                    'Save Changes',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
           ),
         ),
         const SizedBox(height: 12),
@@ -490,9 +525,10 @@ class FullscreenImageViewer extends StatelessWidget {
         child: Center(
           child: Hero(
             tag: tag,
-            child: image is Uint8List
-                ? Image.memory(image as Uint8List)
-                : Image.file(image as io.File),
+            child:
+                image is Uint8List
+                    ? Image.memory(image as Uint8List)
+                    : Image.file(image as io.File),
           ),
         ),
       ),

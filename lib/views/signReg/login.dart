@@ -1,8 +1,8 @@
-import 'dart:async';
+import 'dart:async'; // Still needed for Timer, but we'll remove its auto-clear functionality
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shweeshaungdaily/view_models/auth_viewmodel.dart';
-import 'package:shweeshaungdaily/views/main_screen.dart';
+import 'package:shweeshaungdaily/views/main_screen.dart'; // Assuming HomePage is now MainScreenPage
 import 'package:shweeshaungdaily/views/signReg/register.dart';
 
 class SignInPage extends StatefulWidget {
@@ -19,80 +19,110 @@ class _SignInPageState extends State<SignInPage> {
   bool _obscureText = true;
 
   String? _emailError;
-  Timer? _errorTimer;
+  String? _passwordError;
+  // Removed _errorTimer as auto-clear animation is no longer desired
+  // Timer? _errorTimer;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _errorTimer?.cancel();
+    // Removed _errorTimer?.cancel();
     super.dispose();
   }
 
+  // Modified to remove auto-clear animation
   void _setEmailError(String? message) {
     setState(() {
       _emailError = message;
     });
-
-    if (message != null) {
-      _errorTimer?.cancel();
-      _errorTimer = Timer(const Duration(seconds: 2), () {
-        if (mounted) {
-          setState(() {
-            _emailError = null;
-          });
-        }
-      });
-    }
+    // Removed Timer logic
   }
 
-  // Add this to your state class if not already
-  String? _passwordError;
-
-  // In _onSignIn or inside onChanged, validate:
+  // Modified to remove auto-clear animation
   void _setPasswordError(String? message) {
     setState(() {
       _passwordError = message;
     });
-
-    if (message != null) {
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) {
-          setState(() {
-            _passwordError = null;
-          });
-        }
-      });
-    }
+    // Removed Timer logic
   }
 
-  // void _onSignIn() {
-  //   String email = _emailController.text;
-  //   String password = _passwordController.text;
+  Future<void> _onSignIn() async {
+    FocusScope.of(context).unfocus(); // Dismiss keyboard
 
-  //   print('Attempting sign-in with:');
-  //   print('Email: $email');
-  //   print('Password: $password');
+    String email = _emailController.text.trim();
+    String password = _passwordController.text;
 
-  //   // Manual email validation
-  //   if (email.isEmpty) {
-  //     _setEmailError('Email is required');
-  //     return;
-  //   } else if (!RegExp(r'^[\w-\.]+@[\w-]+\.edu\.mm$').hasMatch(email)) {
-  //     _setEmailError('Edu mail only');
-  //     return;
-  //   }
+    // Reset errors before validation
+    _setEmailError(null);
+    _setPasswordError(null);
 
-  //   if (password.length < 8) {
-  //     _setPasswordError('Password must be at least 4 characters');
-  //     return;
-  //   }
-  //   // All validations passed
-  //   Navigator.pushReplacement(
-  //     context,
-  //     MaterialPageRoute(builder: (context) => const RegisterPage()),
-  //   );
-  // }
+    bool hasError = false;
+
+    if (email.isEmpty) {
+      _setEmailError('Email is required!');
+      hasError = true;
+    } else if (!RegExp(r'^[\w-\.]+@[\w-]+\.edu\.mm$').hasMatch(email)) {
+      _setEmailError('Edu mail only!');
+      hasError = true;
+    }
+
+    if (password.isEmpty) {
+      _setPasswordError('Password is required!');
+      hasError = true;
+    } else if (password.length < 8) {
+      // Added a basic length check for consistency
+      _setPasswordError('Password must be at least 8 characters.');
+      hasError = true;
+    }
+
+    if (hasError) {
+      return;
+    }
+
+    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            CircularProgressIndicator(color: Colors.white),
+            SizedBox(width: 16),
+            Text('Signing in...', style: TextStyle(color: Colors.white)),
+          ],
+        ),
+        backgroundColor: Color(0xFF317575),
+        duration: Duration(minutes: 1), // Long duration for ongoing process
+      ),
+    );
+
+    bool success = false;
+    try {
+      success = await authViewModel.login(email, password);
+    } catch (e) {
+      print('Login error: $e');
+    } finally {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    }
+
+    if (success) {
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HomePage(),
+        ), // Changed to MainScreenPage
+        (Route<dynamic> route) => false, // This removes all previous routes
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Login failed. Please check your credentials.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,165 +135,86 @@ class _SignInPageState extends State<SignInPage> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(25.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 25.0,
+                  vertical: 40.0,
+                ),
                 child: Form(
                   key: _formKey,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      const SizedBox(height: 50),
+                      const SizedBox(height: 30),
                       const Text(
-                        'Sign in',
+                        'Sign In',
                         style: TextStyle(
                           color: Color(0xFF317575),
-                          fontSize: 34,
+                          fontSize: 38, // Consistent font size
                           fontWeight: FontWeight.bold,
                         ),
+                        textAlign: TextAlign.start, // Left-align header
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       const Text(
                         'Welcome back! Let\'s see if you remember the magic words.',
                         style: TextStyle(
                           color: Color(0xFF317575),
-                          fontSize: 16,
+                          fontSize: 18, // Consistent font size
                         ),
-                        textAlign: TextAlign.center,
+                        textAlign: TextAlign.start, // Left-align subtitle
                       ),
                       const SizedBox(height: 60),
-                      // ...existing code for fields and button...
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AnimatedOpacity(
-                            opacity: _emailError == null ? 0.0 : 1.0,
-                            duration: const Duration(milliseconds: 300),
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                left: 12.0,
-                                bottom: 6.0,
-                              ),
-                              child: Text(
-                                _emailError ?? '',
-                                style: const TextStyle(
-                                  color: Colors.redAccent,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF57C5BE),
-                              borderRadius: BorderRadius.circular(15),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.4),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: TextFormField(
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: const InputDecoration(
-                                hintText: 'Email',
-                                hintStyle: TextStyle(color: Colors.white),
-                                prefixIcon: Icon(
-                                  Icons.mail_outline,
-                                  color: Colors.white,
-                                ),
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: 18.0,
-                                  horizontal: 10.0,
-                                ),
-                              ),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                              ),
-                              cursorColor: Colors.white,
-                              validator:
-                                  (_) => null, // disable default validator
-                            ),
-                          ),
-                        ],
+
+                      /// Email Input Field
+                      _buildErrorText(_emailError), // Non-animated error text
+                      _buildModernInputField(
+                        controller: _emailController,
+                        hintText: 'Email',
+                        icon: Icons.mail_outline,
+                        keyboardType: TextInputType.emailAddress,
+                        onChanged: (value) {
+                          if (value.isEmpty) {
+                            _setEmailError('Email is required!');
+                          } else if (!RegExp(
+                            r'^[\w-\.]+@[\w-]+\.edu\.mm$',
+                          ).hasMatch(value)) {
+                            _setEmailError('Edu mail only!');
+                          } else {
+                            _setEmailError(null);
+                          }
+                        },
                       ),
-                      const SizedBox(height: 5),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AnimatedOpacity(
-                            opacity: _passwordError == null ? 0.0 : 1.0,
-                            duration: const Duration(milliseconds: 300),
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                left: 12.0,
-                                bottom: 6.0,
-                              ),
-                              child: Text(
-                                _passwordError ?? '',
-                                style: const TextStyle(
-                                  color: Colors.redAccent,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF57C5BE),
-                              borderRadius: BorderRadius.circular(15),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.4),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: TextFormField(
-                              controller: _passwordController,
-                              obscureText: _obscureText,
-                              decoration: InputDecoration(
-                                hintText: 'Password',
-                                hintStyle: const TextStyle(color: Colors.white),
-                                prefixIcon: const Icon(
-                                  Icons.vpn_key_outlined,
-                                  color: Colors.white,
-                                ),
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 18.0,
-                                  horizontal: 10.0,
-                                ),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscureText
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                    color: Colors.white,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _obscureText = !_obscureText;
-                                    });
-                                  },
-                                ),
-                              ),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                              ),
-                              cursorColor: Colors.white,
-                              validator:
-                                  (_) => null, // disable default validator
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 20),
+
+                      /// Password Input Field
+                      _buildErrorText(
+                        _passwordError,
+                      ), // Non-animated error text
+                      _buildModernInputField(
+                        controller: _passwordController,
+                        hintText: 'Password',
+                        icon: Icons.lock_outline,
+                        obscureText: _obscureText,
+                        onToggleVisibility: () {
+                          setState(() {
+                            _obscureText = !_obscureText;
+                          });
+                        },
+                        onChanged: (value) {
+                          if (value.isEmpty) {
+                            _setPasswordError('Password is required!');
+                          } else if (value.length < 8) {
+                            _setPasswordError(
+                              'Password must be at least 8 characters.',
+                            );
+                          } else {
+                            _setPasswordError(null);
+                          }
+                        },
                       ),
+                      const SizedBox(height: 15),
+
+                      /// Forgot Password?
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
@@ -271,96 +222,56 @@ class _SignInPageState extends State<SignInPage> {
                             // TODO: Navigate to forgot password page or show dialog
                             print('Forgot Password tapped');
                           },
+                          style: TextButton.styleFrom(
+                            splashFactory: NoSplash.splashFactory,
+                            foregroundColor: const Color(
+                              0xFF317575,
+                            ), // Consistent color
+                          ),
                           child: const Text(
                             'Forgot Password?',
                             style: TextStyle(
-                              color: Color(0xFF317575),
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
+                              decoration:
+                                  TextDecoration
+                                      .underline, // Added underline for clarity
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 5),
-                      ElevatedButton(
-                        onPressed:
-                            authViewModel.isLoading
-                                ? null
-                                : () async {
-                                  String email = _emailController.text;
-                                  String password = _passwordController.text;
-
-                                  print('Attempting sign-in with:');
-                                  print('Email: $email');
-                                  print('Password: $password');
-
-                                  // Manual email validation
-                                  if (email.isEmpty) {
-                                    _setEmailError('Email is required');
-                                    return;
-                                  }
-
-                                  if (password.isEmpty) {
-                                    _setPasswordError('Please fill password');
-                                    return;
-                                  }
-
-                                  bool success = await authViewModel.login(
-                                    _emailController.text.trim(),
-                                    _passwordController.text,
-                                  );
-                                  if (success && context.mounted) {
-                                    Navigator.pushAndRemoveUntil(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => HomePage(),
-                                      ),
-                                      (Route<dynamic> route) =>
-                                          false, // This removes all previous routes
-                                    );
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Login failed'),
-                                      ),
-                                    );
-                                  }
-                                },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF317575),
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size(double.infinity, 55),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          elevation: 8,
-                          shadowColor: Colors.black.withOpacity(1),
-                        ),
-                        child: const Text(
-                          'Sign in',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                      const SizedBox(height: 25), // Adjusted spacing
+                      /// Sign In Button
+                      _buildModernSignInButton(
+                        onPressed: authViewModel.isLoading ? null : _onSignIn,
+                        isLoading: authViewModel.isLoading,
                       ),
-                      const SizedBox(height: 40),
                     ],
                   ),
                 ),
               ),
             ),
+
+            /// Don't have an account? Sign up
             Padding(
-              padding: const EdgeInsets.only(bottom: 10.0),
+              padding: const EdgeInsets.only(bottom: 20.0),
               child: TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const RegisterPage(),
-                    ),
-                  );
-                },
+                onPressed:
+                    authViewModel.isLoading
+                        ? null
+                        : () {
+                          // Disable if loading
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const RegisterPage(),
+                            ),
+                          );
+                        },
+                style: TextButton.styleFrom(
+                  splashFactory: NoSplash.splashFactory,
+                  foregroundColor: const Color(0xFF4C878B),
+                ),
                 child: const Text.rich(
                   TextSpan(
                     text: 'Don\'t have an account? ',
@@ -369,8 +280,8 @@ class _SignInPageState extends State<SignInPage> {
                       TextSpan(
                         text: 'Sign up',
                         style: TextStyle(
-                          color: Color(0xFF4C878B),
                           fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
                         ),
                       ),
                     ],
@@ -379,6 +290,119 @@ class _SignInPageState extends State<SignInPage> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // Reusable input field widget (copied from CreatePasswordPage, now with onChanged)
+  Widget _buildModernInputField({
+    required TextEditingController controller,
+    required String hintText,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text, // Added default
+    bool obscureText = false,
+    VoidCallback? onToggleVisibility,
+    required ValueChanged<String> onChanged, // Added onChanged
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      obscureText: obscureText,
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: TextStyle(color: const Color(0xFF317575).withOpacity(0.7)),
+        prefixIcon: Icon(icon, color: const Color(0xFF317575)),
+        suffixIcon:
+            onToggleVisibility != null
+                ? IconButton(
+                  icon: Icon(
+                    obscureText ? Icons.visibility_off : Icons.visibility,
+                    color: const Color(0xFF317575),
+                  ),
+                  onPressed: onToggleVisibility,
+                )
+                : null,
+        fillColor: Colors.white,
+        filled: true,
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 18.0,
+          horizontal: 10.0,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF57C5BE), width: 1.5),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF317575), width: 2.0),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.redAccent, width: 2.0),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2.5),
+        ),
+      ),
+      style: const TextStyle(color: Color(0xFF317575), fontSize: 18),
+      cursorColor: const Color(0xFF317575),
+      onChanged: onChanged, // Pass onChanged to TextFormField
+    );
+  }
+
+  // Reusable button widget (adapted from RegisterPage's _buildModernRegisterButton)
+  Widget _buildModernSignInButton({
+    required VoidCallback? onPressed,
+    required bool isLoading,
+  }) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF317575),
+        foregroundColor: Colors.white,
+        minimumSize: const Size(double.infinity, 60),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 8,
+        shadowColor: const Color(0xFF317575).withOpacity(0.5),
+        disabledBackgroundColor: const Color(0xFF317575).withOpacity(0.6),
+        disabledForegroundColor: Colors.white.withOpacity(0.7),
+      ),
+      child:
+          isLoading
+              ? const SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  strokeWidth: 2.5,
+                ),
+              )
+              : const Text(
+                'Sign In',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+    );
+  }
+
+  // Non-animated error text widget (copied from CreatePasswordPage)
+  Widget _buildErrorText(String? error) {
+    if (error == null) {
+      return const SizedBox(height: 0); // No height when no error
+    }
+    return Padding(
+      padding: const EdgeInsets.only(left: 12.0, bottom: 8.0),
+      child: Text(
+        error,
+        style: const TextStyle(
+          color: Colors.redAccent,
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );

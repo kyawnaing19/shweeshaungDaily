@@ -558,7 +558,7 @@ class _HomePageState extends State<HomeScreenPage>
                     vertical: 16,
                   ),
                   child: const Text(
-                    "Latest Feed",
+                    "Bulletin Board",
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
@@ -852,9 +852,9 @@ class _HomePageState extends State<HomeScreenPage>
                     width: double.infinity,
                     child: Padding(
                       padding: EdgeInsets.all(
-                        10,
+                        17,
                       ), // 👈 creates space around image
-                      child: Image.asset('assets/images/reactorIcon.png'),
+                      child: Image.asset('assets/images/voice_inbox.png'),
                     ),
                   ),
                 ),

@@ -8,14 +8,14 @@ import 'package:shweeshaungdaily/view_models/reg_viewmodel.dart';
 import 'package:shweeshaungdaily/views/Home.dart';
 import 'package:shweeshaungdaily/views/signReg/login.dart' show SignInPage;
 
-class StudendInfoPage extends StatefulWidget {
-  const StudendInfoPage({super.key});
+class StudentInfoPage extends StatefulWidget {
+  const StudentInfoPage({super.key});
 
   @override
-  State<StudendInfoPage> createState() => _StudentInfoPageState();
+  State<StudentInfoPage> createState() => _StudentInfoPageState();
 }
 
-class _StudentInfoPageState extends State<StudendInfoPage> {
+class _StudentInfoPageState extends State<StudentInfoPage> {
   final TextEditingController _semesterController = TextEditingController();
   final TextEditingController _classController = TextEditingController();
   final TextEditingController _majorController = TextEditingController();

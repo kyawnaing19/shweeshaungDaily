@@ -10,14 +10,13 @@ class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
   @override
-  State<RegisterPage> createState() => _SignInPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _SignInPageState extends State<RegisterPage> {
+class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final bool _obscureText = true;
 
   String? _emailError;
   String? _nameError;
@@ -25,8 +24,14 @@ class _SignInPageState extends State<RegisterPage> {
   bool _isRegistering = false;
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
+    _nameController.dispose();
     _errorTimer?.cancel();
     super.dispose();
   }
@@ -65,29 +70,53 @@ class _SignInPageState extends State<RegisterPage> {
     }
   }
 
+  // Modified _createSlideRoute to navigate to VerifyEmailPage
+  PageRouteBuilder _createSlideRoute() {
+    return PageRouteBuilder(
+      pageBuilder:
+          (context, animation, secondaryAnimation) =>
+              const VerifyEmailPage(), // Changed to VerifyEmailPage()
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(1.0, 0.0); // Starts from the right
+        const end = Offset.zero; // Ends at the center
+        const curve =
+            Curves.easeOutCubic; // Smooth acceleration and deceleration
+
+        var tween = Tween(
+          begin: begin,
+          end: end,
+        ).chain(CurveTween(curve: curve));
+
+        return SlideTransition(position: animation.drive(tween), child: child);
+      },
+      transitionDuration: const Duration(milliseconds: 700),
+      reverseTransitionDuration: const Duration(milliseconds: 500),
+    );
+  }
+
   void _onSignUp() async {
-    String email = _emailController.text;
-    String name = _nameController.text;
+    FocusScope.of(context).unfocus();
 
-    print('Attempting sign-in with:');
-    print('Name: $name');
-    print('Email: $email');
+    String email = _emailController.text.trim();
+    String name = _nameController.text.trim();
 
-    // Manual email validation
-    if (email.isEmpty && name.isEmpty) {
-      _setEmailError('Email is required');
-      _setNameError('Name is required');
-      return;
+    _setEmailError(null);
+    _setNameError(null);
+
+    bool hasError = false;
+    if (name.isEmpty) {
+      _setNameError('Name is required!');
+      hasError = true;
     }
-    if (email.isEmpty && name.isNotEmpty) {
-      _setEmailError('Email is required');
-      return;
-    }
-    if (name.isEmpty && email.isNotEmpty) {
-      _setNameError('Name is required');
-      return;
+    if (email.isEmpty) {
+      _setEmailError('Email is required!');
+      hasError = true;
     } else if (!RegExp(r'^[\w-\.]+@[\w-]+\.edu\.mm$').hasMatch(email)) {
-      _setEmailError('Edu mail only');
+      _setEmailError('Edu mail only!');
+      hasError = true;
+    }
+
+    if (hasError) {
       return;
     }
 
@@ -99,33 +128,51 @@ class _SignInPageState extends State<RegisterPage> {
     setState(() {
       _isRegistering = true;
     });
+
     final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Registering...'),
-        duration: Duration(
-          days: 1,
-        ), // Effectively keeps it until manually hidden
+      SnackBar(
+        content: Row(
+          children: [
+            const CircularProgressIndicator(color: Colors.white),
+            const SizedBox(width: 16),
+            Text(
+              'Registering $name...',
+              style: const TextStyle(color: Colors.white),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF317575),
+        duration: const Duration(minutes: 1),
       ),
     );
+
     bool success = false;
     try {
       success = await authViewModel.registerEmail(email, name);
     } catch (e) {
       success = false;
+      print('Registration error: $e');
+    } finally {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      setState(() {
+        _isRegistering = false;
+      });
     }
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    setState(() {
-      _isRegistering = false;
-    });
+
     if (success) {
+      // Use the custom slide transition
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const VerifyEmailPage()),
+        _createSlideRoute(), // Call the function to get the PageRouteBuilder
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Registration failed. Please try again.')),
+        const SnackBar(
+          content: Text('Registration failed. Please try again.'),
+          backgroundColor: Colors.redAccent,
+        ),
       );
     }
   }
@@ -140,207 +187,103 @@ class _SignInPageState extends State<RegisterPage> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(25.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 25.0,
+                  vertical: 40.0,
+                ),
                 child: Form(
                   key: _formKey,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      const SizedBox(height: 50),
+                      const SizedBox(height: 30),
                       const Text(
                         'Create Account',
                         style: TextStyle(
                           color: Color(0xFF317575),
-                          fontSize: 34,
+                          fontSize: 38,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       const Text(
-                        'Sign in to continue your journey',
+                        'Sign up to start your journey with us!',
                         style: TextStyle(
                           color: Color(0xFF317575),
-                          fontSize: 16,
+                          fontSize: 18,
                         ),
-                        textAlign: TextAlign.center,
+                        textAlign: TextAlign.start,
                       ),
-                      const SizedBox(height: 80),
-                      // ...existing code for fields and button...
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AnimatedOpacity(
-                            opacity: _nameError == null ? 0.0 : 1.0,
-                            duration: const Duration(milliseconds: 300),
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                left: 12.0,
-                                bottom: 6.0,
-                              ),
-                              child: Text(
-                                _nameError ?? '',
-                                style: const TextStyle(
-                                  color: Colors.redAccent,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF57C5BE),
-                              borderRadius: BorderRadius.circular(15),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.4),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: TextFormField(
-                              controller: _nameController,
-                              keyboardType: TextInputType.name,
-                              decoration: const InputDecoration(
-                                hintText: 'Full Name',
-                                hintStyle: TextStyle(color: Colors.white),
-                                prefixIcon: Icon(
-                                  Icons.person,
-                                  color: Colors.white,
-                                ),
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: 18.0,
-                                  horizontal: 10.0,
-                                ),
-                              ),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                              ),
-                              cursorColor: Colors.white,
-                              validator:
-                                  (_) => null, // disable default validator
-                              onChanged: (value) {
-                                if (value.isEmpty) {
-                                  _setNameError('Name is required!');
-                                } else {
-                                  _setNameError(null);
-                                }
-                              },
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 60),
+
+                      /// Name Input Field
+                      _buildErrorText(_nameError),
+                      _buildModernInputField(
+                        controller: _nameController,
+                        hintText: 'Full Name',
+                        icon: Icons.person_outline,
+                        keyboardType: TextInputType.name,
+                        onChanged: (value) {
+                          if (value.isEmpty) {
+                            _setNameError('Name is required!');
+                          } else {
+                            _setNameError(null);
+                          }
+                        },
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AnimatedOpacity(
-                            opacity: _emailError == null ? 0.0 : 1.0,
-                            duration: const Duration(milliseconds: 300),
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                left: 12.0,
-                                bottom: 6.0,
-                              ),
-                              child: Text(
-                                _emailError ?? '',
-                                style: const TextStyle(
-                                  color: Colors.redAccent,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF57C5BE),
-                              borderRadius: BorderRadius.circular(15),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.4),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: TextFormField(
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: const InputDecoration(
-                                hintText: 'Email',
-                                hintStyle: TextStyle(color: Colors.white),
-                                prefixIcon: Icon(
-                                  Icons.mail_outline,
-                                  color: Colors.white,
-                                ),
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: 18.0,
-                                  horizontal: 10.0,
-                                ),
-                              ),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                              ),
-                              cursorColor: Colors.white,
-                              validator:
-                                  (_) => null, // disable default validator
-                              onChanged: (value) {
-                                if (value.isEmpty) {
-                                  _setEmailError('Email is required!');
-                                } else if (!RegExp(
-                                  r'^[\w-\.]+@[\w-]+\.edu\.mm$',
-                                ).hasMatch(value)) {
-                                  _setEmailError('Edu mail only !');
-                                } else {
-                                  _setEmailError(null);
-                                }
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 35),
-                      ElevatedButton(
-                        onPressed: _isRegistering ? null : _onSignUp,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF317575),
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size(double.infinity, 55),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          elevation: 8,
-                          shadowColor: Colors.black.withOpacity(1),
-                          disabledBackgroundColor: const Color(0xFF317575),
-                          disabledForegroundColor: Colors.white,
-                        ),
-                        child: const Text(
-                          'Create',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                      const SizedBox(height: 20),
+
+                      /// Email Input Field
+                      _buildErrorText(_emailError),
+                      _buildModernInputField(
+                        controller: _emailController,
+                        hintText: 'Email',
+                        icon: Icons.mail_outline,
+                        keyboardType: TextInputType.emailAddress,
+                        onChanged: (value) {
+                          if (value.isEmpty) {
+                            _setEmailError('Email is required!');
+                          } else if (!RegExp(
+                            r'^[\w-\.]+@[\w-]+\.edu\.mm$',
+                          ).hasMatch(value)) {
+                            _setEmailError('Edu mail only!');
+                          } else {
+                            _setEmailError(null);
+                          }
+                        },
                       ),
                       const SizedBox(height: 40),
+
+                      /// Create Account Button
+                      _buildModernRegisterButton(
+                        onPressed: _isRegistering ? null : _onSignUp,
+                        isRegistering: _isRegistering,
+                      ),
                     ],
                   ),
                 ),
               ),
             ),
+
+            /// Already have an account text
             Padding(
-              padding: const EdgeInsets.only(bottom: 10.0),
+              padding: const EdgeInsets.only(bottom: 20.0),
               child: TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const SignInPage()),
-                  );
-                },
+                onPressed:
+                    _isRegistering
+                        ? null
+                        : () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SignInPage(),
+                            ),
+                          );
+                        },
+                style: TextButton.styleFrom(
+                  splashFactory: NoSplash.splashFactory,
+                  foregroundColor: const Color(0xFF4C878B),
+                ),
                 child: const Text.rich(
                   TextSpan(
                     text: 'Already have an account? ',
@@ -349,8 +292,8 @@ class _SignInPageState extends State<RegisterPage> {
                       TextSpan(
                         text: 'Sign in',
                         style: TextStyle(
-                          color: Color(0xFF4C878B),
                           fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
                         ),
                       ),
                     ],
@@ -359,6 +302,104 @@ class _SignInPageState extends State<RegisterPage> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModernInputField({
+    required TextEditingController controller,
+    required String hintText,
+    required IconData icon,
+    required TextInputType keyboardType,
+    required ValueChanged<String> onChanged,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: TextStyle(color: const Color(0xFF317575).withOpacity(0.7)),
+        prefixIcon: Icon(icon, color: const Color(0xFF317575)),
+        fillColor: Colors.white,
+        filled: true,
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 18.0,
+          horizontal: 10.0,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF57C5BE), width: 1.5),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF317575), width: 2.0),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.redAccent, width: 2.0),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2.5),
+        ),
+      ),
+      style: const TextStyle(color: Color(0xFF317575), fontSize: 18),
+      cursorColor: const Color(0xFF317575),
+      onChanged: onChanged,
+    );
+  }
+
+  Widget _buildModernRegisterButton({
+    required VoidCallback? onPressed,
+    required bool isRegistering,
+  }) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF317575),
+        foregroundColor: Colors.white,
+        minimumSize: const Size(double.infinity, 60),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 8,
+        shadowColor: const Color(0xFF317575).withOpacity(0.5),
+        disabledBackgroundColor: const Color(0xFF317575).withOpacity(0.6),
+        disabledForegroundColor: Colors.white.withOpacity(0.7),
+      ),
+      child:
+          isRegistering
+              ? const SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  strokeWidth: 2.5,
+                ),
+              )
+              : const Text(
+                'Create Account',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+    );
+  }
+
+  Widget _buildErrorText(String? error) {
+    return AnimatedOpacity(
+      opacity: error == null ? 0.0 : 1.0,
+      duration: const Duration(milliseconds: 300),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 12.0, bottom: 8.0),
+        child: Text(
+          error ?? '',
+          style: const TextStyle(
+            color: Colors.redAccent,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ),
     );
