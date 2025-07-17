@@ -55,7 +55,7 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
         _bioController.text = profileData['bio'] ?? '';
 
          final String profileImageUrl = profileData['profilePictureUrl'] != null
-        ? '$baseUrl/${profileData!['profilePictureUrl']}'
+        ? '$baseUrl/${profileData['profilePictureUrl']}'
         : 'assets/images/tpo.jpg';
 
         // Handle profile image if your API returns a URL or base64 string

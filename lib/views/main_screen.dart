@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/views/bottomNavBar.dart';
 
-import 'package:shweeshaungdaily/views/teacherprofile.dart';
 import 'Home.dart';
 import 'note/note_list_view.dart';
 import 'profile_router.dart';
 import 'timetablepage.dart';
-import 'package:shweeshaungdaily/widget/settings_card.dart';
 import 'package:shweeshaungdaily/widget/notification_icon.dart';
 
 class HomePage extends StatefulWidget {

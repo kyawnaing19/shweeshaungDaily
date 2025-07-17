@@ -65,11 +65,10 @@ class _SettingsItem extends StatelessWidget {
   final VoidCallback? onTap;
 
   const _SettingsItem({
-    Key? key,
     required this.icon,
     required this.text,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

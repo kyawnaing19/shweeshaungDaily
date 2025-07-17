@@ -5,7 +5,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/utils/image_cache.dart';
-import 'package:shweeshaungdaily/views/user_profile_update.dart';
 import '../services/api_service.dart';
 import 'package:shweeshaungdaily/services/authorize_image.dart';
 

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shweeshaungdaily/services/token_service.dart';
 import 'package:shweeshaungdaily/views/teacherprofile.dart';
 import 'package:shweeshaungdaily/views/user_profile.dart';
-import 'package:shweeshaungdaily/views/user_profile_view.dart';
-import 'package:shweeshaungdaily/views/userprofile.dart';
 
 class ProfileRouterPage extends StatelessWidget {
   final VoidCallback? onBack;

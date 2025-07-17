@@ -4,7 +4,7 @@ import 'package:shweeshaungdaily/services/authorize_image.dart';
 class ImageFullView extends StatelessWidget {
   final String imageUrl;
 
-  const ImageFullView({Key? key, required this.imageUrl}) : super(key: key);
+  const ImageFullView({super.key, required this.imageUrl});
 
   @override
   Widget build(BuildContext context) {

@@ -432,12 +432,12 @@ class _ComposeLoveLetterScreenState extends State<ComposeLoveLetterScreen>
                   ),
                   onTap: () async {
                     // Find the corresponding ID from the original API results
-                    final List<Map<String, dynamic>>? allResults =
+                    final List<Map<String, dynamic>> allResults =
                         await ApiService.searchUserNames(
                           _recipientController.text,
                         ); // Re-fetch or cache results
                     final Map<String, dynamic>? selectedUser = allResults
-                        ?.firstWhere(
+                        .firstWhere(
                           (item) => item['name'] == name,
                           orElse: () => {}, // Provide an empty map if not found
                         );

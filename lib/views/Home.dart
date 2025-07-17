@@ -9,6 +9,7 @@ import 'package:shweeshaungdaily/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shweeshaungdaily/services/authorize_image.dart';
 import 'package:shweeshaungdaily/services/token_service.dart';
+import 'package:shweeshaungdaily/utils/audio_timeformat.dart';
 import 'package:shweeshaungdaily/utils/image_cache.dart';
 import 'package:shweeshaungdaily/views/audio_post/audio_view.dart';
 import 'package:shweeshaungdaily/views/image_full_view.dart';
@@ -626,7 +627,7 @@ class _HomePageState extends State<HomeScreenPage>
                           padding: const EdgeInsets.only(bottom: 16.0),
                           child: _buildFeedCard(
                             user: user,
-                            timeAgo: timeAgo,
+                            timeAgo: formatFacebookStyleTime(timeAgo),
                             message: message,
                             imageUrl: imageUrl,
                             likeCount: likeCount,
