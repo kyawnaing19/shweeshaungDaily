@@ -311,11 +311,11 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
               Icons.face_retouching_natural_outlined),
           const SizedBox(height: 16),
           _buildTextField(
-              'Semester', _semesterController, Icons.school_outlined),
+              'Semester', _semesterController, Icons.school_outlined, enabled: false),
           const SizedBox(height: 16),
-          _buildTextField('Class', _classController, Icons.class_outlined),
+          _buildTextField('Class', _classController, Icons.class_outlined, enabled: false),
           const SizedBox(height: 16),
-          _buildTextField('Major', _majorController, Icons.work_outline),
+          _buildTextField('Major', _majorController, Icons.work_outline, enabled: false),
           const SizedBox(height: 16),
           _buildTextField('Bio', _bioController, Icons.info_outline,
               maxLines: 3),
@@ -325,8 +325,8 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
   }
 
   Widget _buildTextField(
-      String label, TextEditingController controller, IconData icon,
-      {TextInputType? keyboardType, int maxLines = 1}) {
+      String label, TextEditingController controller, IconData icon, 
+      {TextInputType? keyboardType, int maxLines = 1, bool enabled = true}) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
@@ -356,17 +356,18 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
           fontSize: 14,
         ),
       ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter $label';
-        }
-        if (label == 'Email' &&
-            !RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.edu\.mm$')
-                .hasMatch(value)) {
-          return 'Please enter a valid .edu.mm email';
-        }
-        return null;
-      },
+      // validator: (value) {
+      //   if (value == null || value.isEmpty) {
+      //     return 'Please enter $label';
+      //   }
+      //   if (label == 'Email' &&
+      //       !RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.edu\.mm$')
+      //           .hasMatch(value)) {
+      //     return 'Please enter a valid .edu.mm email';
+      //   }
+      //   return null;
+      // },
+      enabled: enabled,
     );
   }
 
@@ -392,8 +393,8 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                       // );
 
                       // Simulating API call for update
-                      await Future.delayed(const Duration(seconds: 2));
-                      final bool success = Random().nextBool(); // Replace with actual API response
+                     
+                      final bool success = await ApiService.updateProfile(_nicknameController.text,_bioController.text);// Replace with actual API response
 
                       setState(() => _isSaving = false);
 

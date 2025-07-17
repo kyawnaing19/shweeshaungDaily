@@ -631,9 +631,28 @@ static Future<List<Map<String, dynamic>>> searchUserNames(String query) async {
     throw Exception('Failed to load search results');
   }
   }
+
+  static Future<bool> updateProfile(String nickName,String bio)async {
+  final url = Uri.parse(userbaseUrl);
+  final Map<String, dynamic> requestBody = {
+    'nickName': nickName,
+    'bio': bio
+  };
+   final response = await AuthorizedHttpService.sendAuthorizedRequest(
+    url,
+    method: 'PUT',
+    body: requestBody, // ✅ Don't jsonEncode here!
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  );
+  if(response != null && response.statusCode==200) {
+    return true;
+  }
+  return false;
 }
 
 
-
+}
   
 

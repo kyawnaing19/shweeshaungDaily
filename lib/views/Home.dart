@@ -1075,7 +1075,7 @@ class _HomePageState extends State<HomeScreenPage>
                     borderRadius: BorderRadius.circular(16),
                     child: AuthorizedImage(
                       imageUrl: imageUrl,
-                      height: 280,
+                      height: 200,
                       width: double.infinity,
                       // Add this line
                     ),
@@ -1202,14 +1202,14 @@ class _HomePageState extends State<HomeScreenPage>
                     style: const TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   const Spacer(),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.share_rounded,
-                      color: Colors.white70,
-                      size: 22,
-                    ),
-                    onPressed: () {},
-                  ),
+                  // IconButton(
+                  //   icon: const Icon(
+                  //     Icons.share_rounded,
+                  //     color: Colors.white70,
+                  //     size: 22,
+                  //   ),
+                  //   onPressed: () {},
+                  // ),
                 ],
               ),
             ),
