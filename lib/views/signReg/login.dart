@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shweeshaungdaily/view_models/auth_viewmodel.dart';
 import 'package:shweeshaungdaily/views/main_screen.dart'; // Assuming HomePage is now MainScreenPage
+import 'package:shweeshaungdaily/views/signReg/forget_password.dart';
 import 'package:shweeshaungdaily/views/signReg/register.dart';
 
 class SignInPage extends StatefulWidget {
@@ -219,7 +220,12 @@ class _SignInPageState extends State<SignInPage> {
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: () {
-                            // TODO: Navigate to forgot password page or show dialog
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ForgetPassword(),
+                              ),
+                            );
                             print('Forgot Password tapped');
                           },
                           style: TextButton.styleFrom(

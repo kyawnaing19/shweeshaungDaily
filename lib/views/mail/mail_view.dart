@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shweeshaungdaily/colors.dart';
+import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/views/mail/compose_mail.dart';
 import 'package:shweeshaungdaily/views/mail/letter_view.dart';
 // Make sure this path is correct
@@ -28,28 +29,7 @@ class _MailBoxHomeState extends State<MailBoxHome> {
     _fetchSentMails();
     _fetchAllMails();
     // This will now fetch real data in production
-    // For testing, you can override it like this:
-    _sentMailsFuture = Future.value([
-      {
-        'text': 'This is the body of the test email.',
-        'recipientId': 123,
-        'recipientName': 'Test Recipient',
-        'semester': '2025 Fall',
-        'major': 'Computer Science',
-        'senderId': 456,
-        'senderName': 'Test Sender',
-        // No 'isDelivered' or 'time' in this sample
-      },
-      {
-        'text': 'Another test email about a project.',
-        'recipientId': 789,
-        'recipientName': 'Project Collaborator',
-        'semester': '2026 Spring',
-        'major': 'Electrical Engineering',
-        'senderId': null, // Anonymous
-        'senderName': null, // Anonymous
-      },
-    ]);
+    // For testing, you can override it like this
 
     _getInboxMessages = Future.value([
       {
@@ -77,13 +57,13 @@ class _MailBoxHomeState extends State<MailBoxHome> {
   // A method to fetch sent mails
   void _fetchSentMails() {
     setState(() {
-      // _sentMailsFuture = ApiService.getSentMails();
+       _sentMailsFuture = ApiService.getSentMails();
     });
   }
 
   void _fetchAllMails() {
     setState(() {
-      // _sentMailsFuture = ApiService.getSentMails();
+      //  _sentMailsFuture = ApiService.getSentMails();
     });
   }
 
@@ -190,6 +170,8 @@ class _MailBoxHomeState extends State<MailBoxHome> {
         message['recipientName'] ?? 'Unknown Recipient';
     final String semester = message['semester'] ?? 'N/A';
     final String major = message['major'] ?? 'N/A';
+    final bool isAnonymous = message['senderId'] == null ||
+        message['senderName'] == null; // Check if the sender is anonymous
     // Removed 'time' as it's not in PublicMailDTO and you only want specified fields
     // If you still want to show a time, you'd need to add it to your DTO or determine how it's sent from the API.
 

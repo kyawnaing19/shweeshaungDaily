@@ -31,6 +31,15 @@ class AuthViewModel extends ChangeNotifier {
         if (accessToken != null && refreshToken != null) {
           await TokenService.saveTokens(accessToken!, refreshToken!);
           await TokenService.setRole(isTeacher ? 'teacher' : 'user');
+          if(isTeacher){
+            final bool =await ApiService.isAdmin(email);
+            if(bool){
+              await TokenService.setAsAdmin(true);
+            } else {
+              await TokenService.setAsAdmin(false);
+            }
+          }
+
           await TokenService.setUserName(await ApiService.getUserName());
         //    final startupViewModel = Provider.of<StartupViewModel>(listen: false);
         // startupViewModel.setIsTeacher(isTeacher);

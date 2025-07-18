@@ -31,6 +31,17 @@ class TokenService {
     return prefs.getString('role');
   }
 
+
+  static Future<void> setAsAdmin(bool isAmdin) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('admin', isAmdin ? 'true' : 'false');
+  }
+
+  static Future<String?> checkIfAdmin() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('admin');
+  }
+
   static Future<void> updateAccessToken(String accessToken) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_accessTokenKey, accessToken);

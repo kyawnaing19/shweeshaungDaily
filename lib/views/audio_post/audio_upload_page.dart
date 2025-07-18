@@ -8,9 +8,13 @@ import 'package:path_provider/path_provider.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
+import 'package:shweeshaungdaily/services/token_service.dart';
 import 'package:shweeshaungdaily/utils/audio_timeformat.dart';
 import 'package:shweeshaungdaily/views/audio_post/audio_player_widget.dart';
-
+Future<bool> _checkIfTeacher() async {
+    final role = await TokenService.checkIfAdmin();
+    return role == 'true';
+  }
 final Map<String, String> audienceValueMap = {
   'Public': 'Public',
   'Teacher': 'Teacher',
@@ -24,6 +28,16 @@ final Map<String, String> audienceValueMap = {
   'Sem 8': '8',
   'Majors': 'Majors',
 };
+Future<void> updateAudienceMap() async {
+  final isTeacher = await _checkIfTeacher(); // ⬅️ AWAIT here!
+
+  if (isTeacher) {
+    audienceValueMap.remove('Public');
+    audienceValueMap.remove('Teacher');
+  }
+  // Now 'audienceValueMap' is updated based on the teacher status
+  print(audienceValueMap); // For demonstration
+}
 
 const List<String> majorsList = ['CST', 'CS', 'CT'];
 
@@ -63,6 +77,7 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen>
   @override
   void initState() {
     super.initState();
+    updateAudienceMap();
     _titleController.addListener(() => setState(() {}));
     _fetchAudios();
   }

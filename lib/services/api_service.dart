@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -405,6 +406,17 @@ class ApiService {
     }
   }
 
+  static Future<bool> isAdmin(String email) async {
+    final uri = Uri.parse('$baseUrl/isAdmin?email=$email');
+    final response = await http.get(uri);
+    if (response.statusCode == 200) {
+      // Assuming the backend returns true/false as JSON
+      return response.body == 'true' || response.body == '"true"';
+    } else {
+      throw Exception('Failed to verifyTeacher email');
+    }
+  }
+
   static Future<List<String>> getSubjectsForNote() async {
     final uri = Uri.parse('$subbaseUrl/list');
     final response = await AuthorizedHttpService.sendAuthorizedRequest(
@@ -598,13 +610,14 @@ static Future<String?> sendMail({
 
 
 static Future<List<Map<String, dynamic>>?> getSentMails() async {
-  final url = Uri.parse('$baseUrl/sent');
+  final url = Uri.parse('$mailbaseUrl/sent');
 
   final response = await AuthorizedHttpService.sendAuthorizedRequest(
     url,
     method: 'GET',
   );
 
+  print('Response status code: ${response?.body}');
   if (response != null && response.statusCode == 200) {
     final List<dynamic> jsonList = jsonDecode(response.body);
     return jsonList.cast<Map<String, dynamic>>();
@@ -651,6 +664,68 @@ static Future<List<Map<String, dynamic>>> searchUserNames(String query) async {
   }
   return false;
 }
+
+ static Future<bool> resetPassword(String email) async {
+  final url = Uri.parse('$baseUrl/forgot-password?email=$email');
+
+  final response = await http.post(url); // No headers, no body
+
+  if (response.statusCode == 200) {
+    print('Success: ${response.body}');
+    return true;
+  }
+
+  print('Error: ${response.statusCode} - ${response.body}');
+  return false;
+}
+
+
+
+static Future<bool> updateProfilePicture({
+  required File? photo, // Use File instead of XFile
+}) async {
+  Future<http.Response> sendMultipart(String accessToken) async {
+    final url = Uri.parse('$userbaseUrl/profile');
+    var request = http.MultipartRequest('PUT', url)
+      ..headers['Authorization'] = 'Bearer $accessToken';
+
+    if (photo != null) {
+      final bytes = await photo.readAsBytes();
+      final fileName = photo.path.split('/').last;
+
+      request.files.add(
+        http.MultipartFile.fromBytes('photo', bytes, filename: fileName),
+      );
+    }
+
+    final streamedResponse = await request.send();
+    return await http.Response.fromStream(streamedResponse);
+  }
+
+  var tokens = await TokenService.loadTokens();
+  if (tokens == null) throw Exception('Not authenticated');
+
+  var response = await sendMultipart(tokens.accessToken);
+  if (response.statusCode == 401 || response.statusCode == 403) {
+    final refreshed = await ApiService.refreshAccessToken(tokens.refreshToken);
+    if (refreshed != null &&
+        refreshed['accessToken'] != null &&
+        refreshed['refreshToken'] != null) {
+      await TokenService.saveTokens(
+        refreshed['accessToken'],
+        refreshed['refreshToken'],
+      );
+      response = await sendMultipart(refreshed['accessToken']);
+    } else {
+      await TokenService.clearTokens();
+      throw Exception('Session expired. Please log in again.');
+    }
+  }
+
+  return response.statusCode == 200;
+}
+
+
 
 
 }
