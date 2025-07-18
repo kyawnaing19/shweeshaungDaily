@@ -398,8 +398,7 @@ class ApiService {
   static Future<bool> isTeacher(String email) async {
     final uri = Uri.parse('$baseUrl/isTeacher?email=$email');
     final response = await http.get(uri);
-    if (response.statusCode == 200) {
-      // Assuming the backend returns true/false as JSON
+    if (response.statusCode == 200) {      // Assuming the backend returns true/false as JSON
       return response.body == 'true' || response.body == '"true"';
     } else {
       throw Exception('Failed to verifyTeacher email');
@@ -410,6 +409,7 @@ class ApiService {
     final uri = Uri.parse('$baseUrl/isAdmin?email=$email');
     final response = await http.get(uri);
     if (response.statusCode == 200) {
+   
       // Assuming the backend returns true/false as JSON
       return response.body == 'true' || response.body == '"true"';
     } else {

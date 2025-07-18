@@ -35,6 +35,7 @@ class TokenService {
   static Future<void> setAsAdmin(bool isAmdin) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('admin', isAmdin ? 'true' : 'false');
+    print("admin token saved");
   }
 
   static Future<String?> checkIfAdmin() async {

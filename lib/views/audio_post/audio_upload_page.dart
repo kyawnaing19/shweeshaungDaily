@@ -11,8 +11,9 @@ import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/services/token_service.dart';
 import 'package:shweeshaungdaily/utils/audio_timeformat.dart';
 import 'package:shweeshaungdaily/views/audio_post/audio_player_widget.dart';
-Future<bool> _checkIfTeacher() async {
+ Future<bool> _checkIfTeacher() async {
     final role = await TokenService.checkIfAdmin();
+    print('role: $role');
     return role == 'true';
   }
 final Map<String, String> audienceValueMap = {
@@ -26,18 +27,20 @@ final Map<String, String> audienceValueMap = {
   'Sem 6': '6',
   'Sem 7': '7',
   'Sem 8': '8',
+  'Sem 9': '9',
   'Majors': 'Majors',
 };
 Future<void> updateAudienceMap() async {
   final isTeacher = await _checkIfTeacher(); // ⬅️ AWAIT here!
 
-  if (isTeacher) {
+  if (!isTeacher) {
     audienceValueMap.remove('Public');
     audienceValueMap.remove('Teacher');
   }
-  // Now 'audienceValueMap' is updated based on the teacher status
-  print(audienceValueMap); // For demonstration
+  // Now 'audienceValueMap' is updated based on the teacher status// For demonstration
 }
+
+
 
 const List<String> majorsList = ['CST', 'CS', 'CT'];
 
@@ -80,7 +83,23 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen>
     updateAudienceMap();
     _titleController.addListener(() => setState(() {}));
     _fetchAudios();
+    _checkIfTeacherList();
+
   }
+
+  Future<void> _checkIfTeacherList() async {
+    final role = await TokenService.checkIfAdmin();
+    if(role == 'true') {
+      _selectedAudience='Public';
+    }else{
+      _selectedAudience = 'Choose';
+    }
+    setState(() {
+      
+    });
+  }
+
+  
 
   void _onTitleChanged() {
     setState(() {});
@@ -655,7 +674,7 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen>
     }
 
     final isButtonEnabled =
-        _audioPath != null && _titleController.text.trim().isNotEmpty;
+        _audioPath != null && _titleController.text.trim().isNotEmpty && _selectedAudience != 'Choose';
 
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 300),
@@ -733,8 +752,30 @@ class ShowSharesDialog extends StatefulWidget {
 class _ShowSharesDialogState extends State<ShowSharesDialog> {
   bool _showMajors = false;
   String? _pendingSem;
+  bool? isAdmin;
 
-  static const List<String> _audienceList = [
+  Future<void> _loadUserRole() async {
+  final result = await _checkIfTeacher(); // Your async role check
+  setState(() {
+    isAdmin = result;
+  });
+}
+ 
+Future<void> updateAudienceMap() async {
+  final isTeacher = await _checkIfTeacher(); // ⬅️ AWAIT here!
+
+  if (!isTeacher) {
+    _audienceList.remove('Public');
+    _audienceList.remove('Teacher');
+    setState(() {
+      
+    });
+  }
+  // Now 'audienceValueMap' is updated based on the teacher status// For demonstration
+}
+
+
+  static final List<String> _audienceList = [
     'Public',
     'Teacher',
     'Sem 1',
@@ -745,10 +786,19 @@ class _ShowSharesDialogState extends State<ShowSharesDialog> {
     'Sem 6',
     'Sem 7',
     'Sem 8',
+    'Sem 9',
   ];
-
+  @override
+  void initState() {
+    super.initState();
+    _loadUserRole();
+    updateAudienceMap(); // Call the function to update the audience map
+  }
+ 
   @override
   Widget build(BuildContext context) {
+     var checkIf = _checkIfTeacher();
+
     return WillPopScope(
       onWillPop: () async {
         if (_showMajors && _pendingSem != null) {
@@ -840,7 +890,13 @@ class _ShowSharesDialogState extends State<ShowSharesDialog> {
                                   ),
                               itemBuilder: (context, index) {
                                 final item = _audienceList[index];
-                                final isSemWithMajors = index >= 3;
+                               
+                                final bool isSemWithMajors;
+                                if(isAdmin==true) {
+                                  isSemWithMajors = index >= 4;
+                                } else {
+                                  isSemWithMajors = index >= 2;
+                                }
                                 return Material(
                                   color: Colors.transparent,
                                   child: InkWell(

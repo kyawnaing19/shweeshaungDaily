@@ -700,11 +700,6 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                         ); // Replace with actual API response
                         // Simulating API call for update
 
-                        // final bool success = await ApiService.updateProfile(
-                        //   _nicknameController.text,
-                        //   _bioController.text,
-                        // ); // Replace with actual API response
-
                         setState(() => _isSaving = false);
 
                         // ignore: use_build_context_synchronously
