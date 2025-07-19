@@ -81,6 +81,35 @@ class _StudentInfoPageState extends State<StudentInfoPage> {
     );
   }
 
+  // Define the custom slide route for navigation
+  PageRouteBuilder _createSlideRoute(Widget page) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        // Define the offset for the slide transition.
+        // From Offset(1.0, 0.0) means the page starts completely off-screen to the right.
+        // To Offset(0.0, 0.0) means the page ends at its normal position.
+        const begin = Offset(1.0, 0.0); // Starts from the right
+        const end = Offset.zero; // Ends at the center
+
+        // Define the curve for the animation (e.g., easeOutBack for a slight bounce).
+        const curve =
+            Curves.easeOutCubic; // Smooth acceleration and deceleration
+
+        // Create a Tween for the offset.
+        var tween = Tween(
+          begin: begin,
+          end: end,
+        ).chain(CurveTween(curve: curve));
+
+        // Use SlideTransition to apply the animation to the child page.
+        return SlideTransition(position: animation.drive(tween), child: child);
+      },
+      transitionDuration: const Duration(milliseconds: 700),
+      reverseTransitionDuration: const Duration(milliseconds: 500),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // ignore: deprecated_member_use
@@ -148,6 +177,7 @@ class _StudentInfoPageState extends State<StudentInfoPage> {
                                 borderRadius: BorderRadius.circular(15),
                                 boxShadow: [
                                   BoxShadow(
+                                    // ignore: deprecated_member_use
                                     color: kShadowColor.withOpacity(0.4),
                                     blurRadius: 8,
                                     offset: const Offset(0, 4),
@@ -328,6 +358,7 @@ class _StudentInfoPageState extends State<StudentInfoPage> {
                                 borderRadius: BorderRadius.circular(15),
                                 boxShadow: [
                                   BoxShadow(
+                                    // ignore: deprecated_member_use
                                     color: kShadowColor.withOpacity(0.4),
                                     blurRadius: 8,
                                     offset: const Offset(0, 4),
@@ -496,6 +527,7 @@ class _StudentInfoPageState extends State<StudentInfoPage> {
                                 borderRadius: BorderRadius.circular(15),
                                 boxShadow: [
                                   BoxShadow(
+                                    // ignore: deprecated_member_use
                                     color: kShadowColor.withOpacity(0.4),
                                     blurRadius: 8,
                                     offset: const Offset(0, 4),
@@ -670,9 +702,9 @@ class _StudentInfoPageState extends State<StudentInfoPage> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const SignInPage(),
-                      ),
+                      _createSlideRoute(
+                        const SignInPage(),
+                      ), // Use the custom route
                     );
                   },
                   child: const Text.rich(

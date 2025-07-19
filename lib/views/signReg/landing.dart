@@ -18,7 +18,7 @@ class LandingPage extends StatelessWidget {
         const begin = Offset(1.0, 0.0); // Starts from the right
         const end = Offset.zero; // Ends at the center
 
-        // Define the curve for the animation (e.g., easeOutBack for a slight bounce).
+        // Define the curve for the animation (e.g., easeOutCubic for a smooth feel).
         const curve =
             Curves.easeOutCubic; // Smooth acceleration and deceleration
 
@@ -105,9 +105,12 @@ class LandingPage extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 10.0),
               child: TextButton(
                 onPressed: () {
+                  // UPDATED: Apply the custom slide transition to SignInPage
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const SignInPage()),
+                    _createSlideRoute(
+                      const SignInPage(),
+                    ), // Use the custom route
                   );
                 },
                 child: const Text.rich(
@@ -145,9 +148,9 @@ class _LoadingPageState extends State<LoadingPage> {
   @override
   void initState() {
     super.initState();
-    // Start a timer for 2 seconds
+    // Start a timer for 3 seconds
     Timer(const Duration(seconds: 3), () {
-      // After 2 seconds, navigate to the HomePage
+      // After 3 seconds, navigate to the LandingPage
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const LandingPage()),
       );
@@ -183,7 +186,6 @@ class _LoadingPageState extends State<LoadingPage> {
                 style: TextStyle(
                   color: Color(0xFF317575),
                   fontSize: 18,
-                  // You can also apply a fontFamily here if desired, e.g., fontFamily: 'Pacifico',
                 ),
               ),
               SizedBox(
@@ -192,7 +194,7 @@ class _LoadingPageState extends State<LoadingPage> {
               CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(
                   Color(0xFF317575),
-                ), // White loading indicator
+                ), // Loading indicator color
               ),
             ],
           ),

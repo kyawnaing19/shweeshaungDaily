@@ -125,6 +125,34 @@ class _SignInPageState extends State<SignInPage> {
     }
   }
 
+  PageRouteBuilder _createSlideRoute(Widget page) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        // Define the offset for the slide transition.
+        // From Offset(1.0, 0.0) means the page starts completely off-screen to the right.
+        // To Offset(0.0, 0.0) means the page ends at its normal position.
+        const begin = Offset(1.0, 0.0); // Starts from the right
+        const end = Offset.zero; // Ends at the center
+
+        // Define the curve for the animation (e.g., easeOutCubic for a smooth feel).
+        const curve =
+            Curves.easeOutCubic; // Smooth acceleration and deceleration
+
+        // Create a Tween for the offset.
+        var tween = Tween(
+          begin: begin,
+          end: end,
+        ).chain(CurveTween(curve: curve));
+
+        // Use SlideTransition to apply the animation to the child page.
+        return SlideTransition(position: animation.drive(tween), child: child);
+      },
+      transitionDuration: const Duration(milliseconds: 700),
+      reverseTransitionDuration: const Duration(milliseconds: 500),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authViewModel = Provider.of<AuthViewModel>(context);
@@ -205,9 +233,9 @@ class _SignInPageState extends State<SignInPage> {
                           if (value.isEmpty) {
                             _setPasswordError('Password is required!');
                           } else if (value.length < 8) {
-                            // _setPasswordError(
-                            //   'Password must be at least 8 characters.',
-                            // );
+                            _setPasswordError(
+                              'Password must be at least 8 characters.',
+                            );
                           } else {
                             _setPasswordError(null);
                           }
@@ -269,9 +297,9 @@ class _SignInPageState extends State<SignInPage> {
                           // Disable if loading
                           Navigator.push(
                             context,
-                            MaterialPageRoute(
-                              builder: (context) => const RegisterPage(),
-                            ),
+                            _createSlideRoute(
+                              const RegisterPage(),
+                            ), // Use the custom route
                           );
                         },
                 style: TextButton.styleFrom(

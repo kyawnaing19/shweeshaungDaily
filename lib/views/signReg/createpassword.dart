@@ -316,11 +316,11 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
                 child: TextButton(
                   onPressed: () {
                     Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SignInPage(),
-                      ),
-                    );
+                    context,
+                    _createSlideRoute(
+                      const SignInPage(),
+                    ), // Use the custom route
+                  );
                   },
                   style: TextButton.styleFrom(
                     splashFactory: NoSplash.splashFactory,
