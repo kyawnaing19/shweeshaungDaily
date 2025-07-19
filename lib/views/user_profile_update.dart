@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:io' as io;
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart' show Uint8List, kIsWeb; // Import Uint8List and kIsWeb
 
 // Assuming these are defined in your project
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/services/authorize_image.dart'; // Ensure this is correctly implemented
-import 'package:shweeshaungdaily/services/authorized_http_service.dart'; // For fetching authorized network images
+// For fetching authorized network images
 
 class ProfileUpdateScreen extends StatefulWidget {
   const ProfileUpdateScreen({super.key});

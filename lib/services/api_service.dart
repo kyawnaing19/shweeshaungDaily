@@ -742,6 +742,22 @@ static Future<bool> deleteProfile()async {
 }
 
 
+static Future<bool> deleteStory(String purl)async {
+  final url = Uri.parse('$storyUrl?url=$purl');
+   final response = await AuthorizedHttpService.sendAuthorizedRequest(
+    url,
+    method: 'DELETE',
+  );
+    if(response==null){
+    return false;
+  }
+  if(response.statusCode==200) {
+    return true;
+  }
+  return false;
+}
+
+
 
 }
   

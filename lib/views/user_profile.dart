@@ -619,22 +619,60 @@ class _GalleryViewerPageState extends State<GalleryViewerPage> {
                     onPressed: () => Navigator.pop(context),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.white),
-                    onPressed: () {
-                      if (widget.onDeleteItem != null) {
-                        widget.onDeleteItem!(currentIndex);
-                        // After deleting, decide whether to pop or navigate to the next/previous image
-                        if (widget.images.length <= 1) {
-                          Navigator.pop(context); // Pop if no more images
-                        } else {
-                          // Handle navigation after deletion if there are still images
-                          // For simplicity, we'll pop for now. A more complex
-                          // solution would involve animating to next/prev image.
-                          Navigator.pop(context);
-                        }
-                      }
-                    },
-                  ),
+  icon: const Icon(Icons.delete, color: Colors.white),
+  onPressed: () async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Story'),
+        content: const Text('Are you sure you want to delete this story? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final success = await ApiService.deleteStory(
+        widget.images[currentIndex].substring(
+          widget.images[currentIndex].indexOf('tfeedphoto'),
+        ),
+      );
+
+      if (success) {
+        if (widget.onDeleteItem != null) {
+          widget.onDeleteItem!(currentIndex);
+
+          // Pop depending on remaining images
+          if (widget.images.length <= 1) {
+            Navigator.pop(context);
+          } else {
+            Navigator.pop(context); // You can also auto-navigate to next image here
+          }
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to delete story.'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
+  },
+)
+
                 ],
               ),
             ),
