@@ -220,22 +220,24 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => FullscreenImageViewer(
-                tag: 'temp-profile-image', // Use a temporary tag for the new image
-                imageBytes: bytes, // Pass bytes for web
-                onDelete: () {
-                  // If user deletes from viewer, do nothing here as image wasn't set yet
-                  // The viewer handles popping itself.
-                },
-                onConfirm: (confirmedImage) {
-                  // This callback is triggered when "Confirm" is pressed in the viewer
-                  setState(() {
-                    _webImage = confirmedImage as Uint8List;
-                    _profileImage = null; // Clear mobile file if switching
-                  });
-                  _updateProfilePicture(); // Call the update function
-                },
-              ),
+              builder:
+                  (_) => FullscreenImageViewer(
+                    tag:
+                        'temp-profile-image', // Use a temporary tag for the new image
+                    image: bytes,
+                    onDelete: () {
+                      // If user deletes from viewer, do nothing here as image wasn't set yet
+                      // The viewer handles popping itself.
+                    },
+                    onConfirm: (confirmedImage) {
+                      // This callback is triggered when "Confirm" is pressed in the viewer
+                      setState(() {
+                        _webImage = confirmedImage as Uint8List;
+                        _profileImage = null; // Clear mobile file if switching
+                      });
+                      _updateProfilePicture(); // Call the update function
+                    },
+                  ),
             ),
           );
         } else {
@@ -757,75 +759,22 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
   }
 }
 
-/// A widget for displaying an image in fullscreen, supporting network URLs,
-/// file paths, or Uint8List data. It also provides delete and confirm actions.
 class FullscreenImageViewer extends StatelessWidget {
   final String tag;
-  final String? imageUrl; // For network images
-  final io.File? imageFile; // For mobile local files
-  final Uint8List? imageBytes; // For web local files (Uint8List)
+  final dynamic image; // File or Uint8List
   final VoidCallback onDelete;
-  final Function(dynamic confirmedImage) onConfirm;
+  final Function(dynamic image) onConfirm; // New callback for confirmation
 
   const FullscreenImageViewer({
     super.key,
     required this.tag,
-    this.imageUrl,
-    this.imageFile,
-    this.imageBytes,
+    required this.image,
     required this.onDelete,
-    required this.onConfirm,
-  }) : assert(
-            imageUrl != null || imageFile != null || imageBytes != null,
-            'One of imageUrl, imageFile, or imageBytes must be provided.');
+    required this.onConfirm, // Mark as required
+  });
 
   @override
   Widget build(BuildContext context) {
-    Widget imageWidget;
-
-    if (imageUrl != null) {
-      // Display AuthorizedImage for network URLs
-      imageWidget = AuthorizedImage(
-        imageUrl: imageUrl!,
-         width: double.infinity,
-    height: double.infinity,
-        fit: BoxFit.contain, // Fit the entire screen
-      );
-    } else if (imageFile != null) {
-      // Display Image.file for mobile local files
-      imageWidget = Image.file(
-        imageFile!,
-        fit: BoxFit.contain,
-      );
-    } else if (imageBytes != null) {
-      // Display Image.memory for web local files (Uint8List)
-      imageWidget = Image.memory(
-        imageBytes!,
-        fit: BoxFit.contain,
-      );
-    } else {
-      // Fallback in case none are provided (though asserted against)
-      imageWidget = const Center(
-        child: Text(
-          'No image to display',
-          style: TextStyle(color: Colors.white),
-        ),
-      );
-    }
-
-    // Determine the image to pass back on confirm
-    dynamic imageToConfirm;
-    if (imageUrl != null) {
-      // For network images, we typically don't "confirm" them as new local picks.
-      // If the goal is to re-download and save, more logic is needed.
-      // For now, onConfirm for network image will simply close the viewer without returning a new image.
-      imageToConfirm = null;
-    } else if (imageFile != null) {
-      imageToConfirm = imageFile;
-    } else if (imageBytes != null) {
-      imageToConfirm = imageBytes;
-    }
-
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -836,15 +785,14 @@ class FullscreenImageViewer extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          // Confirm Icon - only show if there's an image to confirm (i.e., newly picked)
-          if (imageToConfirm != null)
-            IconButton(
-              icon: const Icon(Icons.check_circle_outline, color: Colors.white),
-              onPressed: () {
-                onConfirm(imageToConfirm); // Call confirm callback with the image
-                Navigator.pop(context); // Close the viewer
-              },
-            ),
+          // Confirm Icon
+          IconButton(
+            icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+            onPressed: () {
+              onConfirm(image); // Call confirm callback with the image
+              Navigator.pop(context); // Close the viewer
+            },
+          ),
           // Delete Icon
           IconButton(
             icon: const Icon(Icons.delete, color: Colors.white),
@@ -861,7 +809,10 @@ class FullscreenImageViewer extends StatelessWidget {
         child: Center(
           child: Hero(
             tag: tag,
-            child: imageWidget,
+            child:
+                image is Uint8List
+                    ? Image.memory(image as Uint8List)
+                    : Image.file(image as io.File),
           ),
         ),
       ),
