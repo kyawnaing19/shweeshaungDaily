@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:io' as io;
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
-// Import for network image fetching
-import 'package:path_provider/path_provider.dart'; // Import for temporary file on mobile
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart' show Uint8List, kIsWeb; // Import Uint8List and kIsWeb
 
 // Assuming these are defined in your project
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
-import 'package:shweeshaungdaily/services/authorize_image.dart';
-import 'package:shweeshaungdaily/services/authorized_http_service.dart';
-
-// Dummy AuthorizedImage for demonstration. Replace with your actual one.
-// This widget is assumed to handle its own network loading and token.
+import 'package:shweeshaungdaily/services/authorize_image.dart'; // Ensure this is correctly implemented
+import 'package:shweeshaungdaily/services/authorized_http_service.dart'; // For fetching authorized network images
 
 class ProfileUpdateScreen extends StatefulWidget {
   const ProfileUpdateScreen({super.key});
@@ -35,10 +31,10 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
   final String baseUrl = ApiService.base;
 
   bool _isSaving = false;
-  bool _isLoading = true; // Added for initial data loading
+  bool _isLoading = true;
 
-  Uint8List? _webImage; // Holds image data for web (newly picked)
-  io.File? _profileImage; // Holds image file for mobile (newly picked)
+  // Stores newly picked local image file (for mobile) or bytes (for web)
+  dynamic _newlyPickedImage;
 
   // Stores the initial profile image URL fetched from the API
   String? _initialProfileImageUrl;
@@ -46,7 +42,7 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
   @override
   void initState() {
     super.initState();
-    _loadProfileData(); // Call this to fetch profile data
+    _loadProfileData();
   }
 
   Future<void> _loadProfileData() async {
@@ -54,11 +50,8 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
       _isLoading = true;
     });
     try {
-      final profileData =
-          await ApiService.getProfile(); // Fetching data from your API service
-
+      final profileData = await ApiService.getProfile();
       if (profileData != null && profileData.isNotEmpty) {
-        // Populate controllers with fetched data
         _nameController.text = profileData['userName'] ?? '';
         _nicknameController.text = profileData['nickName'] ?? '';
         _emailController.text = profileData['email'] ?? '';
@@ -66,69 +59,60 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
         _classController.text = profileData['userClass'] ?? '';
         _majorController.text = profileData['major'] ?? '';
         _bioController.text = profileData['bio'] ?? '';
-        _initialProfileImageUrl = profileData['profilePictureUrl'];
 
-        // Only store the URL, do not fetch bytes here
+        // Store the full URL for AuthorizedImage
         _initialProfileImageUrl =
             profileData['profilePictureUrl'] != null
                 ? '$baseUrl/${profileData['profilePictureUrl']}'
                 : null;
 
         // Clear any previously picked images when loading new profile data
-        _webImage = null;
-        _profileImage = null;
+        _newlyPickedImage = null;
       }
     } catch (e) {
-      // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to load profile: $e'),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _updateProfilePicture() async {
-    setState(() {
-      _isSaving = true; // Show loading indicator
-    });
-
-    try {
-      // Determine which image type to send based on platform
-      dynamic imageToSend;
-      if (kIsWeb) {
-        imageToSend = _webImage;
-      } else {
-        imageToSend = _profileImage;
-      }
-
-      // Ensure there's an image to send
-      if (imageToSend == null) {
-        // ignore: use_build_context_synchronously
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('No image selected to update.'),
-            backgroundColor: kErrorColor,
+            content: Text('Failed to load profile: $e'),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
           ),
         );
-        return; // Exit if no image
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _updateProfilePicture() async {
+    setState(() {
+      _isSaving = true;
+    });
+    try {
+      if (_newlyPickedImage == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('No image selected to update.'),
+              backgroundColor: kErrorColor,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
+        return;
       }
 
-      // Call your API function with the appropriate image data
       final bool success = await ApiService.updateProfilePicture(
-        photo: imageToSend,
+        photo: _newlyPickedImage,
       );
 
       String message;
@@ -137,61 +121,56 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
       if (success) {
         message = 'Profile picture updated successfully! 🎉';
         snackBarColor = Colors.green;
-        // If successful, the image is already in _webImage or _profileImage
-        // and will be displayed.
-        // Also, update the _initialProfileImageUrl to reflect the new image
-        // (you might need to get the new URL from the API response here)
-        // For simplicity, we'll just reload the profile data to get the new URL.
-        await _loadProfileData();
+        await _loadProfileData(); // Reload to get the new image URL from API
+        if (mounted) {
+          // Pop with true after successful picture update
+          Navigator.pop(context, true);
+        }
       } else {
         message = 'Failed to update profile picture. Please try again. 😔';
         snackBarColor = kErrorColor;
-
-        // IMPORTANT: If update failed, revert the local image state
-        // to prevent showing a broken image or an un-uploaded image.
+        // Revert local state if upload failed
         setState(() {
-          _webImage = null;
-          _profileImage = null;
+          _newlyPickedImage = null;
         });
-        // Reload original profile data to revert to the old image or default
-        await _loadProfileData();
+        await _loadProfileData(); // Revert to previous image or default
       }
 
-      // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: snackBarColor,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: snackBarColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
-        ),
-      );
+        );
+      }
     } catch (e) {
-      // Handle any exceptions during the API call
-      // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('An error occurred: ${e.toString()} ⚠️'),
-          backgroundColor: kErrorColor,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An error occurred: ${e.toString()} ⚠️'),
+            backgroundColor: kErrorColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
-        ),
-      );
-      // Also revert image on error
+        );
+      }
       setState(() {
-        _webImage = null;
-        _profileImage = null;
+        _newlyPickedImage = null;
       });
-      await _loadProfileData(); // Reload original profile data
+      await _loadProfileData();
     } finally {
-      setState(() {
-        _isSaving =
-            false; // Hide loading indicator regardless of success/failure
-      });
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
     }
   }
 
@@ -213,65 +192,59 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
       final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
       if (pickedFile != null) {
-        // Determine the image type (web or mobile) and pass it to the viewer
-        if (kIsWeb) {
-          final bytes = await pickedFile.readAsBytes();
-          // ignore: use_build_context_synchronously
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder:
-                  (_) => FullscreenImageViewer(
-                    tag:
-                        'temp-profile-image', // Use a temporary tag for the new image
-                    image: bytes,
-                    onDelete: () {
-                      // If user deletes from viewer, do nothing here as image wasn't set yet
-                      // The viewer handles popping itself.
-                    },
-                    onConfirm: (confirmedImage) {
-                      // This callback is triggered when "Confirm" is pressed in the viewer
-                      setState(() {
-                        _webImage = confirmedImage as Uint8List;
-                        _profileImage = null; // Clear mobile file if switching
-                      });
-                      _updateProfilePicture(); // Call the update function
-                    },
-                  ),
-            ),
-          );
+        dynamic imageForViewer;
+        if (!kIsWeb) { // Check if not web
+          // Mobile: Use File
+          imageForViewer = io.File(pickedFile.path);
         } else {
-          final file = io.File(pickedFile.path);
-          // ignore: use_build_context_synchronously
+          // Web/Desktop: Use Uint8List
+          imageForViewer = await pickedFile.readAsBytes();
+        }
+
+        if (mounted) {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder:
-                  (_) => FullscreenImageViewer(
-                    tag:
-                        'temp-profile-image', // Use a temporary tag for the new image
-                    image: file,
-                    onDelete: () {
-                      // If user deletes from viewer, do nothing here as image wasn't set yet
-                      // The viewer handles popping itself.
-                    },
-                    onConfirm: (confirmedImage) {
-                      // This callback is triggered when "Confirm" is pressed in the viewer
-                      setState(() {
-                        _profileImage = confirmedImage as io.File;
-                        _webImage = null; // Clear web file if switching
-                      });
-                      _updateProfilePicture(); // Call the update function
-                    },
-                  ),
+              builder: (_) => FullscreenImageViewer(
+                image: imageForViewer,
+                imageSourceType: imageForViewer is io.File
+                    ? ImageSourceType.file
+                    : ImageSourceType.bytes,
+                onDelete: () {
+                   setState(() {
+                     _loadProfileData();
+                   });
+                  // User chose to delete from viewer, don't update profile
+                  // The viewer handles popping itself.
+                },
+                onConfirm: (confirmedImage) {
+                  setState(() {
+                    _newlyPickedImage = confirmedImage;
+                  });
+                  _updateProfilePicture();
+                },
+              ),
             ),
           );
         }
       } else {
-        // ignore: use_build_context_synchronously
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('No image selected.'),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('No image selected.'),
+            content: Text('Failed to pick image: $e'),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
@@ -279,17 +252,6 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
           ),
         );
       }
-    } catch (e) {
-      // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to pick image: $e'),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      );
     }
   }
 
@@ -300,7 +262,7 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context, true), // Pop with true on back
         ),
         title: const Text(
           'Edit Profile',
@@ -314,26 +276,25 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
       ),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
-        child:
-            _isLoading
-                ? const Center(
-                  child: CircularProgressIndicator(color: kPrimaryColor),
-                ) // Show loading indicator
-                : SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 16,
-                  ),
-                  child: Column(
-                    children: [
-                      _buildProfileHeader(),
-                      const SizedBox(height: 24),
-                      _buildFormSection(),
-                      const SizedBox(height: 24),
-                      _buildActionButtons(),
-                    ],
-                  ),
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: kPrimaryColor),
+              )
+            : SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
                 ),
+                child: Column(
+                  children: [
+                    _buildProfileHeader(),
+                    const SizedBox(height: 24),
+                    _buildFormSection(),
+                    const SizedBox(height: 24),
+                    _buildActionButtons(),
+                  ],
+                ),
+              ),
       ),
     );
   }
@@ -346,184 +307,108 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
           children: [
             GestureDetector(
               onTap: () async {
-                // Show loading indicator while fetching network image for full view
+                // If there's an initial network image URL, view it using FullscreenImageViewer
                 if (_initialProfileImageUrl != null &&
-                    _webImage == null &&
-                    _profileImage == null) {
-                  // If AuthorizedImage is currently displayed, fetch its bytes on tap
-                  // ignore: use_build_context_synchronously
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder:
-                        (context) => const Center(
-                          child: CircularProgressIndicator(
-                            color: kPrimaryColor,
-                          ),
-                        ),
-                  );
-                  try {
-                    final response =
-                        await AuthorizedHttpService.sendAuthorizedRequest(
-                          Uri.parse(
-                            'https://shweeshaung.mooo.com/$_initialProfileImageUrl',
-                          ),
-                          method: 'GET',
-                        );
-                    // http.get(Uri.parse(_initialProfileImageUrl!), headers: {
-                    //   // Add any necessary authorization headers here, if your API requires them
-                    //   // 'Authorization': 'Bearer YOUR_AUTH_TOKEN', // Example
-                    // });
-
-                    // ignore: use_build_context_synchronously
-                    Navigator.pop(context); // Dismiss loading dialog
-
-                    if (response?.statusCode == 200) {
-                      dynamic imageForViewer;
-                      if (kIsWeb) {
-                        imageForViewer = response?.bodyBytes;
-                      } else {
-                        final directory = await getTemporaryDirectory();
-                        final filePath =
-                            '${directory.path}/profile_full_view_temp_image.png';
-                        final file = io.File(filePath);
-                        await file.writeAsBytes(response!.bodyBytes);
-                        imageForViewer = file;
-                      }
-
-                      // ignore: use_build_context_synchronously
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (_) => FullscreenImageViewer(
-                                tag: 'profile-image',
-                                image: imageForViewer,
-                                onDelete: () {
-                                  setState(() {
-                                    _webImage = null;
-                                    _profileImage = null;
-                                    _initialProfileImageUrl =
-                                        null; // Clear network URL too
-                                  });
-                                  // You might call an API to delete the remote image here
-                                  // ApiService.deleteProfilePicture();
-                                },
-                                onConfirm: (confirmedImage) {
-                                  // For an already set image, confirm just closes the viewer
-                                  Navigator.pop(context);
-                                },
-                              ),
-                        ),
-                      );
-                    } else {
-                      // ignore: use_build_context_synchronously
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Failed to load full image: ${response?.statusCode}',
-                          ),
-                          backgroundColor: kErrorColor,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      );
-                    }
-                  } catch (e) {
-                    // ignore: use_build_context_synchronously
-                    Navigator.pop(context); // Dismiss loading dialog
-                    // ignore: use_build_context_synchronously
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error loading full image: $e'),
-                        backgroundColor: kErrorColor,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                    _newlyPickedImage == null) {
+                  if (mounted) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => FullscreenImageViewer(
+                          image: _initialProfileImageUrl!,
+                          imageSourceType: ImageSourceType.network,
+                          imageWidth: MediaQuery.of(context).size.width,
+                          imageHeight: MediaQuery.of(context).size.height,
+                          onDelete: () {
+                            setState(() {
+                              _initialProfileImageUrl = null;
+                              _newlyPickedImage = null;
+                            });
+                            // Optionally, call an API to delete the remote image here
+                            // ApiService.deleteProfilePicture();
+                          },
+                          onConfirm: (confirmedImage) {
+                            // For an existing network image, "confirm" means just close.
+                            Navigator.pop(context);
+                          },
                         ),
                       ),
                     );
                   }
-                } else if (_profileImage != null || _webImage != null) {
-                  // If a newly picked image is present, view that directly
-                  // ignore: use_build_context_synchronously
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (_) => FullscreenImageViewer(
-                            tag: 'profile-image',
-                            image: _webImage ?? _profileImage,
-                            onDelete: () {
-                              setState(() {
-                                _webImage = null;
-                                _profileImage = null;
-                                // If you want to remove the image from the backend when deleted from viewer
-                                // You might call a specific API function here, e.g., ApiService.deleteProfilePicture();
-                              });
-                              // No need to call _updateProfilePicture here, as it's a delete action.
-                            },
-                            onConfirm: (confirmedImage) {
-                              // For an already set image, "Confirm" might just close the viewer
-                              // or do nothing if the image is already considered confirmed.
-                              Navigator.pop(context);
-                            },
-                          ),
-                    ),
-                  );
+                }
+                // If there's a newly picked local image, view that
+                else if (_newlyPickedImage != null) {
+                  if (mounted) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => FullscreenImageViewer(
+                          image: _newlyPickedImage,
+                          imageSourceType: _newlyPickedImage is io.File
+                              ? ImageSourceType.file
+                              : ImageSourceType.bytes,
+                          onDelete: () {
+                            setState(() {
+                              _newlyPickedImage = null;
+                            });
+                            // No need to call update API here, it's a local discard
+                          },
+                          onConfirm: (confirmedImage) {
+                            // For a newly picked image, "confirm" means just close,
+                            // as it's already handled by _pickImage calling _updateProfilePicture
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ),
+                    );
+                  }
                 }
               },
-              child: Hero(
-                tag: 'profile-image',
-                child: Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border:
-                        (_profileImage != null || _webImage != null)
-                            ? Border.all(color: Colors.white, width: 4)
-                            : null,
-                    gradient:
-                        (_profileImage == null && _webImage == null)
-                            ? const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [kPrimaryColor, kPrimaryDarkColor],
-                            )
-                            : null,
-                  ),
-                  child: ClipOval(
-                    child:
-                        _webImage != null
-                            ? Image.memory(
-                              _webImage!,
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: (_newlyPickedImage != null ||
+                          _initialProfileImageUrl != null)
+                      ? Border.all(color: Colors.white, width: 4)
+                      : null,
+                  gradient: (_newlyPickedImage == null &&
+                          _initialProfileImageUrl == null)
+                      ? const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [kPrimaryColor, kPrimaryDarkColor],
+                        )
+                      : null,
+                ),
+                child: ClipOval(
+                  child: _newlyPickedImage != null
+                      ? (_newlyPickedImage is Uint8List
+                          ? Image.memory(
+                              _newlyPickedImage as Uint8List,
                               width: 120,
                               height: 120,
                               fit: BoxFit.cover,
                             )
-                            : _profileImage != null
-                            ? Image.file(
-                              _profileImage!,
+                          : Image.file(
+                              _newlyPickedImage as io.File,
                               width: 120,
                               height: 120,
                               fit: BoxFit.cover,
-                            )
-                            : (_initialProfileImageUrl != null && !_isLoading)
-                            ? AuthorizedImage(
+                            ))
+                      : (_initialProfileImageUrl != null && !_isLoading)
+                          ? AuthorizedImage(
                               imageUrl: _initialProfileImageUrl!,
                               width: 120,
                               height: 120,
                               fit: BoxFit.cover,
                             )
-                            : const Icon(
+                          : const Icon(
                               Icons.person,
                               size: 60,
                               color: Colors.white,
                             ),
-                  ),
                 ),
               ),
             ),
@@ -559,7 +444,7 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
         Text(
           _nameController.text.isNotEmpty
               ? _nameController.text
-              : 'Loading Name...', // Display placeholder while loading
+              : 'Loading Name...',
           style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -569,7 +454,7 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
         Text(
           _emailController.text.isNotEmpty
               ? _emailController.text
-              : 'Loading Email...', // Display placeholder while loading
+              : 'Loading Email...',
           style: const TextStyle(fontSize: 14, color: kGrey),
         ),
       ],
@@ -655,17 +540,6 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
         ),
         labelStyle: const TextStyle(color: kGrey, fontSize: 14),
       ),
-      // validator: (value) {
-      //   if (value == null || value.isEmpty) {
-      //     return 'Please enter $label';
-      //   }
-      //   if (label == 'Email' &&
-      //       !RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.edu\.mm$')
-      //           .hasMatch(value)) {
-      //     return 'Please enter a valid .edu.mm email';
-      //   }
-      //   return null;
-      // },
       enabled: enabled,
     );
   }
@@ -676,39 +550,24 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed:
-                _isSaving
-                    ? null
-                    : () async {
-                      if (_formKey.currentState!.validate()) {
-                        setState(() => _isSaving = true);
+            onPressed: _isSaving
+                ? null
+                : () async {
+                    if (_formKey.currentState!.validate()) {
+                      setState(() => _isSaving = true);
+                      final bool success = await ApiService.updateProfile(
+                        _nicknameController.text,
+                        _bioController.text,
+                      );
 
-                        // Here you would call your API to save the profile data
-                        // For example:
-                        // final success = await ApiService.updateProfile(
-                        //   name: _nameController.text,
-                        //   nickname: _nicknameController.text,
-                        //   email: _emailController.text,
-                        //   // ... other fields
-                        // );
-
-                        // Simulating API call for update
-
-                        final bool success = await ApiService.updateProfile(
-                          _nicknameController.text,
-                          _bioController.text,
-                        ); // Replace with actual API response
-                        // Simulating API call for update
-
+                      if (mounted) {
                         setState(() => _isSaving = false);
-
-                        // ignore: use_build_context_synchronously
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
                               success
-                                  ? 'Profile updated successfully!'
-                                  : 'Failed to update profile',
+                                  ? 'Profile updated successfully! 🎉'
+                                  : 'Failed to update profile 😔',
                             ),
                             backgroundColor:
                                 success ? Colors.green : kErrorColor,
@@ -718,8 +577,12 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                             ),
                           ),
                         );
+                        if (success) {
+                          Navigator.pop(context, true); // Pop with true on success
+                        }
                       }
-                    },
+                    }
+                  },
             style: ElevatedButton.styleFrom(
               backgroundColor: kPrimaryColor,
               foregroundColor: kWhite,
@@ -730,25 +593,24 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
               elevation: 0,
               shadowColor: Colors.transparent,
             ),
-            child:
-                _isSaving
-                    ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 3,
-                        color: kWhite,
-                      ),
-                    )
-                    : const Text(
-                      'Save Changes',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+            child: _isSaving
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      color: kWhite,
                     ),
+                  )
+                : const Text(
+                    'Save Changes',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
           ),
         ),
         const SizedBox(height: 12),
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context, true), // Pop with true on cancel
           child: const Text(
             'Cancel',
             style: TextStyle(fontWeight: FontWeight.bold),
@@ -759,22 +621,58 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
   }
 }
 
+enum ImageSourceType { network, file, bytes }
+
+/// A widget for displaying an image in fullscreen, supporting network URLs (AuthorizedImage),
+/// file paths, or Uint8List data. It also provides delete and confirm actions.
 class FullscreenImageViewer extends StatelessWidget {
-  final String tag;
-  final dynamic image; // File or Uint8List
+  final dynamic image; // Can be String (URL), io.File, or Uint8List
+  final ImageSourceType imageSourceType; // To differentiate image type
+  final double? imageWidth; // Optional width for the image
+  final double? imageHeight; // Optional height for the image
   final VoidCallback onDelete;
-  final Function(dynamic image) onConfirm; // New callback for confirmation
+  final Function(dynamic confirmedImage) onConfirm;
 
   const FullscreenImageViewer({
     super.key,
-    required this.tag,
     required this.image,
+    required this.imageSourceType,
+    this.imageWidth,
+    this.imageHeight,
     required this.onDelete,
-    required this.onConfirm, // Mark as required
+    required this.onConfirm,
   });
 
   @override
   Widget build(BuildContext context) {
+    Widget imageWidget;
+    switch (imageSourceType) {
+      case ImageSourceType.network:
+        imageWidget = AuthorizedImage(
+          imageUrl: image as String,
+          width: imageWidth ?? MediaQuery.of(context).size.width,
+          height: imageHeight ?? MediaQuery.of(context).size.height,
+          fit: BoxFit.contain,
+        );
+        break;
+      case ImageSourceType.file:
+        imageWidget = Image.file(
+          image as io.File,
+          width: imageWidth,
+          height: imageHeight,
+          fit: BoxFit.contain,
+        );
+        break;
+      case ImageSourceType.bytes:
+        imageWidget = Image.memory(
+          image as Uint8List,
+          width: imageWidth,
+          height: imageHeight,
+          fit: BoxFit.contain,
+        );
+        break;
+    }
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -785,35 +683,67 @@ class FullscreenImageViewer extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          // Confirm Icon
-          IconButton(
-            icon: const Icon(Icons.check_circle_outline, color: Colors.white),
-            onPressed: () {
-              onConfirm(image); // Call confirm callback with the image
-              Navigator.pop(context); // Close the viewer
-            },
-          ),
+          // Confirm Icon - only show if there's an image to confirm (i.e., newly picked local image)
+          // For network images, confirmation usually means just closing the viewer.
+          if (imageSourceType != ImageSourceType.network)
+            IconButton(
+              icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+              onPressed: () {
+                onConfirm(image); // Pass the local image back for confirmation
+                Navigator.pop(context); // Close the viewer
+              },
+            ),
           // Delete Icon
           IconButton(
-            icon: const Icon(Icons.delete, color: Colors.white),
-            onPressed: () {
-              onDelete();
-              Navigator.pop(context); // Close the viewer after delete
-            },
+  icon: const Icon(Icons.delete, color: Colors.white),
+  onPressed: () async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Profile Picture?'),
+        content: const Text('Are you sure you want to delete your profile picture? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
           ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final check = await ApiService.deleteProfile();
+      if (check) {
+        onDelete();
+        Navigator.pop(context);        // Close delete confirmation/viewer
+        Navigator.pop(context, true); // Return to previous screen
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to delete profile picture.'),
+            backgroundColor: kErrorColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
+  },
+)
+
         ],
       ),
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => Navigator.pop(context),
         child: Center(
-          child: Hero(
-            tag: tag,
-            child:
-                image is Uint8List
-                    ? Image.memory(image as Uint8List)
-                    : Image.file(image as io.File),
-          ),
+          child: imageWidget,
         ),
       ),
     );

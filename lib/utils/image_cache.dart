@@ -18,6 +18,8 @@ class ImageCacheManager {
   final hash = md5.convert(utf8.encode(url)).toString();
   if (url.startsWith('https://shweeshaung.mooo.com/tfeedphoto/story')) {
     return 'story_$hash';
+  }else if(url.startsWith('https://shweeshaung.mooo.com/tfeedphoto/profile')) {
+    return 'profile_$hash';
   }
   return 'feed_$hash';
 }
@@ -71,6 +73,47 @@ class ImageCacheManager {
     }
   }
 }
+
+static Future<void> clearUnusedProfileImages(Set<String> activeStoryUrls) async {
+  final dirPath = await _getCacheDirPath();
+  final dir = Directory(dirPath);
+  final files = dir.listSync();
+
+  final activeStoryHashes = activeStoryUrls
+      .map((url) => _generateFileName(url))
+      .where((name) => name.startsWith('profile')) // keep only feed hashes
+      .toSet();
+
+  for (final file in files) {
+    if (file is File) {
+      final fileName = file.path.split('/').last.split('.jpg').first;
+
+      // Only delete if it's a feed image and not active
+      if (fileName.startsWith('profile_') && !activeStoryHashes.contains(fileName)) {
+        await file.delete();
+      }
+    }
+  }
+}
+
+
+static Future<void> deleteProfileImageByUrl(String imageUrl) async {
+  final dirPath = await _getCacheDirPath();
+  final dir = Directory(dirPath);
+
+  final fileName = _generateFileName(imageUrl);
+
+  // Only proceed if it's a profile image
+  if (!fileName.startsWith('profile_')) return;
+
+  final filePath = '${dir.path}/$fileName.jpg';
+  final file = File(filePath);
+
+  if (await file.exists()) {
+    await file.delete();
+  }
+}
+
 
 static Future<void> clearUnusedFeedImages(Set<String> activeStoryUrls) async {
   final dirPath = await _getCacheDirPath();

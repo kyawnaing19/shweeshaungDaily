@@ -64,7 +64,6 @@ class _UserProfileViewState extends State<UserProfile> {
   Future<List<Map<String, dynamic>>> loadStoryItems() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString('cached_story');
-
     if (jsonString == null) return [];
 
     try {
@@ -82,12 +81,11 @@ class _UserProfileViewState extends State<UserProfile> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('cached_story', jsonEncode(result));
 
-      final imageUrls =
-          result
-              .map((item) => item['url'] as String?)
-              .where((url) => url != null && url.isNotEmpty)
-              .map((url) => '$baseUrl/$url')
-              .toSet();
+      final imageUrls = result
+          .map((item) => item['url'] as String?)
+          .where((url) => url != null && url.isNotEmpty)
+          .map((url) => '$baseUrl/$url')
+          .toSet();
 
       // Ensure ImageCacheManager.clearUnusedStoryImages is implemented to handle network images
       await ImageCacheManager.clearUnusedStoryImages(imageUrls);
@@ -134,156 +132,175 @@ class _UserProfileViewState extends State<UserProfile> {
             ? _profile!['bio'].toString()
             : 'Add a few words about yourself...';
 
-    final String profileImageUrl =
-        _profile?['profile_image'] != null
-            ? '$baseUrl/${_profile!['profile_image']}'
-            : 'assets/images/tpo.jpg';
+    // Directly use _profile?['profilePictureUrl'] to determine image source
+    final String? rawProfileImageUrl = _profile?['profilePictureUrl'];
+    final String? finalProfileImageUrl =
+        (rawProfileImageUrl != null && rawProfileImageUrl.isNotEmpty)
+            ? '$baseUrl/$rawProfileImageUrl'
+            : null;
 
     return Scaffold(
       backgroundColor: kBackgroundColor,
-      body:
-          _loading
-              ? const Center(
-                child: CircularProgressIndicator(color: kPrimaryColor),
-              )
-              : SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: kHorizontalPadding,
-                  ),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: kHorizontalPadding),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment
-                                  .start, // This aligns children to the start horizontally
-                          children: [
-                            GestureDetector(
-                              onTap: () {
+      body: _loading
+          ? const Center(
+              child: CircularProgressIndicator(color: kPrimaryColor),
+            )
+          : SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: kHorizontalPadding,
+                ),
+                child: Column(
+                  children: [
+                    const SizedBox(height: kHorizontalPadding),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start, // This aligns children to the start horizontally
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              if (finalProfileImageUrl != null) {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder:
-                                        (_) => FullscreenImageView(
-                                          imageUrl: profileImageUrl,
-                                          isAsset: profileImageUrl.startsWith(
-                                            'assets/',
-                                          ),
-                                        ),
+                                    builder: (_) => FullscreenImageView(
+                                      imageUrl: finalProfileImageUrl,
+                                      isAsset: false, // It's a network image
+                                    ),
                                   ),
                                 );
-                              },
-                              child: Hero(
-                                tag: 'profileImageHero',
-                                child: CircleAvatar(
-                                  radius: 60,
-                                  backgroundColor: kWhite,
-                                  child: CircleAvatar(
-                                    radius: 56,
-                                    backgroundImage:
-                                        profileImageUrl.startsWith('assets/')
-                                            ? AssetImage(profileImageUrl)
-                                                as ImageProvider
-                                            : NetworkImage(profileImageUrl),
-                                  ),
+                              }
+                            },
+                            child: CircleAvatar(
+                              radius: 60,
+                              backgroundColor: kWhite,
+                              child: ClipOval(
+                                // Added ClipOval here
+                                child: SizedBox(
+                                  // Sized box to ensure proper sizing for ClipOval
+                                  width: 112, // Corresponds to radius * 2
+                                  height: 112, // Corresponds to radius * 2
+                                  child: finalProfileImageUrl != null
+                                      ? AuthorizedImage(
+                                          // Add a Key here based on the image URL
+                                          key: ValueKey(finalProfileImageUrl),
+                                          imageUrl: finalProfileImageUrl,
+                                          width: 112,
+                                          height: 112,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : const Icon(
+                                          Icons.person,
+                                          size: 60,
+                                          color: kPrimaryColor,
+                                        ),
                                 ),
                               ),
                             ),
-                            const SizedBox(height: kVerticalSpacing),
-                            Text(
-                              userNickname,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: kPrimaryColor,
+                          ),
+                          const SizedBox(height: kVerticalSpacing),
+                          Text(
+                            userNickname,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: kPrimaryColor,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(
+                                '@$userName',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: kPrimaryColor,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-  children: [
-    Text(
-      '@$userName',
-      style: const TextStyle(
-        fontSize: 16,
-        color: kPrimaryColor,
-      ),
-    ),
-    const SizedBox(width: 8),
-    GestureDetector(
-      onTap: () {
-        Navigator.push(  // Fixed: Use Navigator.push directly
-          context,
-          MaterialPageRoute(
-            builder: (context) => const ProfileUpdateScreen(),
-          ),
-        );
-      },
-      child: const Icon(
-        Icons.edit,
-        color: kPrimaryColor,
-        size: 30,
-      ),
-    ),
-  ],
-),
-                          ],
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () async {
+                                  // Navigate to ProfileUpdateScreen and wait for a result
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ProfileUpdateScreen(),
+                                    ),
+                                  );
+
+                                  // If the result indicates a successful update (e.g., true), refresh the profile
+                                  if (result == true) {
+                                    debugPrint('Profile updated, re-fetching profile data...');
+                                    await _fetchProfile();
+                                    // No need to re-fetch stories unless profile changes affect story display logic
+                                  }
+                                },
+                                child: const Icon(
+                                  Icons.edit,
+                                  color: kPrimaryColor,
+                                  size: 30,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    _buildInfoCard(userBio),
+                    const SizedBox(height: 18),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Album',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: kPrimaryColor,
                         ),
                       ),
-                      const SizedBox(height: 18),
-                      _buildInfoCard(userBio),
-                      const SizedBox(height: 18),
-                      const Align(
-                        alignment: Alignment.centerLeft,
+                    ),
+                    const SizedBox(height: kVerticalSpacing),
+                    // Show a message if album is empty and not loading
+                    if (_stories.isEmpty && !_loading)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 20.0),
                         child: Text(
-                          'Album',
+                          'Your album is empty. Add your first photo!',
                           style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: kPrimaryColor,
+                            fontSize: 16,
+                            color: Colors.grey[600],
                           ),
+                          textAlign: TextAlign.center,
                         ),
                       ),
-                      const SizedBox(height: kVerticalSpacing),
-                      // Show a message if album is empty and not loading
-                      if (_stories.isEmpty && !_loading)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 20.0),
-                          child: Text(
-                            'Your album is empty. Add your first photo!',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _stories.length + 1,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 12.0,
-                              mainAxisSpacing: 12.0,
-                              childAspectRatio: 0.8,
-                            ),
-                        itemBuilder: (context, index) {
-                          if (index == 0) {
-                            return _buildAddNewCard();
-                          } else {
-                            return _buildPhotoCard(index - 1, context);
-                          }
-                        },
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _stories.length + 1,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12.0,
+                        mainAxisSpacing: 12.0,
+                        childAspectRatio: 0.8,
                       ),
-                      const SizedBox(height: 30),
-                    ],
-                  ),
+                      itemBuilder: (context, index) {
+                        if (index == 0) {
+                          return _buildAddNewCard();
+                        } else {
+                          return _buildPhotoCard(index - 1, context);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 30),
+                  ],
                 ),
               ),
+            ),
     );
   }
 
@@ -346,21 +363,17 @@ class _UserProfileViewState extends State<UserProfile> {
         Navigator.push(
           context,
           PageRouteBuilder(
-            pageBuilder:
-                (context, animation, secondaryAnimation) => GalleryViewerPage(
-                  images:
-                      _stories
-                          .map(
-                            (item) =>
-                                item['url'] != null
-                                    ? '$baseUrl/${item['url']}'
-                                    : '',
-                          )
-                          .where((url) => url.isNotEmpty)
-                          .toList(),
-                  initialIndex: index,
-                  onDeleteItem: _onDeleteItem,
-                ),
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                GalleryViewerPage(
+              images: _stories
+                  .map(
+                    (item) => item['url'] != null ? '$baseUrl/${item['url']}' : '',
+                  )
+                  .where((url) => url.isNotEmpty)
+                  .toList(),
+              initialIndex: index,
+              onDeleteItem: _onDeleteItem,
+            ),
             transitionDuration: Duration.zero,
             transitionsBuilder: (
               context,
@@ -373,37 +386,32 @@ class _UserProfileViewState extends State<UserProfile> {
           ),
         );
       },
-      child: Hero(
-        tag:
-            'galleryImage_${storyItem['id']}', // <--- Update Hero tag to use ID
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16.0),
-          child: Stack(
-            children: [
-              AuthorizedImage(
-                imageUrl: imageUrl,
-                height: double.infinity,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
-              // ... rest of your stack content
-              if (itemType == 'video')
-                const Center(
-                  child: Icon(
-                    Icons.play_circle_fill,
-                    color: Colors.white,
-                    size: 50,
-                  ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16.0),
+        child: Stack(
+          children: [
+            AuthorizedImage(
+              imageUrl: imageUrl,
+              height: double.infinity,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+            // ... rest of your stack content
+            if (itemType == 'video')
+              const Center(
+                child: Icon(
+                  Icons.play_circle_fill,
+                  color: Colors.white,
+                  size: 50,
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );
   }
 
   // In _UserProfileViewState class
-
   Widget _buildAddNewCard() {
     return GestureDetector(
       onTap: () async {
@@ -486,48 +494,19 @@ class _FullscreenImageViewerState extends State<FullscreenImageView>
             child: Center(
               child: Transform.translate(
                 offset: _offset,
-                child: Hero(
-                  tag: 'profileImageHero',
-                  child:
-                      widget.isAsset
-                          ? Image.asset(
-                            widget.imageUrl,
-                            width: MediaQuery.of(context).size.width * 0.9,
-                            height: MediaQuery.of(context).size.height * 0.7,
-                            fit: BoxFit.contain,
-                          )
-                          : Image.network(
-                            widget.imageUrl,
-                            width: MediaQuery.of(context).size.width * 0.9,
-                            height: MediaQuery.of(context).size.height * 0.7,
-                            fit: BoxFit.contain,
-                            loadingBuilder: (
-                              BuildContext context,
-                              Widget child,
-                              ImageChunkEvent? loadingProgress,
-                            ) {
-                              if (loadingProgress == null) return child;
-                              return Center(
-                                child: CircularProgressIndicator(
-                                  value:
-                                      loadingProgress.expectedTotalBytes != null
-                                          ? loadingProgress
-                                                  .cumulativeBytesLoaded /
-                                              loadingProgress
-                                                  .expectedTotalBytes!
-                                          : null,
-                                ),
-                              );
-                            },
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Icon(
-                                Icons.error,
-                                color: Colors.red,
-                                size: 50,
-                              );
-                            },
-                          ),
-                ),
+                child: widget.isAsset
+                    ? Image.asset(
+                        widget.imageUrl,
+                        width: MediaQuery.of(context).size.width * 0.9,
+                        height: MediaQuery.of(context).size.height * 0.7,
+                        fit: BoxFit.contain,
+                      )
+                    : AuthorizedImage(
+                        imageUrl: widget.imageUrl,
+                        width: MediaQuery.of(context).size.width * 0.9,
+                        height: MediaQuery.of(context).size.height * 0.7,
+                        fit: BoxFit.contain,
+                      ),
               ),
             ),
           ),

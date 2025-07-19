@@ -726,6 +726,21 @@ static Future<bool> updateProfilePicture({
 }
 
 
+static Future<bool> deleteProfile()async {
+  final url = Uri.parse('$userbaseUrl/profile');
+   final response = await AuthorizedHttpService.sendAuthorizedRequest(
+    url,
+    method: 'DELETE',
+  );
+  if(response==null){
+    return false;
+  }
+  if(response.statusCode==200) {
+    return true;
+  }
+  return false;
+}
+
 
 
 }

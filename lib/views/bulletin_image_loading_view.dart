@@ -1,6 +1,7 @@
 // shimmer_loading_placeholder.dart
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:shweeshaungdaily/colors.dart';
 
 class ShimmerLoadingPlaceholder extends StatelessWidget {
   final double height;
@@ -14,12 +15,7 @@ class ShimmerLoadingPlaceholder extends StatelessWidget {
     required this.height,
     required this.width,
     this.baseColor = const Color(0xFFE0E0E0), // Default light grey
-    this.highlightColor = const Color.fromARGB(
-      255,
-      74,
-      89,
-      92,
-    ), // Default even lighter grey
+    this.highlightColor = kPrimaryColor, // Default even lighter grey
     this.backgroundColor =
         Colors.white, // Default white background for the block
   });
