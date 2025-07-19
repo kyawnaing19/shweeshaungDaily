@@ -12,6 +12,7 @@ import 'package:shweeshaungdaily/services/token_service.dart';
 import 'package:shweeshaungdaily/utils/audio_timeformat.dart';
 import 'package:shweeshaungdaily/utils/image_cache.dart';
 import 'package:shweeshaungdaily/views/audio_post/audio_view.dart';
+import 'package:shweeshaungdaily/views/bulletin_image_loading_view.dart';
 import 'package:shweeshaungdaily/views/image_full_view.dart';
 import 'package:shweeshaungdaily/views/mail/mail_view.dart';
 
@@ -558,7 +559,7 @@ class _HomePageState extends State<HomeScreenPage>
                     vertical: 16,
                   ),
                   child: const Text(
-                    "Bulletin Board",
+                    "Bulletin",
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
@@ -575,15 +576,9 @@ class _HomePageState extends State<HomeScreenPage>
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     if (isFeedLoading) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 32.0),
-                        child: Center(
-                          child: SizedBox(
-                            width: 32,
-                            height: 32,
-                            child: CircularProgressIndicator(),
-                          ),
-                        ),
+                      return ShimmerLoadingPlaceholder(
+                        height: MediaQuery.of(context).size.height * 0.3,
+                        width: MediaQuery.of(context).size.width - 32,
                       );
                     }
 
@@ -1055,6 +1050,11 @@ class _HomePageState extends State<HomeScreenPage>
               child: CopyableText(
                 text: message,
                 style: const TextStyle(color: Colors.white, fontSize: 15),
+                highlightStyle: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
 

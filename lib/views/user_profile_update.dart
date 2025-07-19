@@ -15,7 +15,6 @@ import 'package:shweeshaungdaily/services/authorized_http_service.dart';
 // Dummy AuthorizedImage for demonstration. Replace with your actual one.
 // This widget is assumed to handle its own network loading and token.
 
-
 class ProfileUpdateScreen extends StatefulWidget {
   const ProfileUpdateScreen({super.key});
 
@@ -70,9 +69,10 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
         _initialProfileImageUrl = profileData['profilePictureUrl'];
 
         // Only store the URL, do not fetch bytes here
-        _initialProfileImageUrl = profileData['profilePictureUrl'] != null
-            ? '$baseUrl/${profileData['profilePictureUrl']}'
-            : null;
+        _initialProfileImageUrl =
+            profileData['profilePictureUrl'] != null
+                ? '$baseUrl/${profileData['profilePictureUrl']}'
+                : null;
 
         // Clear any previously picked images when loading new profile data
         _webImage = null;
@@ -127,7 +127,9 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
       }
 
       // Call your API function with the appropriate image data
-      final bool success = await ApiService.updateProfilePicture(photo: imageToSend);
+      final bool success = await ApiService.updateProfilePicture(
+        photo: imageToSend,
+      );
 
       String message;
       Color snackBarColor;
@@ -187,7 +189,8 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
       await _loadProfileData(); // Reload original profile data
     } finally {
       setState(() {
-        _isSaving = false; // Hide loading indicator regardless of success/failure
+        _isSaving =
+            false; // Hide loading indicator regardless of success/failure
       });
     }
   }
@@ -217,22 +220,24 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => FullscreenImageViewer(
-                tag: 'temp-profile-image', // Use a temporary tag for the new image
-                image: bytes,
-                onDelete: () {
-                  // If user deletes from viewer, do nothing here as image wasn't set yet
-                  // The viewer handles popping itself.
-                },
-                onConfirm: (confirmedImage) {
-                  // This callback is triggered when "Confirm" is pressed in the viewer
-                  setState(() {
-                    _webImage = confirmedImage as Uint8List;
-                    _profileImage = null; // Clear mobile file if switching
-                  });
-                  _updateProfilePicture(); // Call the update function
-                },
-              ),
+              builder:
+                  (_) => FullscreenImageViewer(
+                    tag:
+                        'temp-profile-image', // Use a temporary tag for the new image
+                    image: bytes,
+                    onDelete: () {
+                      // If user deletes from viewer, do nothing here as image wasn't set yet
+                      // The viewer handles popping itself.
+                    },
+                    onConfirm: (confirmedImage) {
+                      // This callback is triggered when "Confirm" is pressed in the viewer
+                      setState(() {
+                        _webImage = confirmedImage as Uint8List;
+                        _profileImage = null; // Clear mobile file if switching
+                      });
+                      _updateProfilePicture(); // Call the update function
+                    },
+                  ),
             ),
           );
         } else {
@@ -241,22 +246,24 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => FullscreenImageViewer(
-                tag: 'temp-profile-image', // Use a temporary tag for the new image
-                image: file,
-                onDelete: () {
-                  // If user deletes from viewer, do nothing here as image wasn't set yet
-                  // The viewer handles popping itself.
-                },
-                onConfirm: (confirmedImage) {
-                  // This callback is triggered when "Confirm" is pressed in the viewer
-                  setState(() {
-                    _profileImage = confirmedImage as io.File;
-                    _webImage = null; // Clear web file if switching
-                  });
-                  _updateProfilePicture(); // Call the update function
-                },
-              ),
+              builder:
+                  (_) => FullscreenImageViewer(
+                    tag:
+                        'temp-profile-image', // Use a temporary tag for the new image
+                    image: file,
+                    onDelete: () {
+                      // If user deletes from viewer, do nothing here as image wasn't set yet
+                      // The viewer handles popping itself.
+                    },
+                    onConfirm: (confirmedImage) {
+                      // This callback is triggered when "Confirm" is pressed in the viewer
+                      setState(() {
+                        _profileImage = confirmedImage as io.File;
+                        _webImage = null; // Clear web file if switching
+                      });
+                      _updateProfilePicture(); // Call the update function
+                    },
+                  ),
             ),
           );
         }
@@ -307,25 +314,26 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
       ),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
-        child: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: kPrimaryColor),
-              ) // Show loading indicator
-            : SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 16,
+        child:
+            _isLoading
+                ? const Center(
+                  child: CircularProgressIndicator(color: kPrimaryColor),
+                ) // Show loading indicator
+                : SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                  child: Column(
+                    children: [
+                      _buildProfileHeader(),
+                      const SizedBox(height: 24),
+                      _buildFormSection(),
+                      const SizedBox(height: 24),
+                      _buildActionButtons(),
+                    ],
+                  ),
                 ),
-                child: Column(
-                  children: [
-                    _buildProfileHeader(),
-                    const SizedBox(height: 24),
-                    _buildFormSection(),
-                    const SizedBox(height: 24),
-                    _buildActionButtons(),
-                  ],
-                ),
-              ),
       ),
     );
   }
@@ -339,18 +347,29 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
             GestureDetector(
               onTap: () async {
                 // Show loading indicator while fetching network image for full view
-                if (_initialProfileImageUrl != null && _webImage == null && _profileImage == null) {
+                if (_initialProfileImageUrl != null &&
+                    _webImage == null &&
+                    _profileImage == null) {
                   // If AuthorizedImage is currently displayed, fetch its bytes on tap
                   // ignore: use_build_context_synchronously
                   showDialog(
                     context: context,
                     barrierDismissible: false,
-                    builder: (context) => const Center(
-                      child: CircularProgressIndicator(color: kPrimaryColor),
-                    ),
+                    builder:
+                        (context) => const Center(
+                          child: CircularProgressIndicator(
+                            color: kPrimaryColor,
+                          ),
+                        ),
                   );
                   try {
-                    final response = await AuthorizedHttpService.sendAuthorizedRequest(Uri.parse('https://shweeshaung.mooo.com/$_initialProfileImageUrl'), method: 'GET');
+                    final response =
+                        await AuthorizedHttpService.sendAuthorizedRequest(
+                          Uri.parse(
+                            'https://shweeshaung.mooo.com/$_initialProfileImageUrl',
+                          ),
+                          method: 'GET',
+                        );
                     // http.get(Uri.parse(_initialProfileImageUrl!), headers: {
                     //   // Add any necessary authorization headers here, if your API requires them
                     //   // 'Authorization': 'Bearer YOUR_AUTH_TOKEN', // Example
@@ -365,7 +384,8 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                         imageForViewer = response?.bodyBytes;
                       } else {
                         final directory = await getTemporaryDirectory();
-                        final filePath = '${directory.path}/profile_full_view_temp_image.png';
+                        final filePath =
+                            '${directory.path}/profile_full_view_temp_image.png';
                         final file = io.File(filePath);
                         await file.writeAsBytes(response!.bodyBytes);
                         imageForViewer = file;
@@ -375,30 +395,34 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => FullscreenImageViewer(
-                            tag: 'profile-image',
-                            image: imageForViewer,
-                            onDelete: () {
-                              setState(() {
-                                _webImage = null;
-                                _profileImage = null;
-                                _initialProfileImageUrl = null; // Clear network URL too
-                              });
-                              // You might call an API to delete the remote image here
-                              // ApiService.deleteProfilePicture();
-                            },
-                            onConfirm: (confirmedImage) {
-                              // For an already set image, confirm just closes the viewer
-                              Navigator.pop(context);
-                            },
-                          ),
+                          builder:
+                              (_) => FullscreenImageViewer(
+                                tag: 'profile-image',
+                                image: imageForViewer,
+                                onDelete: () {
+                                  setState(() {
+                                    _webImage = null;
+                                    _profileImage = null;
+                                    _initialProfileImageUrl =
+                                        null; // Clear network URL too
+                                  });
+                                  // You might call an API to delete the remote image here
+                                  // ApiService.deleteProfilePicture();
+                                },
+                                onConfirm: (confirmedImage) {
+                                  // For an already set image, confirm just closes the viewer
+                                  Navigator.pop(context);
+                                },
+                              ),
                         ),
                       );
                     } else {
                       // ignore: use_build_context_synchronously
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Failed to load full image: ${response?.statusCode}'),
+                          content: Text(
+                            'Failed to load full image: ${response?.statusCode}',
+                          ),
                           backgroundColor: kErrorColor,
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(
@@ -428,24 +452,25 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => FullscreenImageViewer(
-                        tag: 'profile-image',
-                        image: _webImage ?? _profileImage,
-                        onDelete: () {
-                          setState(() {
-                            _webImage = null;
-                            _profileImage = null;
-                            // If you want to remove the image from the backend when deleted from viewer
-                            // You might call a specific API function here, e.g., ApiService.deleteProfilePicture();
-                          });
-                          // No need to call _updateProfilePicture here, as it's a delete action.
-                        },
-                        onConfirm: (confirmedImage) {
-                          // For an already set image, "Confirm" might just close the viewer
-                          // or do nothing if the image is already considered confirmed.
-                          Navigator.pop(context);
-                        },
-                      ),
+                      builder:
+                          (_) => FullscreenImageViewer(
+                            tag: 'profile-image',
+                            image: _webImage ?? _profileImage,
+                            onDelete: () {
+                              setState(() {
+                                _webImage = null;
+                                _profileImage = null;
+                                // If you want to remove the image from the backend when deleted from viewer
+                                // You might call a specific API function here, e.g., ApiService.deleteProfilePicture();
+                              });
+                              // No need to call _updateProfilePicture here, as it's a delete action.
+                            },
+                            onConfirm: (confirmedImage) {
+                              // For an already set image, "Confirm" might just close the viewer
+                              // or do nothing if the image is already considered confirmed.
+                              Navigator.pop(context);
+                            },
+                          ),
                     ),
                   );
                 }
@@ -481,23 +506,23 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                             )
                             : _profileImage != null
                             ? Image.file(
-                                _profileImage!,
-                                width: 120,
-                                height: 120,
-                                fit: BoxFit.cover,
-                              )
+                              _profileImage!,
+                              width: 120,
+                              height: 120,
+                              fit: BoxFit.cover,
+                            )
                             : (_initialProfileImageUrl != null && !_isLoading)
-                                ? AuthorizedImage(
-                                    imageUrl: _initialProfileImageUrl!,
-                                    width: 120,
-                                    height: 120,
-                                    fit: BoxFit.cover,
-                                  )
-                                : const Icon(
-                                    Icons.person,
-                                    size: 60,
-                                    color: Colors.white,
-                                  ),
+                            ? AuthorizedImage(
+                              imageUrl: _initialProfileImageUrl!,
+                              width: 120,
+                              height: 120,
+                              fit: BoxFit.cover,
+                            )
+                            : const Icon(
+                              Icons.person,
+                              size: 60,
+                              color: Colors.white,
+                            ),
                   ),
                 ),
               ),
@@ -667,18 +692,18 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                         //   // ... other fields
                         // );
 
-                      // Simulating API call for update
-
-                      final bool success = await ApiService.updateProfile(
-                        _nicknameController.text,
-                        _bioController.text,
-                      ); // Replace with actual API response
                         // Simulating API call for update
 
                         final bool success = await ApiService.updateProfile(
                           _nicknameController.text,
                           _bioController.text,
                         ); // Replace with actual API response
+                        // Simulating API call for update
+
+                        // final bool success = await ApiService.updateProfile(
+                        //   _nicknameController.text,
+                        //   _bioController.text,
+                        // ); // Replace with actual API response
 
                         setState(() => _isSaving = false);
 

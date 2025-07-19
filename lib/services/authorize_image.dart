@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:shweeshaungdaily/services/authorized_http_service.dart';
 import 'package:shweeshaungdaily/utils/image_cache.dart';
+import 'package:shweeshaungdaily/views/bulletin_image_loading_view.dart';
 
 class AuthorizedImage extends StatefulWidget {
   final String imageUrl;
@@ -88,13 +89,9 @@ class _AuthorizedImageState extends State<AuthorizedImage> {
     }
 
     if (_isLoading || _imageBytes == null) {
-      return Container(
+      return ShimmerLoadingPlaceholder(
         height: widget.height,
         width: widget.width,
-        color: Colors.grey.shade200,
-        child: const Center(
-          child: CircularProgressIndicator(color: Color(0xFF00897B)),
-        ),
       );
     }
 
