@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert'; // Add this for JSON encoding/decoding
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:intl/intl.dart';
@@ -685,19 +686,25 @@ class _HomePageState extends State<HomeScreenPage>
     required String upcoming,
   }) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 13),
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [kCardGradientStart, kCardGradientEnd],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: kShadowColor.withOpacity(0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.white.withOpacity(0.8),
+            blurRadius: 20,
+            offset: const Offset(-8, -8),
+            spreadRadius: 1,
+          ),
+          BoxShadow(
+            color: kShadowColor.withOpacity(0.15),
+            blurRadius: 25,
+            offset: const Offset(10, 10),
           ),
         ],
       ),
@@ -708,108 +715,141 @@ class _HomePageState extends State<HomeScreenPage>
             Expanded(
               flex: 2,
               child: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: kPrimaryDarkColor,
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(16),
-                    topLeft: Radius.circular(16),
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(22),
+                    topLeft: Radius.circular(22),
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      offset: const Offset(4, 0),
+                      blurRadius: 8,
+                    ),
+                  ],
                 ),
                 child: Center(
                   child: Text(
                     number,
-                    style: GoogleFonts.rowdies(
-                      fontSize: 62,
-                      color: Colors.white,
+                    style: GoogleFonts.poppins(
+                      fontSize: 68,
+                      color: Colors.white.withOpacity(0.9),
                       fontWeight: FontWeight.w200,
                     ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 20),
             Expanded(
               flex: 6,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
+              // --- FIX START ---
+              // Wrap the Padding with SingleChildScrollView to allow scrolling
+              // if the content exceeds the available vertical space.
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(25, 20, 20, 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  // Removed mainAxisAlignment.spaceAround as SingleChildScrollView
+                  // provides infinite height, so spaceAround won't have a finite space to work with.
+                  // Children will take their natural height.
                   children: [
+                    // Date
                     Text(
-                      date,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
+                      date.toUpperCase(),
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.0,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
+
+                    // Code
                     Text(
                       code,
-                      style: GoogleFonts.rowdies(
+                      style: GoogleFonts.poppins(
                         fontSize: 15,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white,
-                        letterSpacing: 0.3,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.blueGrey.shade800,
+                        letterSpacing: 0.2,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 12),
+
+                    // Teacher
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.person_outline,
-                          size: 16,
-                          color: Colors.white70,
+                          size: 18,
+                          color: Colors.blueGrey.shade500,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          teacher,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            teacher,
+                            style: GoogleFonts.lato(
+                              color: Colors.blueGrey.shade700,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
+
+                    // Time
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.access_time,
-                          size: 16,
-                          color: Colors.white70,
+                          size: 18,
+                          color: Colors.blueGrey.shade500,
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         Text(
                           time,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
+                          style: GoogleFonts.lato(
+                            color: Colors.blueGrey.shade700,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 14),
+
+                    // Upcoming Tag
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: 12,
+                        vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(
+                          color: Colors.grey.shade300,
+                          width: 1,
+                        ),
                       ),
                       child: Text(
                         "Upcoming: $upcoming",
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.white70,
+                        style: GoogleFonts.lato(
+                          fontSize: 13,
+                          color: Colors.blueGrey.shade700,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
+              // --- FIX END ---
             ),
           ],
         ),
@@ -916,50 +956,6 @@ class _HomePageState extends State<HomeScreenPage>
       ),
     );
   }
-
-  // Widget _buildQuickActionButton(
-  //   BuildContext context,
-  //   IconData icon,
-  //   String label,
-  //   VoidCallback onTapAction,
-  // ) {
-  //   return Material(
-  //     borderRadius: BorderRadius.circular(16),
-  //     color: const Color(0xFF00897B),
-  //     elevation: 2,
-  //     child: InkWell(
-  //       borderRadius: BorderRadius.circular(16),
-  //       onTap: onTapAction,
-  //       child: Container(
-  //         height: 100,
-  //         padding: const EdgeInsets.symmetric(vertical: 12),
-  //         child: Column(
-  //           mainAxisAlignment: MainAxisAlignment.center,
-  //           children: [
-  //             Container(
-  //               width: 40,
-  //               height: 40,
-  //               decoration: BoxDecoration(
-  //                 color: Colors.white.withOpacity(0.2),
-  //                 shape: BoxShape.circle,
-  //               ),
-  //               child: Icon(icon, color: Colors.white, size: 22),
-  //             ),
-  //             const SizedBox(height: 8),
-  //             Text(
-  //               label,
-  //               style: const TextStyle(
-  //                 color: Colors.white,
-  //                 fontWeight: FontWeight.w600,
-  //                 fontSize: 14,
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
 
   Widget _buildFeedCard({
     required String user,
@@ -1238,96 +1234,151 @@ class _HomePageState extends State<HomeScreenPage>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [kLunchGradientStart, kLunchGradientEnd],
+        gradient: LinearGradient(
+          // Dark, deep gradient for the card background
+          colors: [Color(0xFF212121), Color(0xFF000000)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.15),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.white.withOpacity(
+              0.05,
+            ), // Subtle light glow for neumorphic effect
+            blurRadius: 15,
+            offset: Offset(-4, -4),
+            spreadRadius: 0.5,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(
+              0.4,
+            ), // Deeper dark shadow for neumorphic effect
+            blurRadius: 15,
+            offset: Offset(4, 4),
           ),
         ],
       ),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              flex: 2,
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: kLunchIconBg,
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(16),
-                    topLeft: Radius.circular(16),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: IntrinsicHeight(
+          child: Row(
+            children: [
+              // Icon Section with "Hungry Mood" Color
+              Container(
+                width: 80,
+                decoration: BoxDecoration(
+                  // **"Hungry Mood" color for the icon section**
+                  color: Color(0xFFFFC107), // A warm, appetizing amber/orange
+                  border: Border(
+                    right: BorderSide(
+                      color: Colors.white.withOpacity(
+                        0.2,
+                      ), // Brighter border for separation
+                      width: 1,
+                    ),
                   ),
                 ),
-                child: const Center(
-                  child: Icon(Icons.lunch_dining, size: 48, color: kWhite),
+                child: Center(
+                  child: Icon(
+                    Icons.restaurant_menu, // A clear food-related icon
+                    size: 40,
+                    color:
+                        Colors
+                            .black87, // Darker icon for good contrast on the warm background
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 6,
+                        offset: Offset(1, 1),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              flex: 6,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      DateFormat('MMM dd EEE').format(date),
-                      style: const TextStyle(
-                        color: kLunchText,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Lunch Break',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: kLunchText,
-                        letterSpacing: 0.5,
-                      ),
-                      softWrap: false,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.access_time,
-                          size: 16,
-                          color: kLunchText,
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Date (subtle white)
+                      Text(
+                        DateFormat('MMM dd EEE').format(date).toUpperCase(),
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.6),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.5,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          time,
-                          style: const TextStyle(
-                            color: kLunchText,
-                            fontSize: 13,
+                      ),
+                      SizedBox(height: 8),
+                      // Title with a gradient, potentially incorporating a "hungry mood" color
+                      ShaderMask(
+                        blendMode: BlendMode.srcIn,
+                        shaderCallback:
+                            (bounds) => LinearGradient(
+                              // **Gradient for title, blending white with a warm accent**
+                              colors: [
+                                Colors.white,
+                                Color(0xFFFFE082),
+                              ], // White to a warm, soft yellow
+                            ).createShader(bounds),
+                        child: Text(
+                          'Lunch Feast', // Updated title
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            height: 1.1,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Enjoy your meal and take a break!',
-                      style: TextStyle(fontSize: 14, color: kLunchTextAccent),
-                    ),
-                  ],
+                      ),
+                      SizedBox(height: 12),
+                      // Time & additional icon
+                      Row(
+                        children: [
+                          Icon(Icons.schedule, size: 16, color: Colors.white70),
+                          SizedBox(width: 8),
+                          Text(
+                            time,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Spacer(),
+                          Container(
+                            height: 20,
+                            width: 1,
+                            color: Colors.white.withOpacity(0.15),
+                            margin: EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                          Icon(
+                            Icons
+                                .directions_run, // Another food-related icon for subtle theming
+                            size: 18,
+                            color: Colors.white70,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      // Message (italic white)
+                      Text(
+                        'Time to satisfy those cravings!', // Updated message
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
