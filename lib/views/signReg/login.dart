@@ -205,9 +205,9 @@ class _SignInPageState extends State<SignInPage> {
                           if (value.isEmpty) {
                             _setPasswordError('Password is required!');
                           } else if (value.length < 8) {
-                            _setPasswordError(
-                              'Password must be at least 8 characters.',
-                            );
+                            // _setPasswordError(
+                            //   'Password must be at least 8 characters.',
+                            // );
                           } else {
                             _setPasswordError(null);
                           }

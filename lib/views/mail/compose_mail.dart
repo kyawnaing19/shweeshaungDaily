@@ -448,7 +448,7 @@ class _ComposeLoveLetterScreenState extends State<ComposeLoveLetterScreen>
                       _suggestedRecipients = []; // Clear suggestions
                       // Set the recipient ID here
                       _selectedRecipientId =
-                          selectedUser?['id'] as int?; // Cast to int?
+                          selectedUser['id'] as int?; // Cast to int?
                     });
                     Future.delayed(const Duration(milliseconds: 50), () {
                       _ignoreTextChanges = false;
