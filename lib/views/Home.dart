@@ -18,6 +18,8 @@ import 'package:shweeshaungdaily/views/mail/mail_view.dart';
 
 import 'package:shweeshaungdaily/views/comment_section.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:shweeshaungdaily/views/teacher_profile_view.dart';
+import 'package:shweeshaungdaily/views/user_profile_view.dart';
 import 'package:shweeshaungdaily/views/widget_loading.dart';
 import 'package:shweeshaungdaily/widget/copyable_text.dart';
 
@@ -234,7 +236,7 @@ class _HomePageState extends State<HomeScreenPage>
               .map((item) => item['profileUrl'])
               .where((url) => url != null && url != '')
               .map((url) => '$baseUrl/$url')
-              .toSet();        
+              .toSet();
 
       await ImageCacheManager.clearUnusedFeedImages(imageUrls);
       await ImageCacheManager.clearUnusedProfileImages(imageUrlsForProfiles);
@@ -979,7 +981,9 @@ class _HomePageState extends State<HomeScreenPage>
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => MailBoxHome()),
+                        MaterialPageRoute(
+                          builder: (context) => UserProfileView(),
+                        ),
                       );
                     },
                     child: SizedBox(
@@ -1051,18 +1055,19 @@ class _HomePageState extends State<HomeScreenPage>
                       border: Border.all(color: Colors.white, width: 2),
                     ),
                     child: ClipOval(
-                      child: (profileUrl != null && profileUrl.isNotEmpty)
-                          ? AuthorizedImage(
-                              imageUrl: profileUrl,
-                              width: 40,
-                              height: 40,
-                              fit: BoxFit.cover,
-                            )
-                          : const Icon(
-                              Icons.person,
-                              size: 35,
-                              color: Colors.white,
-                            ),
+                      child:
+                          (profileUrl != null && profileUrl.isNotEmpty)
+                              ? AuthorizedImage(
+                                imageUrl: profileUrl,
+                                width: 40,
+                                height: 40,
+                                fit: BoxFit.cover,
+                              )
+                              : const Icon(
+                                Icons.person,
+                                size: 35,
+                                color: Colors.white,
+                              ),
                     ),
                   ),
                   const SizedBox(width: 12),
