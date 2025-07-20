@@ -24,6 +24,8 @@ class _TeacherProfileUpdateScreenState extends State<TeacherProfileUpdateScreen>
   final TextEditingController _bioController = TextEditingController();
   final TextEditingController _departmentController = TextEditingController(); // For teacher-specific data
   final TextEditingController _subjectsTaughtController = TextEditingController(); // For teacher-specific data
+  final TextEditingController _roleController = TextEditingController(); // For teacher-specific data
+
   final String baseUrl = ApiService.base;
 
   bool _isSaving = false;
@@ -50,13 +52,12 @@ class _TeacherProfileUpdateScreenState extends State<TeacherProfileUpdateScreen>
         _emailController.text = profileData['email'] ?? ''; // Assuming 'email' for teacher
         _bioController.text = profileData['bio'] ?? '';
         _departmentController.text = profileData['department'] ?? 'N/A'; // Teacher-specific
+        _roleController.text = profileData['role'] ?? 'N/A'; // Teacher-specific
         // Assuming subjectsTaught is a List and you want to display it as a comma-separated string
         _subjectsTaughtController.text = (profileData['subjectsTaught'] is List)
             ? (profileData['subjectsTaught'] as List).join(', ')
             : profileData['subjectsTaught'] ?? 'N/A'; // Teacher-specific
-
-print( profileData);
-
+print(profileData['role']);
         _initialProfileImageUrl =
             profileData['profileUrl'] != null // Assuming 'photoUrl' for teacher
                 ? '$baseUrl/${profileData['profileUrl']}'
@@ -176,6 +177,7 @@ print( profileData);
     _bioController.dispose();
     _departmentController.dispose();
     _subjectsTaughtController.dispose();
+    _roleController.dispose();
     super.dispose();
   }
 
@@ -461,17 +463,24 @@ print( profileData);
           _buildTextField(
             'Department',
             _departmentController,
-            Icons.school_outlined,
+            Icons.apartment,
             enabled: false, // Assuming department is not editable via this screen
           ),
           const SizedBox(height: 16),
           _buildTextField(
-            'Subjects Taught',
-            _subjectsTaughtController,
-            Icons.menu_book_outlined,
-            enabled: false, // Assuming subjects are not editable via this screen
-            maxLines: 3,
+            'Role',
+            _roleController,
+            Icons.person_4,
+            enabled: false, // Assuming department is not editable via this screen
           ),
+          // const SizedBox(height: 16),
+          // _buildTextField(
+          //   'Subjects Taught',
+          //   _subjectsTaughtController,
+          //   Icons.menu_book_outlined,
+          //   enabled: false, // Assuming subjects are not editable via this screen
+          //   maxLines: 3,
+          // ),
           const SizedBox(height: 16),
           _buildTextField(
             'Bio',

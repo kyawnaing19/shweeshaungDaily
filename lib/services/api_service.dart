@@ -98,11 +98,15 @@ class ApiService {
   static Future<bool> logout() async {
     final tokens = await TokenService.loadTokens();
     try {
+      
       await http.post(
         Uri.parse('$baseUrl/logout'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'refreshToken': tokens!.refreshToken}),
       );
+
+      await TokenService.clearTokens();
+
       return true;
     } catch (e) {
       return false;
@@ -225,6 +229,34 @@ class ApiService {
 
   static Future<List<Map<String, dynamic>>?> getFeed() async {
     final url = Uri.parse(feedBaseUrl);
+
+    try {
+      final response = await AuthorizedHttpService.sendAuthorizedRequest(
+        url,
+        method: 'GET',
+      );
+
+      if (response != null && response.statusCode == 200) {
+        final body = response.body;
+        final decoded = jsonDecode(body);
+
+        if (decoded is List) {
+          return decoded.cast<Map<String, dynamic>>();
+        } else {
+          print('Unexpected response format: $decoded');
+        }
+      } else {
+        print('Failed to fetch feed. Status code: ${response?.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching feed: $e');
+    }
+
+    return null;
+  }
+
+   static Future<List<Map<String, dynamic>>?> getTeacherProfileFeed() async {
+    final url = Uri.parse('$feedBaseUrl/teacherprofilefeed');
 
     try {
       final response = await AuthorizedHttpService.sendAuthorizedRequest(
@@ -807,8 +839,20 @@ static Future<bool> deleteAudio(String purl)async {
     url,
     method: 'DELETE',
   );
-  print(response!.body);
-  if(response.statusCode==200) {
+  if(response?.statusCode==200) {
+    return true;
+  }
+  return false;
+}
+
+static Future<bool> deleteFeedbyId(String id)async {
+  final url = Uri.parse('$feedBaseUrl/delete?id=$id');
+   final response = await AuthorizedHttpService.sendAuthorizedRequest(
+    url,
+    method: 'DELETE',
+  );
+  print(response?.body);
+  if(response?.statusCode==200) {
     return true;
   }
   return false;

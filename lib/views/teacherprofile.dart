@@ -6,11 +6,11 @@ import 'dart:typed_data';
 import 'dart:convert';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 // Assuming these imports are available in your project
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/services/authorize_image.dart';
+import 'package:shweeshaungdaily/services/authorized_network_image.dart';
 import 'package:shweeshaungdaily/services/token_service.dart';
 import 'package:shweeshaungdaily/utils/audio_timeformat.dart';
 import 'package:shweeshaungdaily/utils/image_cache.dart';
@@ -37,6 +37,14 @@ final Map<String, String> audienceValueMap = {
 
 const List<String> majorsList = ['CST', 'CS', 'CT'];
 
+const double kHorizontalPadding = 20.0;
+const double kVerticalSpacing = 15.0;
+const double kCardElevation = 2.0;
+const double kCardBorderRadius = 12.0;
+const Color kPrimaryColor = Color(0xFF00897B);
+const Color kBackgroundColor = Color(0xFFE0F7FA);
+const Color kAccentColor = Color(0xFF48C4BC);
+
 class TeacherProfilePage extends StatefulWidget {
   final VoidCallback? onBack;
 
@@ -61,10 +69,12 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
   bool _loadingStories = true; // Renamed to avoid conflict with `isFeedLoading`
 
   // User Profile Data
-  String _userName = 'Loading...';
-  String _userEmail = 'Loading...';
+  String _nickName = 'Loading...';
+  String _department = 'Loading...';
+  String _role = 'Loading...';
   String? _userPhotoUrl;
   bool _isLoadingUser = true;
+  String? _userBio;
 
   @override
   void initState() {
@@ -90,9 +100,16 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
       final Map<String, dynamic>? profile = await ApiService.getProfile();
       if (mounted) {
         setState(() {
-          _userName = profile!['name'] ?? 'N/A';
-          _userEmail = profile['email'] ?? 'N/A';
-          _userPhotoUrl = profile['profileUrl']; // Assuming 'photoUrl' is the key
+          _nickName = profile!['nickName'] ?? 'N/A';
+          _department = profile['department'] ?? 'N/A';
+          _role = profile['role'] ?? 'N/A';
+          _userPhotoUrl =
+              profile['profileUrl']; // Assuming 'photoUrl' is the key\
+          _userBio =
+              (profile['bio']?.toString().trim().isNotEmpty ?? false)
+                  ? profile!['bio'].toString()
+                  : 'Add a few words about yourself...';
+
           _isLoadingUser = false;
         });
       }
@@ -101,13 +118,13 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
       if (mounted) {
         setState(() {
           _isLoadingUser = false;
-          _userName = 'Error';
-          _userEmail = 'Error loading profile';
+          _nickName = 'Error';
+          _department = 'Error';
+          _role = 'Error';
         });
       }
     }
   }
-
 
   // Method: loadCachedFeed, copied from Home.dart
   Future<List<Map<String, dynamic>>> loadCachedFeed() async {
@@ -136,11 +153,11 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     });
 
     try {
-      final result = await ApiService.getFeed();
+      final result = await ApiService.getTeacherProfileFeed();
 
       // Save feed to local cache
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('cached_feed', jsonEncode(result));
+      // final prefs = await SharedPreferences.getInstance();
+      // await prefs.setString('cached_feed', jsonEncode(result));
 
       setState(() {
         feedItems = result ?? [];
@@ -148,20 +165,21 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
       });
 
       // 🧹 Clean up cached images not in feed
-      final imageUrls =
-          feedItems!
-              .map((item) => item['photoUrl'])
-              .where((url) => url != null && url != '')
-              .map((url) => '$baseUrl/$url')
-              .toSet();
+      // final imageUrls =
+      //     feedItems!
+      //         .map((item) => item['photoUrl'])
+      //         .where((url) => url != null && url != '')
+      //         .map((url) => '$baseUrl/$url')
+      //         .toSet();
 
-      await ImageCacheManager.clearUnusedFeedImages(imageUrls);
+      // await ImageCacheManager.clearUnusedFeedImages(imageUrls);
     } catch (e) {
       // API failed – try to reload cached feed
-      final cached = await loadCachedFeed();
+      // final cached = await loadCachedFeed();
       setState(() {
-        feedItems = cached;
-        feedErrorMessage = 'Failed to load feed: ${e.toString()}'; // Display error message
+        feedItems = [];
+        feedErrorMessage =
+            'Failed to load feed: ${e.toString()}'; // Display error message
         isFeedLoading = false;
       });
     }
@@ -262,82 +280,97 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                     ),
                   ],
                 ),
-                child: _isLoadingUser
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-  _userPhotoUrl != null
-      ? ClipOval(
-          child: AuthorizedImage(
-            imageUrl: '$baseUrl/$_userPhotoUrl',
-            height: 60, // 2 * radius (CircleAvatar radius = 30)
-            width: 60,
-            fit: BoxFit.cover,
-          ),
-        )
-      : CircleAvatar(
-          radius: 30,
-          backgroundColor: Colors.white,
-          child: Icon(
-            Icons.person,
-            size: 30,
-            color: kPrimaryDarkColor,
-          ),
-        ),
-  const SizedBox(width: 16),
-  Expanded(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          _userName,
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-          overflow: TextOverflow.ellipsis,
-        ),
-        Text(
-          _userEmail,
-          style: GoogleFonts.poppins(
-              color: Colors.white70, fontSize: 13),
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
-    ),
-  ),
-  IconButton(
-    icon: const Icon(
-      Icons.edit,
-      color: Colors.white70,
-    ),
-    onPressed: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const TeacherProfileUpdateScreen(),
-        ),
-      ).then((value) {
-        if (value == true) {
-          _fetchUserProfile();
-        }
-      });
-    },
-  ),
-],
-
-                    ),
-                  ],
-                ),
+                child:
+                    _isLoadingUser
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                _userPhotoUrl != null
+                                    ? ClipOval(
+                                      child: AuthorizedImage(
+                                        imageUrl: '$baseUrl/$_userPhotoUrl',
+                                        height:
+                                            60, // 2 * radius (CircleAvatar radius = 30)
+                                        width: 60,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                    : CircleAvatar(
+                                      radius: 30,
+                                      backgroundColor: Colors.white,
+                                      child: Icon(
+                                        Icons.person,
+                                        size: 30,
+                                        color: kPrimaryDarkColor,
+                                      ),
+                                    ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _nickName,
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 20,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Text(
+                                        _department,
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.white70,
+                                          fontSize: 13,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Text(
+                                        _role,
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.white70,
+                                          fontSize: 13,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.edit,
+                                    color: Colors.white70,
+                                  ),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) =>
+                                                const TeacherProfileUpdateScreen(),
+                                      ),
+                                    ).then((value) {
+                                      if (value == true) {
+                                        _fetchUserProfile();
+                                      }
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 20),
+                            _buildInfoCard(_userBio!),
+                          ],
+                        ),
               ),
             ),
 
-
-            const SizedBox(height: 7),
+            const SizedBox(height: 15),
 
             // Tabs: Shares & Stories
             Padding(
@@ -428,7 +461,8 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
             const SizedBox(height: 15),
 
             // Swipeable Shares & Stories
-            Expanded( // Use Expanded to allow the PageView to take available height
+            Expanded(
+              // Use Expanded to allow the PageView to take available height
               child: PageView(
                 controller: _pageController,
                 onPageChanged: (index) {
@@ -438,157 +472,196 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                 },
                 children: [
                   // Shares Widget
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 20),
-                    padding: const EdgeInsets.only(top: 12),
-                    decoration: BoxDecoration(
-                      color: kPrimaryDarkColor,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              backgroundColor: Colors.transparent,
-                              builder:
-                                  (context) => const UploadSharesDialog(),
-                            );
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 15,
-                            ),
-                            decoration: BoxDecoration(
-                              color: kAccentColor,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: const [
-                                Expanded(
-                                  child: Text(
-                                    "What's on your mind?",
-                                    style: TextStyle(color: Colors.white),
-                                  ),
+                  Column(
+                    children: [
+                      // In _TeacherProfilePageState, inside the build method, where UploadSharesDialog is called:
+                      GestureDetector(
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) => const UploadSharesDialog(),
+                          ).then((value) {
+                            // <--- Add .then() here
+                            if (value == true) {
+                              // Check if the result is true (indicating success)
+                              _fetchFeed(); // Call _fetchFeed() to refresh the feed
+                            }
+                          });
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 15,
+                          ),
+                          decoration: BoxDecoration(
+                            color: kAccentColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: const [
+                              Expanded(
+                                child: Text(
+                                  "What's on your mind?",
+                                  style: TextStyle(color: Colors.white),
                                 ),
-                                Icon(Icons.add, color: Colors.white),
-                              ],
-                            ),
+                              ),
+                              Icon(Icons.add, color: Colors.white),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 16), // Spacing below the "What's on your mind?"
-
-                        // Bulletin Section (Copied from Home.dart)
-                        Expanded( // Wrap the bulletin content in Expanded to fill remaining space
-                          child: RefreshIndicator( // Added RefreshIndicator
-                            onRefresh: _fetchFeed, // Refresh feed on pull
-                            child: CustomScrollView( // Use CustomScrollView for SliverPadding
-                              slivers: [
-                                SliverPadding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  sliver: SliverList(
-                                    delegate: SliverChildBuilderDelegate(
-                                      (context, index) {
-                                        if (isFeedLoading) {
-                                          return const ShimmerLoadingPlaceholder( // Added const
-                                            height: 200, // Example height
-                                            width: double.infinity, // Example width
-                                          );
-                                        }
-
-                                        if (feedErrorMessage != null) {
-                                          return Padding(
-                                            padding: const EdgeInsets.symmetric(vertical: 32.0),
-                                            child: Center(child: Text(feedErrorMessage!)),
-                                          );
-                                        }
-
-                                        if (feedItems!.isEmpty) {
-                                          return const Padding(
-                                            padding: EdgeInsets.symmetric(vertical: 32.0),
-                                            child: Center(child: Text('No feed items available.')),
-                                          );
-                                        }
-
-                                        final item = feedItems![index];
-                                        final String user =
-                                            item['teacherName']; // Replace with actual user
-                                        final String timeAgo = item['createdAt'] ?? '';
-                                        final String message = item['text'] ?? '';
-                                        final String? imageUrl =
-                                            (item['photoUrl'] != null && item['photoUrl'] != '')
-                                                ? '$baseUrl/${item['photoUrl']}'
-                                                : null;
-                                        // Count likes and comments from the response arrays
-                                        final int likeCount = (item['likes'] as List?)?.length ?? 0;
-                                        final int commentCount =
-                                            (item['comments'] as List?)?.length ?? 0;
-
-                                        return FutureBuilder<String?>(
-                                          future: TokenService.getUserName(),
-                                          builder: (context, snapshot) {
-                                            final List<String> likes = List<String>.from(
-                                              item['likes'] ?? [],
-                                            );
-                                            final userName = snapshot.data ?? '';
-                                            final bool isLikedByMe = likes.contains(userName);
-                                            return Padding(
-                                              padding: const EdgeInsets.only(bottom: 16.0),
-                                              child: _buildFeedCard(
-                                                user: user,
-                                                timeAgo: formatFacebookStyleTime(timeAgo),
-                                                message: message,
-                                                imageUrl: imageUrl,
-                                                likeCount: likeCount,
-                                                commentCount: commentCount,
-                                                comments: item['comments'] ?? [],
-                                                feedId: item['id'] ?? '',
-                                                isLiked: isLikedByMe,
-                                                userName: userName, // Pass userName here
-                                              ),
-                                            );
-                                          },
+                      ),
+                      const SizedBox(
+                        height: 16,
+                      ), // Spacing below the "What's on your mind?"
+                      // Bulletin Section (Copied from Home.dart)
+                      Expanded(
+                        // Wrap the bulletin content in Expanded to fill remaining space
+                        child: RefreshIndicator(
+                          // Added RefreshIndicator
+                          onRefresh: _fetchFeed, // Refresh feed on pull
+                          child: CustomScrollView(
+                            // Use CustomScrollView for SliverPadding
+                            slivers: [
+                              SliverPadding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                                sliver: SliverList(
+                                  delegate: SliverChildBuilderDelegate(
+                                    (context, index) {
+                                      if (isFeedLoading) {
+                                        return const ShimmerLoadingPlaceholder(
+                                          // Added const
+                                          height: 200, // Example height
+                                          width:
+                                              double.infinity, // Example width
                                         );
-                                      },
-                                      childCount: () {
-                                        if (isFeedLoading ||
-                                            feedErrorMessage != null ||
-                                            feedItems!.isEmpty) {
-                                          return 1;
-                                        } else {
-                                          return feedItems?.length;
-                                        }
-                                      }(),
-                                    ),
+                                      }
+
+                                      if (feedErrorMessage != null) {
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 32.0,
+                                          ),
+                                          child: Center(
+                                            child: Text(feedErrorMessage!),
+                                          ),
+                                        );
+                                      }
+
+                                      if (feedItems!.isEmpty) {
+                                        return const Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: 32.0,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              'No feed items available.',
+                                            ),
+                                          ),
+                                        );
+                                      }
+
+                                      final item = feedItems![index];
+                                      final String user =
+                                          item['teacherName']; // Replace with actual user
+                                      final String timeAgo =
+                                          item['createdAt'] ?? '';
+                                      final String message = item['text'] ?? '';
+                                      final String? imageUrl =
+                                          (item['photoUrl'] != null &&
+                                                  item['photoUrl'] != '')
+                                              ? '$baseUrl/${item['photoUrl']}'
+                                              : null;
+                                      final String? uprofile =
+                                          (item['profileUrl'] != null &&
+                                                  item['profileUrl'] != '')
+                                              ? '$baseUrl/${item['profileUrl']}'
+                                              : null;
+                                      // Count likes and comments from the response arrays
+                                      final int likeCount =
+                                          (item['likes'] as List?)?.length ?? 0;
+                                      final int commentCount =
+                                          (item['comments'] as List?)?.length ??
+                                          0;
+
+                                      return FutureBuilder<String?>(
+                                        future: TokenService.getUserName(),
+                                        builder: (context, snapshot) {
+                                          final List<String> likes =
+                                              List<String>.from(
+                                                item['likes'] ?? [],
+                                              );
+                                          final userName = snapshot.data ?? '';
+                                          final bool isLikedByMe = likes
+                                              .contains(userName);
+                                          return Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 16.0,
+                                            ),
+                                            child: _buildFeedCard(
+                                              user: user,
+                                              timeAgo: formatFacebookStyleTime(
+                                                timeAgo,
+                                              ),
+                                              message: message,
+                                              imageUrl: imageUrl,
+                                              likeCount: likeCount,
+                                              profileUrl: uprofile,
+                                              commentCount: commentCount,
+                                              comments: item['comments'] ?? [],
+                                              feedId: item['id'] ?? '',
+                                              isLiked: isLikedByMe,
+                                              userName:
+                                                  userName, // Pass userName here
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                    childCount: () {
+                                      if (isFeedLoading ||
+                                          feedErrorMessage != null ||
+                                          feedItems!.isEmpty) {
+                                        return 1;
+                                      } else {
+                                        return feedItems?.length;
+                                      }
+                                    }(),
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                   // Stories Widget (Album section from UserProfile.dart)
-                  RefreshIndicator( // Added RefreshIndicator for stories
+                  RefreshIndicator(
+                    // Added RefreshIndicator for stories
                     onRefresh: _fetchStories, // Refresh stories on pull
-                    child: SingleChildScrollView( // Added SingleChildScrollView
-                      physics: const AlwaysScrollableScrollPhysics(), // Ensure scrollable even if content is small
+                    child: SingleChildScrollView(
+                      // Added SingleChildScrollView
+                      physics:
+                          const AlwaysScrollableScrollPhysics(), // Ensure scrollable even if content is small
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Show a message if album is empty and not loading
                             if (_stories.isEmpty && !_loadingStories)
                               Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 20.0),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 20.0,
+                                ),
                                 child: Text(
                                   'Your album is empty. Add your first photo!',
                                   style: TextStyle(
@@ -600,27 +673,36 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                               ),
                             _loadingStories
                                 ? const Center(
-                                    child: CircularProgressIndicator(color: kPrimaryDarkColor),
-                                  )
-                                : GridView.builder(
-                                    shrinkWrap: true,
-                                    physics: const NeverScrollableScrollPhysics(),
-                                    itemCount: _stories.length + 1,
-                                    gridDelegate:
-                                        const SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 3, // Changed to 3 for a tighter grid
-                                          crossAxisSpacing: 8.0, // Adjusted spacing
-                                          mainAxisSpacing: 8.0, // Adjusted spacing
-                                          childAspectRatio: 0.7, // Adjusted aspect ratio for better fit
-                                        ),
-                                    itemBuilder: (context, index) {
-                                      if (index == 0) {
-                                        return _buildAddNewCard();
-                                      } else {
-                                        return _buildPhotoCard(index - 1, context);
-                                      }
-                                    },
+                                  child: CircularProgressIndicator(
+                                    color: kPrimaryDarkColor,
                                   ),
+                                )
+                                : GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: _stories.length + 1,
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount:
+                                            3, // Changed to 3 for a tighter grid
+                                        crossAxisSpacing:
+                                            8.0, // Adjusted spacing
+                                        mainAxisSpacing:
+                                            8.0, // Adjusted spacing
+                                        childAspectRatio:
+                                            0.7, // Adjusted aspect ratio for better fit
+                                      ),
+                                  itemBuilder: (context, index) {
+                                    if (index == 0) {
+                                      return _buildAddNewCard();
+                                    } else {
+                                      return _buildPhotoCard(
+                                        index - 1,
+                                        context,
+                                      );
+                                    }
+                                  },
+                                ),
                           ],
                         ),
                       ),
@@ -634,7 +716,46 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
       ),
     );
   }
-  
+
+  Widget _buildInfoCard(String bio) {
+    return SizedBox(
+      width: MediaQuery.of(context).size.width * 0.9,
+      child: Card(
+        elevation: kCardElevation,
+        shadowColor: Colors.black.withOpacity(0.3),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(kCardBorderRadius),
+        ),
+        color: kAccentColor,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Bio',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                bio,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.white,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // Modify the signature of _buildPhotoCard to accept a Key
   Widget _buildPhotoCard(int index, BuildContext context) {
     // Ensure the index is within bounds and the 'url' exists
@@ -744,6 +865,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     required String user,
     required String timeAgo,
     required String message,
+    required String? profileUrl,
     required String? imageUrl,
     required int? likeCount,
     required int? commentCount,
@@ -783,12 +905,14 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                       border: Border.all(color: Colors.white, width: 2),
                     ),
                     child: ClipOval(
-                      child: Image.asset(
-                        'assets/images/tpo.jpg',
-                        fit: BoxFit.cover,
-                        width: 40,
-                        height: 40,
-                      ),
+                      child:
+                          profileUrl != null && profileUrl.isNotEmpty
+                              ? AuthorizedNetworkImage(
+                                imageUrl: profileUrl,
+                                height: 40,
+                                width: 40,
+                              )
+                              : Icon(Icons.account_circle, size: 40),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -814,11 +938,61 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(
-                      Icons.more_vert_rounded,
-                      color: Colors.white70,
-                    ),
-                    onPressed: () {},
+                    icon: const Icon(Icons.delete, color: Colors.white70),
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Confirm Delete'),
+                            content: const Text(
+                              'Are you sure you want to delete this item?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed:
+                                    () => Navigator.of(
+                                      context,
+                                    ).pop(false), // Cancel
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed:
+                                    () => Navigator.of(
+                                      context,
+                                    ).pop(true), // Confirm
+                                child: const Text(
+                                  'Delete',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+
+                      if (confirm == true) {
+                        final success = await ApiService.deleteFeedbyId(
+                          feedId.toString(),
+                        );
+
+                        // You can show a snackbar or refresh your UI based on 'success'
+                        if (success==true) {
+                          _fetchFeed();
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('Failed to delete story.'),
+                              backgroundColor: Colors.red,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          );
+                        }
+                      }
+                    },
                   ),
                 ],
               ),
@@ -886,12 +1060,11 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                               size: 22,
                             ),
                             onPressed: () async {
-                              if (feedId == null) return; // Add null check for feedId
+                              if (feedId == null)
+                                return; // Add null check for feedId
                               if (isLiked) {
                                 print("is liked");
-                                final success = await ApiService.unlike(
-                                  feedId,
-                                );
+                                final success = await ApiService.unlike(feedId);
                                 if (success) {
                                   setState(() {
                                     isLiked = false;
@@ -920,7 +1093,9 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                                     if (idx != null && idx >= 0) {
                                       feedItems![idx]['likes'] = List.from(
                                         feedItems![idx]['likes'] ?? [],
-                                      )..add(userName); // Use userName parameter here
+                                      )..add(
+                                        userName,
+                                      ); // Use userName parameter here
                                     }
                                     isLiked = true;
                                     likeCount = likeCount! + 1;
@@ -1024,6 +1199,7 @@ class ShimmerLoadingPlaceholder extends StatelessWidget {
     );
   }
 }
+
 // New widget: _buildAddNewCard, copied from UserProfile.dart
 class UploadSharesDialog extends StatefulWidget {
   const UploadSharesDialog({super.key});
@@ -1054,6 +1230,7 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
     super.dispose();
   }
 
+  // In _UploadSharesDialogState
   Future<void> _uploadPost() async {
     setState(() => _isUploading = true);
     try {
@@ -1074,7 +1251,7 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
       );
 
       if (mounted) {
-        Navigator.pop(context);
+        Navigator.pop(context, true); // <--- Pass true here to indicate success
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Post shared successfully!'),
