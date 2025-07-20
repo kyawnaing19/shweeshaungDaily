@@ -357,6 +357,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                                     ).then((value) {
                                       if (value == true) {
                                         _fetchUserProfile();
+                                        _fetchFeed();
                                       }
                                     });
                                   },
@@ -907,12 +908,20 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                     child: ClipOval(
                       child:
                           profileUrl != null && profileUrl.isNotEmpty
-                              ? AuthorizedNetworkImage(
+                              ? AuthorizedImage(
                                 imageUrl: profileUrl,
                                 height: 40,
                                 width: 40,
                               )
-                              : Icon(Icons.account_circle, size: 40),
+                              : CircleAvatar(
+                                radius: 30,
+                                backgroundColor: Colors.white,
+                                child: Icon(
+                                  Icons.person,
+                                  size: 30,
+                                  color: kPrimaryDarkColor,
+                                ),
+                              ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -977,7 +986,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                         );
 
                         // You can show a snackbar or refresh your UI based on 'success'
-                        if (success==true) {
+                        if (success == true) {
                           _fetchFeed();
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(

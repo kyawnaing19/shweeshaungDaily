@@ -57,7 +57,6 @@ class _TeacherProfileUpdateScreenState extends State<TeacherProfileUpdateScreen>
         _subjectsTaughtController.text = (profileData['subjectsTaught'] is List)
             ? (profileData['subjectsTaught'] as List).join(', ')
             : profileData['subjectsTaught'] ?? 'N/A'; // Teacher-specific
-print(profileData['role']);
         _initialProfileImageUrl =
             profileData['profileUrl'] != null // Assuming 'photoUrl' for teacher
                 ? '$baseUrl/${profileData['profileUrl']}'
@@ -568,6 +567,7 @@ print(profileData['role']);
                           ),
                         );
                         if (success) {
+                          
                           Navigator.pop(context, true); // Pop with true on success
                         }
                       }
