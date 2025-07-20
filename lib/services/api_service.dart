@@ -781,6 +781,7 @@ static Future<bool> updateProfilePicture({
   if (tokens == null) throw Exception('Not authenticated');
 
   var response = await sendMultipart(tokens.accessToken);
+  print(response.body);
   if (response.statusCode == 401 || response.statusCode == 403) {
     final refreshed = await ApiService.refreshAccessToken(tokens.refreshToken);
     if (refreshed != null &&
@@ -791,6 +792,7 @@ static Future<bool> updateProfilePicture({
         refreshed['refreshToken'],
       );
       response = await sendMultipart(refreshed['accessToken']);
+      print(response.body);
     } else {
       await TokenService.clearTokens();
       throw Exception('Session expired. Please log in again.');

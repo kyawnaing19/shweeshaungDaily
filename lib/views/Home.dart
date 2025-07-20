@@ -229,7 +229,15 @@ class _HomePageState extends State<HomeScreenPage>
               .map((url) => '$baseUrl/$url')
               .toSet();
 
+      final imageUrlsForProfiles =
+          feedItems!
+              .map((item) => item['profileUrl'])
+              .where((url) => url != null && url != '')
+              .map((url) => '$baseUrl/$url')
+              .toSet();        
+
       await ImageCacheManager.clearUnusedFeedImages(imageUrls);
+      await ImageCacheManager.clearUnusedProfileImages(imageUrlsForProfiles);
     } catch (e) {
       // print("hhhhh");
       // API failed – try to reload cached feed
@@ -634,6 +642,10 @@ class _HomePageState extends State<HomeScreenPage>
                         (item['photoUrl'] != null && item['photoUrl'] != '')
                             ? '$baseUrl/${item['photoUrl']}'
                             : null;
+                    final String? profileUrl =
+                        (item['profileUrl'] != null && item['profileUrl'] != '')
+                            ? '$baseUrl/${item['profileUrl']}'
+                            : null;
                     final int likeCount = (item['likes'] as List?)?.length ?? 0;
                     final int commentCount =
                         (item['comments'] as List?)?.length ?? 0;
@@ -653,6 +665,7 @@ class _HomePageState extends State<HomeScreenPage>
                           ), // Use item ID for unique key if available
                           padding: const EdgeInsets.only(bottom: 16.0),
                           child: _buildFeedCard(
+                            profileUrl: profileUrl,
                             // Your existing _buildFeedCard function
                             user: user,
                             timeAgo: formatFacebookStyleTime(
@@ -996,6 +1009,7 @@ class _HomePageState extends State<HomeScreenPage>
   }
 
   Widget _buildFeedCard({
+    required String? profileUrl,
     required String user,
     required String timeAgo,
     required String message,
@@ -1037,12 +1051,18 @@ class _HomePageState extends State<HomeScreenPage>
                       border: Border.all(color: Colors.white, width: 2),
                     ),
                     child: ClipOval(
-                      child: Image.asset(
-                        'assets/images/tpo.jpg',
-                        fit: BoxFit.cover,
-                        width: 40,
-                        height: 40,
-                      ),
+                      child: (profileUrl != null && profileUrl.isNotEmpty)
+                          ? AuthorizedImage(
+                              imageUrl: profileUrl,
+                              width: 40,
+                              height: 40,
+                              fit: BoxFit.cover,
+                            )
+                          : const Icon(
+                              Icons.person,
+                              size: 35,
+                              color: Colors.white,
+                            ),
                     ),
                   ),
                   const SizedBox(width: 12),

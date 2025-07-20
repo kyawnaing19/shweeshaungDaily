@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart' show Uint8List, kIsWeb;
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/services/authorize_image.dart';
+import 'package:shweeshaungdaily/utils/image_cache.dart';
 
 class TeacherProfileUpdateScreen extends StatefulWidget {
   const TeacherProfileUpdateScreen({super.key});
@@ -314,7 +315,7 @@ class _TeacherProfileUpdateScreenState extends State<TeacherProfileUpdateScreen>
                               _initialProfileImageUrl = null;
                               _newlyPickedImage = null;
                             });
-                             await ApiService.deleteProfile(); // Call API to delete profile picture
+                             await ApiService.deleteProfile();
                              if(mounted) Navigator.pop(context, true); // Pop out of update screen after deletion
                           },
                           onConfirm: (confirmedImage) {
@@ -707,6 +708,7 @@ class FullscreenImageViewer extends StatelessWidget {
               if (confirm == true) {
                 final check = await ApiService.deleteProfile();
                 if (check) {
+                  await ImageCacheManager.deleteProfileImageByUrl(image as String);
                   onDelete();
                   Navigator.pop(context);        // Close delete confirmation/viewer
                   Navigator.pop(context, true); // Return to previous screen, indicating change
