@@ -609,7 +609,7 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
         ),
         const SizedBox(height: 12),
         TextButton(
-          onPressed: () => Navigator.pop(context, true), // Pop with true on cancel
+          onPressed: () => Navigator.pop(context, false), // Pop with true on cancel
           child: const Text(
             'Cancel',
             style: TextStyle(fontWeight: FontWeight.bold),

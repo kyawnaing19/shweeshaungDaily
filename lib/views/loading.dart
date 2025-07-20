@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Import for SystemChrome
 import 'package:provider/provider.dart';
 import 'package:shweeshaungdaily/view_models/StartupViewModel.dart';
 import 'package:shweeshaungdaily/views/main_screen.dart';
@@ -15,6 +16,19 @@ class _LoadingPageState extends State<LoadingPage> {
   @override
   void initState() {
     super.initState();
+    // Ensure the system UI is styled correctly when this page appears.
+    // Use addPostFrameCallback to ensure it runs after the first frame is rendered.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SystemChrome.setSystemUIOverlayStyle(
+        const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent, // Make status bar transparent
+          statusBarIconBrightness: Brightness.light, // For dark icons on light content
+          statusBarBrightness: Brightness.dark, // For iOS: `dark` for dark text/icons, `light` for light text/icons
+          systemNavigationBarColor: Color(0xFF1b1b1b), // Match your background color
+          systemNavigationBarIconBrightness: Brightness.light, // Set icon brightness
+        ),
+      );
+    });
   }
 
   @override
@@ -22,46 +36,16 @@ class _LoadingPageState extends State<LoadingPage> {
     final viewModel = Provider.of<StartupViewModel>(context);
 
     if (viewModel.isLoggedIn == null) {
+      final screenWidth = MediaQuery.of(context).size.width;
+      final imageWidth = screenWidth * 0.7;
+
       return Scaffold(
-        body: Container(
-          color: const Color(
-            0xFF4AC4BF,
-          ), // The greenish-blue color from your image
-          child: const Center(
-            child: Column(
-              // Use Column to arrange widgets vertically
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Shwee Shaung Daily',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 30,
-                    fontFamily:
-                        'Pacifico', // Ensure this font is added to your pubspec.yaml
-                  ),
-                ),
-                SizedBox(
-                  height: 100,
-                ), // Space between "Shwee Shaung Daily" and "Loading..."
-                Text(
-                  'Loading...',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    // You can also apply a fontFamily here if desired, e.g., fontFamily: 'Pacifico',
-                  ),
-                ),
-                SizedBox(
-                  height: 20,
-                ), // Space between "Loading..." and the indicator
-                CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Colors.white,
-                  ), // White loading indicator
-                ),
-              ],
-            ),
+        backgroundColor: const Color(0xFF1b1b1b), // Your desired dark background
+        body: Center(
+          child: Image.asset(
+            "assets/icons/45.png",
+            width: imageWidth,
+            fit: BoxFit.contain,
           ),
         ),
       );
@@ -69,5 +53,3 @@ class _LoadingPageState extends State<LoadingPage> {
     return viewModel.isLoggedIn! ? const HomePage() : const LandingPage();
   }
 }
-
-// To run this example:

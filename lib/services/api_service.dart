@@ -95,7 +95,7 @@ class ApiService {
     return response.statusCode == 201;
   }
 
-  static Future<void> logout() async {
+  static Future<bool> logout() async {
     final tokens = await TokenService.loadTokens();
     try {
       await http.post(
@@ -103,8 +103,9 @@ class ApiService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'refreshToken': tokens!.refreshToken}),
       );
+      return true;
     } catch (e) {
-      print('Logout failed: $e');
+      return false;
     }
   }
 
@@ -433,8 +434,49 @@ class ApiService {
   }
 
 
-  static Future<List<dynamic>> getAudios() async {
+  static Future<List<dynamic>> getAudiosByEmailForTeacher() async {
     final uri = Uri.parse('$feedBaseUrl/audio');
+    try{
+    final response = await AuthorizedHttpService.sendAuthorizedRequest(
+      uri,
+      method: 'GET',
+    );
+
+    if (response != null && response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data;
+    } else {
+      return [];
+    }
+  
+  } catch (e) {
+      throw Exception('Error fetching audio files: $e');
+    }
+  }
+
+
+  static Future<List<dynamic>> getAudiosOfRector() async {
+    final uri = Uri.parse('$feedBaseUrl/audio/rector');
+    try{
+    final response = await AuthorizedHttpService.sendAuthorizedRequest(
+      uri,
+      method: 'GET',
+    );
+
+    if (response != null && response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data;
+    } else {
+      return [];
+    }
+  
+  } catch (e) {
+      throw Exception('Error fetching audio files: $e');
+    }
+  }
+
+  static Future<List<dynamic>> getAudiosForStudent() async {
+    final uri = Uri.parse('$feedBaseUrl/audio/student');
     try{
     final response = await AuthorizedHttpService.sendAuthorizedRequest(
       uri,
@@ -757,6 +799,22 @@ static Future<bool> deleteStory(String purl)async {
   return false;
 }
 
+
+static Future<bool> deleteAudio(String purl)async {
+  final url = Uri.parse('$feedBaseUrl/audio?url=$purl');
+   final response = await AuthorizedHttpService.sendAuthorizedRequest(
+    url,
+    method: 'DELETE',
+  );
+  print(response!.body);
+    if(response==null){
+    return false;
+  }
+  if(response.statusCode==200) {
+    return true;
+  }
+  return false;
+}
 
 
 }

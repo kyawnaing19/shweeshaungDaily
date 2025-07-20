@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shweeshaungdaily/splash_screen.dart';
 import 'package:shweeshaungdaily/view_models/StartupViewModel.dart';
 import 'package:shweeshaungdaily/view_models/auth_viewmodel.dart';
 import 'package:shweeshaungdaily/view_models/reg_viewmodel.dart';
-import 'package:shweeshaungdaily/views/loading.dart';
 import 'package:flutter_quill/flutter_quill.dart'; // Keep this for FlutterQuillLocalizations.delegate
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:shweeshaungdaily/views/loading.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

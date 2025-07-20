@@ -41,8 +41,8 @@ class _ReactorAudioPageState extends State<ReactorAudioPage>
     });
     try {
       // TODO: Replace with correct API calls if rector and teacher audios are different
-      final rector = await ApiService.getAudios();
-      final teacher = await ApiService.getAudios();
+      final rector = await ApiService.getAudiosOfRector();
+      final teacher = await ApiService.getAudiosForStudent();
       setState(() {
         rectorAudioList = rector;
         teacherAudioList = teacher;

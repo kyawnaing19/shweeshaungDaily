@@ -11,11 +11,13 @@ import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/services/token_service.dart';
 import 'package:shweeshaungdaily/utils/audio_timeformat.dart';
 import 'package:shweeshaungdaily/views/audio_post/audio_player_widget.dart';
- Future<bool> _checkIfTeacher() async {
-    final role = await TokenService.checkIfAdmin();
-    print('role: $role');
-    return role == 'true';
-  }
+
+Future<bool> _checkIfTeacher() async {
+  final role = await TokenService.checkIfAdmin();
+  print('role: $role');
+  return role == 'true';
+}
+
 final Map<String, String> audienceValueMap = {
   'Public': 'Public',
   'Teacher': 'Teacher',
@@ -40,8 +42,6 @@ Future<void> updateAudienceMap() async {
   // Now 'audienceValueMap' is updated based on the teacher status// For demonstration
 }
 
-
-
 const List<String> majorsList = ['CST', 'CS', 'CT'];
 
 class AudioRecorderScreen extends StatefulWidget {
@@ -52,7 +52,7 @@ class AudioRecorderScreen extends StatefulWidget {
 }
 
 class _AudioRecorderScreenState extends State<AudioRecorderScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin { // MODIFIED: Changed to TickerProviderStateMixin
   final AudioRecorder _audioRecorder = AudioRecorder();
   final TextEditingController _titleController = TextEditingController();
   final List<Animation<double>> _animations = [];
@@ -82,24 +82,24 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen>
     super.initState();
     updateAudienceMap();
     _titleController.addListener(() => setState(() {}));
+    // MODIFIED: Initialize _animationController here once
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
     _fetchAudios();
     _checkIfTeacherList();
-
   }
 
   Future<void> _checkIfTeacherList() async {
     final role = await TokenService.checkIfAdmin();
-    if(role == 'true') {
-      _selectedAudience='Public';
-    }else{
+    if (role == 'true') {
+      _selectedAudience = 'Public';
+    } else {
       _selectedAudience = 'Choose';
     }
-    setState(() {
-      
-    });
+    setState(() {});
   }
-
-  
 
   void _onTitleChanged() {
     setState(() {});
@@ -110,6 +110,7 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen>
     _titleController.removeListener(_onTitleChanged);
     _titleController.dispose();
     _audioRecorder.dispose();
+    _animationController.dispose(); // MODIFIED: Dispose the animation controller
     super.dispose();
   }
 
@@ -122,12 +123,12 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen>
   }
 
   Future<void> _fetchAudios() async {
-    audioList = await ApiService.getAudios();
+    audioList = await ApiService.getAudiosByEmailForTeacher();
     cardExpanded = List.generate(audioList.length, (index) => false);
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    );
+
+    // MODIFIED: Reset the animation controller instead of re-initializing it
+    _animationController.reset();
+
     _animations.clear();
     for (int i = 0; i < audioList.length; i++) {
       final delay = i * 300;
@@ -144,7 +145,10 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen>
     setState(() {
       isLoading = false;
     });
-    _animationController.forward();
+    // MODIFIED: Only forward if there are items to animate
+    if (audioList.isNotEmpty) {
+      _animationController.forward();
+    }
   }
 
   /// Starts the audio recording process.
@@ -254,20 +258,24 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen>
         title: _titleController.text,
         audience:
             _selectedAudience == 'Public'
-                ? 'public'
-                : _selectedAudience == 'Majors' &&
-                    _selectedMajor != null &&
-                    _selectedSemester != null
-                ? '${_selectedSemester?.replaceAll('Sem ', '') ?? ''} ${_selectedMajor ?? ''}'
-                : _selectedAudience.startsWith('Sem ')
+    ? 'public'
+    : _selectedAudience == 'Majors' &&
+            _selectedMajor != null &&
+            _selectedSemester != null
+        ? '${_selectedSemester?.replaceAll('Sem ', '') ?? ''} ${_selectedMajor ?? ''}'
+        : _selectedAudience == 'Teacher'
+            ? 'teacher'
+            : _selectedAudience.startsWith('Sem ')
                 ? '${_selectedAudience.replaceAll('Sem ', '')} CST'
                 : _selectedAudience,
+
       );
 
       // Handle success
       setState(() {
         _statusText = "Upload successful!";
         _audioPath = null; // Clear path after successful upload
+        _fetchAudios(); 
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -421,34 +429,41 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen>
                                     separatorBuilder:
                                         (_, __) => const SizedBox(height: 12),
                                     itemBuilder: (context, index) {
-                                      return AnimatedBuilder(
-                                        animation: _animations[index],
-                                        builder: (context, child) {
-                                          final animationValue =
-                                              _animations[index].value.clamp(
-                                                0.0,
-                                                1.0,
-                                              );
-                                          return Transform.translate(
-                                            offset: Offset(
-                                              0,
-                                              (1 - animationValue) * 100,
-                                            ),
-                                            child: Opacity(
-                                              opacity: animationValue,
-                                              child: Transform.scale(
-                                                scale:
-                                                    0.8 + 0.2 * animationValue,
-                                                child: child,
+                                      // MODIFIED: Added null check for animation
+                                      final animation = index < _animations.length ? _animations[index] : null;
+                                      return animation != null
+                                          ? AnimatedBuilder(
+                                              animation: animation,
+                                              builder: (context, child) {
+                                                final animationValue =
+                                                    animation.value.clamp(
+                                                      0.0,
+                                                      1.0,
+                                                    );
+                                                return Transform.translate(
+                                                  offset: Offset(
+                                                    0,
+                                                    (1 - animationValue) * 100,
+                                                  ),
+                                                  child: Opacity(
+                                                    opacity: animationValue,
+                                                    child: Transform.scale(
+                                                      scale:
+                                                          0.8 + 0.2 * animationValue,
+                                                      child: child,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                              child: _buildAudioCard(
+                                                index,
+                                                cardExpanded[index],
                                               ),
-                                            ),
-                                          );
-                                        },
-                                        child: _buildAudioCard(
-                                          index,
-                                          cardExpanded[index],
-                                        ),
-                                      );
+                                            )
+                                          : _buildAudioCard( // Fallback if animation is not ready
+                                              index,
+                                              cardExpanded[index],
+                                            );
                                     },
                                   ),
                         ),
@@ -528,6 +543,60 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen>
                     ],
                   ),
                 ),
+                // --- DELETE ICON ADDED HERE ---
+                IconButton(
+                  icon: const Icon(
+                    Icons.delete,
+                    color: Color(0xFFE57373), // Reddish color for delete
+                  ),
+                  onPressed: () async {
+                    // Show confirmation dialog
+                    final confirmDelete = await showDialog<bool>(
+                      context: context,
+                      builder:
+                          (context) => AlertDialog(
+                            title: Text('Delete Audio'),
+                            content: Text(
+                              'Are you sure you want to delete this audio?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed:
+                                    () =>
+                                        Navigator.pop(context, false), // Cancel
+                                child: Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed:
+                                    () =>
+                                        Navigator.pop(context, true), // Confirm
+                                child: Text(
+                                  'Delete',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          ),
+                    );
+
+                    // If user confirmed deletion
+                    if (confirmDelete == true) {
+                      final boolean = await ApiService.deleteAudio(
+                        audioUrl.substring(audioUrl.indexOf('tfeedphoto')),
+                      );
+
+                      if (boolean) {
+                        _fetchAudios(); // Refresh the list
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to delete audio')),
+                        );
+                      }
+                    }
+                  },
+                  tooltip: 'Delete Audio',
+                ),
+
                 AnimatedRotation(
                   turns: isExpanded ? 0.5 : 0,
                   duration: const Duration(milliseconds: 300),
@@ -674,7 +743,9 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen>
     }
 
     final isButtonEnabled =
-        _audioPath != null && _titleController.text.trim().isNotEmpty && _selectedAudience != 'Choose';
+        _audioPath != null &&
+        _titleController.text.trim().isNotEmpty &&
+        _selectedAudience != 'Choose';
 
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 300),
@@ -755,25 +826,22 @@ class _ShowSharesDialogState extends State<ShowSharesDialog> {
   bool? isAdmin;
 
   Future<void> _loadUserRole() async {
-  final result = await _checkIfTeacher(); // Your async role check
-  setState(() {
-    isAdmin = result;
-  });
-}
- 
-Future<void> updateAudienceMap() async {
-  final isTeacher = await _checkIfTeacher(); // ⬅️ AWAIT here!
-
-  if (!isTeacher) {
-    _audienceList.remove('Public');
-    _audienceList.remove('Teacher');
+    final result = await _checkIfTeacher(); // Your async role check
     setState(() {
-      
+      isAdmin = result;
     });
   }
-  // Now 'audienceValueMap' is updated based on the teacher status// For demonstration
-}
 
+  Future<void> updateAudienceMap() async {
+    final isTeacher = await _checkIfTeacher(); // ⬅️ AWAIT here!
+
+    if (!isTeacher) {
+      _audienceList.remove('Public');
+      _audienceList.remove('Teacher');
+      setState(() {});
+    }
+    // Now 'audienceValueMap' is updated based on the teacher status// For demonstration
+  }
 
   static final List<String> _audienceList = [
     'Public',
@@ -794,10 +862,10 @@ Future<void> updateAudienceMap() async {
     _loadUserRole();
     updateAudienceMap(); // Call the function to update the audience map
   }
- 
+
   @override
   Widget build(BuildContext context) {
-     var checkIf = _checkIfTeacher();
+    var checkIf = _checkIfTeacher();
 
     return WillPopScope(
       onWillPop: () async {
@@ -890,9 +958,9 @@ Future<void> updateAudienceMap() async {
                                   ),
                               itemBuilder: (context, index) {
                                 final item = _audienceList[index];
-                               
+
                                 final bool isSemWithMajors;
-                                if(isAdmin==true) {
+                                if (isAdmin == true) {
                                   isSemWithMajors = index >= 4;
                                 } else {
                                   isSemWithMajors = index >= 2;

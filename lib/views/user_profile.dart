@@ -81,11 +81,12 @@ class _UserProfileViewState extends State<UserProfile> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('cached_story', jsonEncode(result));
 
-      final imageUrls = result
-          .map((item) => item['url'] as String?)
-          .where((url) => url != null && url.isNotEmpty)
-          .map((url) => '$baseUrl/$url')
-          .toSet();
+      final imageUrls =
+          result
+              .map((item) => item['url'] as String?)
+              .where((url) => url != null && url.isNotEmpty)
+              .map((url) => '$baseUrl/$url')
+              .toSet();
 
       // Ensure ImageCacheManager.clearUnusedStoryImages is implemented to handle network images
       await ImageCacheManager.clearUnusedStoryImages(imageUrls);
@@ -141,166 +142,176 @@ class _UserProfileViewState extends State<UserProfile> {
 
     return Scaffold(
       backgroundColor: kBackgroundColor,
-      body: _loading
-          ? const Center(
-              child: CircularProgressIndicator(color: kPrimaryColor),
-            )
-          : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: kHorizontalPadding,
-                ),
-                child: Column(
-                  children: [
-                    const SizedBox(height: kHorizontalPadding),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start, // This aligns children to the start horizontally
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              if (finalProfileImageUrl != null) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => FullscreenImageView(
-                                      imageUrl: finalProfileImageUrl,
-                                      isAsset: false, // It's a network image
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
-                            child: CircleAvatar(
-                              radius: 60,
-                              backgroundColor: kWhite,
-                              child: ClipOval(
-                                // Added ClipOval here
-                                child: SizedBox(
-                                  // Sized box to ensure proper sizing for ClipOval
-                                  width: 112, // Corresponds to radius * 2
-                                  height: 112, // Corresponds to radius * 2
-                                  child: finalProfileImageUrl != null
-                                      ? AuthorizedImage(
-                                          // Add a Key here based on the image URL
-                                          key: ValueKey(finalProfileImageUrl),
-                                          imageUrl: finalProfileImageUrl,
-                                          width: 112,
-                                          height: 112,
-                                          fit: BoxFit.cover,
-                                        )
-                                      : const Icon(
-                                          Icons.person,
-                                          size: 60,
-                                          color: kPrimaryColor,
-                                        ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: kVerticalSpacing),
-                          Text(
-                            userNickname,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: kPrimaryColor,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Text(
-                                '@$userName',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: kPrimaryColor,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              GestureDetector(
-                                onTap: () async {
-                                  // Navigate to ProfileUpdateScreen and wait for a result
-                                  final result = await Navigator.push(
+      body:
+          _loading
+              ? const Center(
+                child: CircularProgressIndicator(color: kPrimaryColor),
+              )
+              : SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: kHorizontalPadding,
+                  ),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: kHorizontalPadding),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment
+                                  .start, // This aligns children to the start horizontally
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                if (finalProfileImageUrl != null) {
+                                  Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) =>
-                                          const ProfileUpdateScreen(),
+                                      builder:
+                                          (_) => FullscreenImageView(
+                                            imageUrl: finalProfileImageUrl,
+                                            isAsset:
+                                                false, // It's a network image
+                                          ),
                                     ),
                                   );
-
-                                  // If the result indicates a successful update (e.g., true), refresh the profile
-                                  if (result == true) {
-                                    debugPrint('Profile updated, re-fetching profile data...');
-                                    await _fetchProfile();
-                                    // No need to re-fetch stories unless profile changes affect story display logic
-                                  }
-                                },
-                                child: const Icon(
-                                  Icons.edit,
-                                  color: kPrimaryColor,
-                                  size: 30,
+                                }
+                              },
+                              child: CircleAvatar(
+                                radius: 60,
+                                backgroundColor: kWhite,
+                                child: ClipOval(
+                                  // Added ClipOval here
+                                  child: SizedBox(
+                                    // Sized box to ensure proper sizing for ClipOval
+                                    width: 112, // Corresponds to radius * 2
+                                    height: 112, // Corresponds to radius * 2
+                                    child:
+                                        finalProfileImageUrl != null
+                                            ? AuthorizedImage(
+                                              // Add a Key here based on the image URL
+                                              key: ValueKey(
+                                                finalProfileImageUrl,
+                                              ),
+                                              imageUrl: finalProfileImageUrl,
+                                              width: 112,
+                                              height: 112,
+                                              fit: BoxFit.cover,
+                                            )
+                                            : const Icon(
+                                              Icons.person,
+                                              size: 60,
+                                              color: kPrimaryColor,
+                                            ),
+                                  ),
                                 ),
                               ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    _buildInfoCard(userBio),
-                    const SizedBox(height: 18),
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Album',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: kPrimaryColor,
+                            ),
+                            const SizedBox(height: kVerticalSpacing),
+                            Text(
+                              userNickname,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: kPrimaryColor,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Text(
+                                  '@$userName',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: kPrimaryColor,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                GestureDetector(
+                                  onTap: () async {
+                                    // Navigate to ProfileUpdateScreen and wait for a result
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) =>
+                                                const ProfileUpdateScreen(),
+                                      ),
+                                    );
+
+                                    // If the result indicates a successful update (e.g., true), refresh the profile
+                                    if (result == true) {
+                                      debugPrint(
+                                        'Profile updated, re-fetching profile data...',
+                                      );
+                                      await _fetchProfile();
+                                      // No need to re-fetch stories unless profile changes affect story display logic
+                                    }
+                                  },
+                                  child: const Icon(
+                                    Icons.edit,
+                                    color: kPrimaryColor,
+                                    size: 30,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: kVerticalSpacing),
-                    // Show a message if album is empty and not loading
-                    if (_stories.isEmpty && !_loading)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 20.0),
+                      const SizedBox(height: 18),
+                      _buildInfoCard(userBio),
+                      const SizedBox(height: 18),
+                      const Align(
+                        alignment: Alignment.centerLeft,
                         child: Text(
-                          'Your album is empty. Add your first photo!',
+                          'Album',
                           style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: kPrimaryColor,
                           ),
-                          textAlign: TextAlign.center,
                         ),
                       ),
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _stories.length + 1,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12.0,
-                        mainAxisSpacing: 12.0,
-                        childAspectRatio: 0.8,
+                      const SizedBox(height: kVerticalSpacing),
+                      // Show a message if album is empty and not loading
+                      if (_stories.isEmpty && !_loading)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20.0),
+                          child: Text(
+                            'Your album is empty. Add your first photo!',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _stories.length + 1,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 12.0,
+                              mainAxisSpacing: 12.0,
+                              childAspectRatio: 0.8,
+                            ),
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            return _buildAddNewCard();
+                          } else {
+                            return _buildPhotoCard(index - 1, context);
+                          }
+                        },
                       ),
-                      itemBuilder: (context, index) {
-                        if (index == 0) {
-                          return _buildAddNewCard();
-                        } else {
-                          return _buildPhotoCard(index - 1, context);
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 30),
-                  ],
+                      const SizedBox(height: 30),
+                    ],
+                  ),
                 ),
               ),
-            ),
     );
   }
 
@@ -363,17 +374,21 @@ class _UserProfileViewState extends State<UserProfile> {
         Navigator.push(
           context,
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                GalleryViewerPage(
-              images: _stories
-                  .map(
-                    (item) => item['url'] != null ? '$baseUrl/${item['url']}' : '',
-                  )
-                  .where((url) => url.isNotEmpty)
-                  .toList(),
-              initialIndex: index,
-              onDeleteItem: _onDeleteItem,
-            ),
+            pageBuilder:
+                (context, animation, secondaryAnimation) => GalleryViewerPage(
+                  images:
+                      _stories
+                          .map(
+                            (item) =>
+                                item['url'] != null
+                                    ? '$baseUrl/${item['url']}'
+                                    : '',
+                          )
+                          .where((url) => url.isNotEmpty)
+                          .toList(),
+                  initialIndex: index,
+                  onDeleteItem: _onDeleteItem,
+                ),
             transitionDuration: Duration.zero,
             transitionsBuilder: (
               context,
@@ -494,19 +509,20 @@ class _FullscreenImageViewerState extends State<FullscreenImageView>
             child: Center(
               child: Transform.translate(
                 offset: _offset,
-                child: widget.isAsset
-                    ? Image.asset(
-                        widget.imageUrl,
-                        width: MediaQuery.of(context).size.width * 0.9,
-                        height: MediaQuery.of(context).size.height * 0.7,
-                        fit: BoxFit.contain,
-                      )
-                    : AuthorizedImage(
-                        imageUrl: widget.imageUrl,
-                        width: MediaQuery.of(context).size.width * 0.9,
-                        height: MediaQuery.of(context).size.height * 0.7,
-                        fit: BoxFit.contain,
-                      ),
+                child:
+                    widget.isAsset
+                        ? Image.asset(
+                          widget.imageUrl,
+                          width: MediaQuery.of(context).size.width * 0.9,
+                          height: MediaQuery.of(context).size.height * 0.7,
+                          fit: BoxFit.contain,
+                        )
+                        : AuthorizedImage(
+                          imageUrl: widget.imageUrl,
+                          width: MediaQuery.of(context).size.width * 0.9,
+                          height: MediaQuery.of(context).size.height * 0.7,
+                          fit: BoxFit.contain,
+                        ),
               ),
             ),
           ),
@@ -619,60 +635,69 @@ class _GalleryViewerPageState extends State<GalleryViewerPage> {
                     onPressed: () => Navigator.pop(context),
                   ),
                   IconButton(
-  icon: const Icon(Icons.delete, color: Colors.white),
-  onPressed: () async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Story'),
-        content: const Text('Are you sure you want to delete this story? This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
+                    icon: const Icon(Icons.delete, color: Colors.white),
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder:
+                            (context) => AlertDialog(
+                              title: const Text('Delete Story'),
+                              content: const Text(
+                                'Are you sure you want to delete this story? This action cannot be undone.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed:
+                                      () => Navigator.of(context).pop(false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed:
+                                      () => Navigator.of(context).pop(true),
+                                  child: const Text(
+                                    'Delete',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                              ],
+                            ),
+                      );
 
-    if (confirm == true) {
-      final success = await ApiService.deleteStory(
-        widget.images[currentIndex].substring(
-          widget.images[currentIndex].indexOf('tfeedphoto'),
-        ),
-      );
+                      if (confirm == true) {
+                        final success = await ApiService.deleteStory(
+                          widget.images[currentIndex].substring(
+                            widget.images[currentIndex].indexOf('tfeedphoto'),
+                          ),
+                        );
 
-      if (success) {
-        if (widget.onDeleteItem != null) {
-          widget.onDeleteItem!(currentIndex);
+                        if (success) {
+                          if (widget.onDeleteItem != null) {
+                            widget.onDeleteItem!(currentIndex);
 
-          // Pop depending on remaining images
-          if (widget.images.length <= 1) {
-            Navigator.pop(context);
-          } else {
-            Navigator.pop(context); // You can also auto-navigate to next image here
-          }
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Failed to delete story.'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-      }
-    }
-  },
-)
-
+                            // Pop depending on remaining images
+                            if (widget.images.length <= 1) {
+                              Navigator.pop(context);
+                            } else {
+                              Navigator.pop(
+                                context,
+                              ); // You can also auto-navigate to next image here
+                            }
+                          }
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('Failed to delete story.'),
+                              backgroundColor: Colors.red,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
                 ],
               ),
             ),

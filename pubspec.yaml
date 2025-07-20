@@ -62,10 +62,13 @@ dependencies:
   comment_box: ^0.0.18
   flutter_svg: ^2.2.0
   shimmer: ^3.0.0
+  lottie: ^3.3.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: "^0.14.4"
+  flutter_native_splash: ^2.4.6
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -74,15 +77,33 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
 
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icons/icon3.png"
+  min_sdk_android: 21 # android min sdk min:16, default 21
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
+flutter_native_splash:
+  color: "#42a5f5" # Or any color code for your background
+  image: assets/icons/45.png # Path to your splash image
+  android: true
+  android_gravity: center
 
-# The following section is specific to Flutter packages.
+  android_12:
+    color: "#42a5f5" # Or any color code for your background
+    image: assets/icons/45.png # Path to your splash image
+    android: true
+    android_gravity: center
+
+
 flutter:
   assets:
     - assets/images/
     - assets/audio/
     - assets/icons/
+    - assets/lottie/
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

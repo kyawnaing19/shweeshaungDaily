@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shweeshaungdaily/colors.dart';
+import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/views/bottomNavBar.dart';
+import 'package:shweeshaungdaily/views/signReg/landing.dart';
 
 import 'Home.dart';
 import 'note/note_list_view.dart';
@@ -128,17 +130,46 @@ class _HomePageState extends State<HomePage> {
           ),
           actions: [
             IconButton(
-              padding: const EdgeInsets.only(right: 20),
-              icon: const Icon(Icons.power_settings_new_outlined, color: Colors.white),
-              onPressed: () {
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (context) => const SettingsCard(),
-                //   ),
-                // );
-              },
-            ),
+  padding: const EdgeInsets.only(right: 20),
+  icon: const Icon(Icons.logout_outlined, color: Colors.white),
+  onPressed: () async {
+    // Show confirmation dialog
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Confirm Logout'),
+        content: Text('Are you sure you want to log out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false), // Cancel
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true), // Confirm
+            child: Text('Logout'),
+          ),
+        ],
+      ),
+    );
+
+    // If user confirmed
+    if (shouldLogout == true) {
+      final success = await ApiService.logout();
+      if (success) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => LandingPage()),
+          (Route<dynamic> route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Logout Failed')),
+        );
+      }
+    }
+  },
+),
+
           ],
         );
       default:
