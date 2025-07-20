@@ -18,6 +18,7 @@ import 'package:shweeshaungdaily/views/mail/mail_view.dart';
 
 import 'package:shweeshaungdaily/views/comment_section.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:shweeshaungdaily/views/widget_loading.dart';
 import 'package:shweeshaungdaily/widget/copyable_text.dart';
 
 class HomeScreenPage extends StatefulWidget {
@@ -575,43 +576,71 @@ class _HomePageState extends State<HomeScreenPage>
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
+                    // 1. Show Shimmer Loading when data is being fetched
                     if (isFeedLoading) {
-                      return ShimmerLoadingPlaceholder(
-                        height: MediaQuery.of(context).size.height * 0.3,
-                        width: MediaQuery.of(context).size.width - 32,
-                      );
-                    }
-
-                    if (feedErrorMessage != null) {
                       return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 32.0),
-                        child: Center(child: Text(feedErrorMessage!)),
+                        key: ValueKey(
+                          'shimmer_item_$index',
+                        ), // Essential for lists
+                        padding: const EdgeInsets.only(
+                          bottom: 16.0,
+                        ), // Spacing between shimmer items
+                        child:
+                            const ShimmerClassCardSkeleton(), // Your shimmer skeleton widget
                       );
                     }
 
-                    if (feedItems!.isEmpty) {
+                    // 2. Show Error Message if there's an error and not loading
+                    if (feedErrorMessage != null) {
+                      // This case should ideally only return a single error message,
+                      // so ensure childCount for error state is 1.
+                      return Padding(
+                        key: const ValueKey(
+                          'feed_error_message',
+                        ), // Unique key for the error message
+                        padding: const EdgeInsets.symmetric(vertical: 32.0),
+                        child: Center(
+                          child: Text(
+                            feedErrorMessage!,
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 16,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      );
+                    }
+
+                    // 3. Show "No items" message if list is empty after loading
+                    if (feedItems == null || feedItems!.isEmpty) {
+                      // This case should also ideally return a single "no items" message.
                       return const Padding(
+                        key: ValueKey(
+                          'no_feed_items_message',
+                        ), // Unique key for no items message
                         padding: EdgeInsets.symmetric(vertical: 32.0),
                         child: Center(child: Text('No feed items available.')),
                       );
                     }
 
+                    // 4. Display Actual Feed Item if data is loaded and available
                     final item = feedItems![index];
                     final String user =
-                        item['teacherName']; // Replace with actual user
-                    final String timeAgo = item['createdAt'] ?? '';
-                    final String message = item['text'] ?? '';
+                        item['teacherName'] as String? ?? 'Unknown Teacher';
+                    final String timeAgo = item['createdAt'] as String? ?? '';
+                    final String message = item['text'] as String? ?? '';
                     final String? imageUrl =
                         (item['photoUrl'] != null && item['photoUrl'] != '')
                             ? '$baseUrl/${item['photoUrl']}'
                             : null;
-                    // Count likes and comments from the response arrays
                     final int likeCount = (item['likes'] as List?)?.length ?? 0;
                     final int commentCount =
                         (item['comments'] as List?)?.length ?? 0;
 
                     return FutureBuilder<String?>(
-                      future: TokenService.getUserName(),
+                      future:
+                          TokenService.getUserName(), // Assumes TokenService is accessible
                       builder: (context, snapshot) {
                         final List<String> likes = List<String>.from(
                           item['likes'] ?? [],
@@ -619,10 +648,16 @@ class _HomePageState extends State<HomeScreenPage>
                         final userName = snapshot.data ?? '';
                         final bool isLikedByMe = likes.contains(userName);
                         return Padding(
+                          key: ValueKey(
+                            item['id'] ?? index,
+                          ), // Use item ID for unique key if available
                           padding: const EdgeInsets.only(bottom: 16.0),
                           child: _buildFeedCard(
+                            // Your existing _buildFeedCard function
                             user: user,
-                            timeAgo: formatFacebookStyleTime(timeAgo),
+                            timeAgo: formatFacebookStyleTime(
+                              timeAgo,
+                            ), // Assumes formatFacebookStyleTime is accessible
                             message: message,
                             imageUrl: imageUrl,
                             likeCount: likeCount,
@@ -635,15 +670,19 @@ class _HomePageState extends State<HomeScreenPage>
                       },
                     );
                   },
+                  // --- Crucial: Define childCount based on state ---
                   childCount: () {
-                    if (isFeedLoading ||
-                        feedErrorMessage != null ||
+                    if (isFeedLoading) {
+                      return 5; // Show 5 shimmer items while loading. Adjust this number as needed.
+                    } else if (feedErrorMessage != null ||
+                        feedItems == null ||
                         feedItems!.isEmpty) {
-                      return 1;
+                      return 1; // Show 1 item for error message or 'no items available' message.
                     } else {
-                      return feedItems?.length;
+                      return feedItems!
+                          .length; // Show the actual number of feed items.
                     }
-                  }(),
+                  }(), // The `()` immediately invokes the anonymous function.
                 ),
               ),
             ),

@@ -16,3 +16,5 @@ const Color kLunchTextAccent = Colors.deepOrangeAccent;
 const Color kWhite = Colors.white;
 const Color kGrey = Colors.grey;
 const Color kErrorColor = Color.fromARGB(255, 223, 29, 29);
+const Color kTextColor = Color(0xFF333333); // Dark text color
+const Color kLightTextColor = Color(0xFF666666);
