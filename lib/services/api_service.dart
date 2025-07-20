@@ -81,8 +81,7 @@ class ApiService {
     if (response.statusCode == 201) {
       return true;
     } else {
-      print('Registration failed with status code: ${response.statusCode}');
-      return false;
+      throw Exception(jsonDecode(response.body)['message']);
     }
   }
 

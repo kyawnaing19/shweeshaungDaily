@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/view_models/auth_viewmodel.dart';
 import 'package:shweeshaungdaily/view_models/reg_viewmodel.dart';
-import 'package:shweeshaungdaily/views/Home.dart';
+import 'package:shweeshaungdaily/views/main_screen.dart';
 import 'package:shweeshaungdaily/views/signReg/login.dart' show SignInPage;
 
 class StudentInfoPage extends StatefulWidget {
@@ -52,9 +52,11 @@ class _StudentInfoPageState extends State<StudentInfoPage> {
     final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
 
     bool success = false;
+    String message='';
     try {
       success = await authViewModel.register(regViewModel.user);
     } catch (e) {
+      message=e.toString();
       success = false;
     }
 
@@ -65,7 +67,7 @@ class _StudentInfoPageState extends State<StudentInfoPage> {
 
     if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to register. Please try again.')),
+         SnackBar(content: Text(message)),
       );
       return;
     }
@@ -76,7 +78,7 @@ class _StudentInfoPageState extends State<StudentInfoPage> {
     }
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (context) => HomeScreenPage()),
+      MaterialPageRoute(builder: (context) => HomePage()),
       (Route<dynamic> route) => false, // This removes all previous routes
     );
   }

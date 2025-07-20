@@ -107,7 +107,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
               profile['profileUrl']; // Assuming 'photoUrl' is the key\
           _userBio =
               (profile['bio']?.toString().trim().isNotEmpty ?? false)
-                  ? profile!['bio'].toString()
+                  ? profile['bio'].toString()
                   : 'Add a few words about yourself...';
 
           _isLoadingUser = false;
@@ -1069,8 +1069,9 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                               size: 22,
                             ),
                             onPressed: () async {
-                              if (feedId == null)
+                              if (feedId == null) {
                                 return; // Add null check for feedId
+                              }
                               if (isLiked) {
                                 print("is liked");
                                 final success = await ApiService.unlike(feedId);
@@ -1183,10 +1184,10 @@ class ShimmerLoadingPlaceholder extends StatelessWidget {
   final double width;
 
   const ShimmerLoadingPlaceholder({
-    Key? key,
+    super.key,
     required this.height,
     required this.width,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

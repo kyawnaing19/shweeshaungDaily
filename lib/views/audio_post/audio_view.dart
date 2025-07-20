@@ -55,7 +55,7 @@ class _ReactorAudioPageState extends State<ReactorAudioPage>
       errorMessage = null;
     });
     try {
-      var rector;
+      List rector;
       // TODO: Replace with correct API calls if rector and teacher audios are different
       if(isAdmin==true){
                rector = await ApiService.getAudiosByEmailForTeacher();

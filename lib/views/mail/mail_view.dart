@@ -409,7 +409,7 @@ class _MailBoxHomeState extends State<MailBoxHome> {
               children: [
                 const Icon(Icons.error_outline, color: Colors.red, size: 40),
                 const SizedBox(height: 10),
-                Text('${_inboxError.toString().replaceFirst('Exception: ', '')}',
+                Text(_inboxError.toString().replaceFirst('Exception: ', ''),
                     textAlign: TextAlign.center),
                 const SizedBox(height: 10),
                 // ElevatedButton(

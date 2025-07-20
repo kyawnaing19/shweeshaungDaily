@@ -12,7 +12,6 @@ import 'package:shweeshaungdaily/services/token_service.dart';
 import 'package:shweeshaungdaily/utils/audio_timeformat.dart';
 import 'package:shweeshaungdaily/utils/image_cache.dart';
 import 'package:shweeshaungdaily/views/audio_post/audio_view.dart';
-import 'package:shweeshaungdaily/views/bulletin_image_loading_view.dart';
 import 'package:shweeshaungdaily/views/image_full_view.dart';
 import 'package:shweeshaungdaily/views/mail/mail_view.dart';
 

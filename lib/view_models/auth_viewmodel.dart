@@ -65,8 +65,12 @@ class AuthViewModel extends ChangeNotifier {
   Future<bool> register(UserRegistrationData user) async {
     isLoading = true;
     notifyListeners();
-
-    final success = await ApiService.register(user);
+    bool success;
+    try{
+       success = await ApiService.register(user);
+    }catch (e){
+      throw Exception(e);
+    }
 
     isLoading = false;
     notifyListeners();
