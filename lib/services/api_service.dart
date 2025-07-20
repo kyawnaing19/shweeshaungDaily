@@ -600,8 +600,9 @@ class ApiService {
       throw Exception('Forbidden access');
     }
   }
+    Map<String, dynamic> data = jsonDecode(response.body);
 
-  throw Exception('Failed with status code: ${response.statusCode}');
+  throw Exception(data['message']);
 }
 
 
@@ -807,9 +808,6 @@ static Future<bool> deleteAudio(String purl)async {
     method: 'DELETE',
   );
   print(response!.body);
-    if(response==null){
-    return false;
-  }
   if(response.statusCode==200) {
     return true;
   }

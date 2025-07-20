@@ -14,44 +14,21 @@ class MailBoxHome extends StatefulWidget {
 }
 
 class _MailBoxHomeState extends State<MailBoxHome> {
-  int _currentTabIndex = 1; // 0 for Sent, 1 for Inbox
+  int _currentTabIndex = 0; // 0 for Sent, 1 for Inbox
 
   // Declare a Future to hold the result of the API call for sent mails.
   // This will be initialized in initState and potentially re-fetched.
   late Future<List<Map<String, dynamic>>?> _sentMailsFuture;
   late Future<List<Map<String, dynamic>>?> _getInboxMessages;
-
-  // Keep mock data for inbox for now, as you only provided getSentMails
+  
+  // Variable to store any error from fetching inbox messages
+  dynamic _inboxError;
 
   @override
   void initState() {
     super.initState();
     _fetchSentMails();
     _fetchAllMails();
-    // This will now fetch real data in production
-    // For testing, you can override it like this
-
-    _getInboxMessages = Future.value([
-      {
-        'text': 'Inbox.',
-        'recipientId': 123,
-        'recipientName': 'Recipient',
-        'semester': '2025 Fall',
-        'major': 'Computer Science',
-        'senderId': 456,
-        'senderName': 'Test Sender',
-        // No 'isDelivered' or 'time' in this sample
-      },
-      {
-        'text': 'Another test email about a project.',
-        'recipientId': 789,
-        'recipientName': 'Project Collaborator',
-        'semester': '2026 Spring',
-        'major': 'Electrical Engineering',
-        'senderId': null, // Anonymous
-        'senderName': null, // Anonymous
-      },
-    ]);
   }
 
   // A method to fetch sent mails
@@ -63,7 +40,17 @@ class _MailBoxHomeState extends State<MailBoxHome> {
 
   void _fetchAllMails() {
     setState(() {
-      //  _sentMailsFuture = ApiService.getSentMails();
+      _inboxError = null; // Clear any previous error
+      _getInboxMessages = ApiService.getAllMails().catchError((e) {
+        _inboxError = e; // Store the error
+        // You can also show a SnackBar here if you want immediate feedback
+        final snackBar = SnackBar(
+          content: Text('Failed to load inbox: ${e.toString()}'),
+          duration: const Duration(seconds: 3),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        return null; // Return null or an empty list to the FutureBuilder
+      });
     });
   }
 
@@ -74,11 +61,10 @@ class _MailBoxHomeState extends State<MailBoxHome> {
     // If you switch to the Sent tab, you might want to re-fetch to get the latest.
     if (index == 0) {
       _fetchSentMails();
+    }else{
+      _fetchAllMails();
     }
   }
-
-  // ... (Your _buildInboxCard and _buildSentCard methods remain the same for now)
-  //     (Consider updating LoveLetterScreen to accept message data later)
 
   Widget _buildInboxCard(Map<String, dynamic> message) {
     // Extract the relevant fields from the message map
@@ -401,7 +387,7 @@ class _MailBoxHomeState extends State<MailBoxHome> {
           if (result == true && _currentTabIndex == 0) {
             _fetchSentMails(); // Refresh only if on sent tab
           } else if (result == true && _currentTabIndex == 1) {
-            // If you implement getInboxMails, you'd fetch inbox here too
+            _fetchAllMails(); // Refresh inbox if on inbox tab
           }
         },
       ),
@@ -415,38 +401,39 @@ class _MailBoxHomeState extends State<MailBoxHome> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           // Show a loading indicator while data is being fetched
           return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          // Show an error message if something went wrong
+        } else if (_inboxError != null) {
+          // If an error was caught in _fetchAllMails
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(Icons.error_outline, color: Colors.red, size: 40),
                 const SizedBox(height: 10),
-                Text('Error: ${snapshot.error}', textAlign: TextAlign.center),
+                Text('${_inboxError.toString().replaceFirst('Exception: ', '')}',
+                    textAlign: TextAlign.center),
                 const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: _fetchAllMails, // Retry button
-                  child: const Text('Retry'),
-                ),
+                // ElevatedButton(
+                //   onPressed: _fetchAllMails, // Retry button
+                //   child: const Text('Retry'),
+                // ),
               ],
             ),
           );
         } else if (snapshot.hasData && snapshot.data != null) {
           // Data successfully fetched
-          final List<Map<String, dynamic>> sentMessages = snapshot.data!;
-          if (sentMessages.isEmpty) {
-            return const Center(child: Text('No sent messages yet.'));
+          final List<Map<String, dynamic>> inboxMessages = snapshot.data!;
+          if (inboxMessages.isEmpty) {
+            return const Center(child: Text('No inbox messages yet.'));
           }
           return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: sentMessages.length,
+            itemCount: inboxMessages.length,
             itemBuilder:
-                (context, index) => _buildInboxCard(sentMessages[index]),
+                (context, index) => _buildInboxCard(inboxMessages[index]),
           );
         } else {
           // No data available (e.g., API returned null, or empty list if no error)
-          return const Center(child: Text('No sent messages found.'));
+          return const Center(child: Text('No inbox messages found.'));
         }
       },
     );

@@ -25,9 +25,9 @@ class LoveLetterScreen extends StatelessWidget {
     final String letterContent =
         message['text'] ??
         'No content available.'; // Assuming 'text' holds the full letter content
-    final String date =
-        message['time'] ??
-        'Unknown Date'; // Assuming 'time' is available for date display
+    final String privacy =
+        message['senderName'] ??
+        'Unknown'; // Assuming 'time' is available for date display
 
     return Scaffold(
       backgroundColor: kBackgroundColor,
@@ -135,7 +135,7 @@ class LoveLetterScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: Text(
-                    date, // Use the extracted date
+                    privacy, // Use the extracted date
                     style: GoogleFonts.roboto(
                       fontSize: 14,
                       color: Colors.white,

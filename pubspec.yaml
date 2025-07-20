@@ -86,13 +86,13 @@ flutter_launcher_icons:
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 flutter_native_splash:
-  color: "#42a5f5" # Or any color code for your background
+  color: "#1b1b1b" # Or any color code for your background
   image: assets/icons/45.png # Path to your splash image
   android: true
   android_gravity: center
 
   android_12:
-    color: "#42a5f5" # Or any color code for your background
+    color: "#1b1b1b" # Or any color code for your background
     image: assets/icons/45.png # Path to your splash image
     android: true
     android_gravity: center

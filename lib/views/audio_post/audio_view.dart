@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shweeshaungdaily/services/token_service.dart';
 import '../../services/api_service.dart';
 import 'audio_player_widget.dart';
 import '../../utils/audio_timeformat.dart';
@@ -20,12 +21,26 @@ class _ReactorAudioPageState extends State<ReactorAudioPage>
   List<dynamic> teacherAudioList = [];
   bool isLoading = true;
   String? errorMessage;
-
+  bool? isAdmin;
   late TabController _tabController;
+
+  Future<bool> _checkIfTeacher() async {
+  final role = await TokenService.checkIfAdmin();
+  print('role: $role');
+  return role == 'true';
+}
+
+  Future<void> _loadUserRole() async {
+    final result = await _checkIfTeacher(); // Your async role check
+    setState(() {
+      isAdmin = result;
+    });
+  }
 
   @override
   void initState() {
     super.initState();
+    _loadUserRole();
     _tabController = TabController(length: 2, vsync: this);
     _animationController = AnimationController(
       vsync: this,
@@ -40,8 +55,14 @@ class _ReactorAudioPageState extends State<ReactorAudioPage>
       errorMessage = null;
     });
     try {
+      var rector;
       // TODO: Replace with correct API calls if rector and teacher audios are different
-      final rector = await ApiService.getAudiosOfRector();
+      if(isAdmin==true){
+               rector = await ApiService.getAudiosByEmailForTeacher();
+      }else{
+               rector = await ApiService.getAudiosOfRector();
+
+      }
       final teacher = await ApiService.getAudiosForStudent();
       setState(() {
         rectorAudioList = rector;

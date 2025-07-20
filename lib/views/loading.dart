@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+
 import 'package:provider/provider.dart';
+
 import 'package:shweeshaungdaily/view_models/StartupViewModel.dart';
+
 import 'package:shweeshaungdaily/views/main_screen.dart';
+
 import 'package:shweeshaungdaily/views/signReg/landing.dart';
 
 class LoadingPage extends StatefulWidget {
@@ -22,52 +26,38 @@ class _LoadingPageState extends State<LoadingPage> {
     final viewModel = Provider.of<StartupViewModel>(context);
 
     if (viewModel.isLoggedIn == null) {
+      // Get the screen size
+
+      final screenWidth = MediaQuery.of(context).size.width;
+
+      final screenHeight = MediaQuery.of(context).size.height;
+
+      // Calculate the desired width based on a percentage of the screen width.
+
+      // You might need to adjust 0.7 (70%) based on your splash screen's exact scaling.
+
+      final imageWidth = screenWidth * 0.7; // Example: 70% of screen width
+
       return Scaffold(
-        body: Container(
-          color: const Color(
-            0xFF4AC4BF,
-          ), // The greenish-blue color from your image
-          child: const Center(
-            child: Column(
-              // Use Column to arrange widgets vertically
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Shwee Shaung Daily',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 30,
-                    fontFamily:
-                        'Pacifico', // Ensure this font is added to your pubspec.yaml
-                  ),
-                ),
-                SizedBox(
-                  height: 100,
-                ), // Space between "Shwee Shaung Daily" and "Loading..."
-                Text(
-                  'Loading...',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    // You can also apply a fontFamily here if desired, e.g., fontFamily: 'Pacifico',
-                  ),
-                ),
-                SizedBox(
-                  height: 20,
-                ), // Space between "Loading..." and the indicator
-                CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Colors.white,
-                  ), // White loading indicator
-                ),
-              ],
-            ),
+        backgroundColor: const Color(0xFF1b1b1b),
+
+        body: Center(
+          child: Image.asset(
+            "assets/icons/45.png",
+
+            width: imageWidth,
+
+            // You can optionally set a height if your splash screen fixes height,
+
+            // but usually setting width with BoxFit.contain/fitWidth is enough to maintain aspect ratio.
+
+            // For a logo like this, BoxFit.contain is usually the best fit.
+            fit: BoxFit.contain, // Ensures the image maintains its aspect ratio
           ),
         ),
       );
     }
+
     return viewModel.isLoggedIn! ? const HomePage() : const LandingPage();
   }
 }
-
-// To run this example:

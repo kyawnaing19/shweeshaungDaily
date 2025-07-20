@@ -1,14 +1,23 @@
 // import 'dart:io'; // Removed for web compatibility
 import 'dart:typed_data';
-
+import 'dart:convert'; // Added for JSON encoding/decoding
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart'; // Added for date formatting
 
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/views/audio_post/audio_upload_page.dart';
+import 'package:shweeshaungdaily/services/authorize_image.dart'; // Added for AuthorizedImage
+import 'package:shweeshaungdaily/services/token_service.dart'; // Added for TokenService
+import 'package:shweeshaungdaily/utils/audio_timeformat.dart'; // Added for formatFacebookStyleTime
+import 'package:shweeshaungdaily/utils/image_cache.dart'; // Added for ImageCacheManager
+import 'package:shweeshaungdaily/views/comment_section.dart'; // Added for CommentSection
+import 'package:shweeshaungdaily/views/image_full_view.dart'; // Added for ImageFullView
+import 'package:shweeshaungdaily/widget/copyable_text.dart'; // Added for CopyableText
+import 'package:shared_preferences/shared_preferences.dart'; // Added for SharedPreferences
 
 final Map<String, String> audienceValueMap = {
   'Public': 'Public',
@@ -38,10 +47,17 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
   int _currentPage = 0;
   late final PageController _pageController;
 
+  // New state variables for feed management, copied from Home.dart
+  final String baseUrl = ApiService.base;
+  List<Map<String, dynamic>>? feedItems = [];
+  bool isFeedLoading = true;
+  String? feedErrorMessage;
+
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _currentPage);
+    _fetchFeed(); // Fetch feed when the page initializes
   }
 
   @override
@@ -50,11 +66,68 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     super.dispose();
   }
 
+  // New method: loadCachedFeed, copied from Home.dart
+  Future<List<Map<String, dynamic>>> loadCachedFeed() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cachedFeed = prefs.getString('cached_feed');
+    if (cachedFeed != null) {
+      try {
+        final decoded = jsonDecode(cachedFeed);
+        if (decoded is List) {
+          return decoded
+              .map((item) => Map<String, dynamic>.from(item as Map))
+              .toList();
+        }
+      } catch (e) {
+        debugPrint('Error decoding cached feed: $e');
+      }
+    }
+    return [];
+  }
+
+  // New method: _fetchFeed, copied from Home.dart
+  Future<void> _fetchFeed() async {
+    setState(() {
+      isFeedLoading = true;
+      feedErrorMessage = null;
+    });
+
+    try {
+      final result = await ApiService.getFeed();
+
+      // Save feed to local cache
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('cached_feed', jsonEncode(result));
+
+      setState(() {
+        feedItems = result ?? [];
+        isFeedLoading = false;
+      });
+
+      // 🧹 Clean up cached images not in feed
+      final imageUrls =
+          feedItems!
+              .map((item) => item['photoUrl'])
+              .where((url) => url != null && url != '')
+              .map((url) => '$baseUrl/$url')
+              .toSet();
+
+      await ImageCacheManager.clearUnusedFeedImages(imageUrls);
+    } catch (e) {
+      // API failed – try to reload cached feed
+      final cached = await loadCachedFeed();
+      setState(() {
+        feedItems = cached;
+        feedErrorMessage = 'Failed to load feed: ${e.toString()}'; // Display error message
+        isFeedLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBackgroundColor,
-
       body: SafeArea(
         child: Column(
           children: [
@@ -120,9 +193,8 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                         curve: Curves.ease,
                       );
                     },
-
                     child: Text(
-                      'Shares',
+                      'Bulletin',
                       style: TextStyle(
                         fontSize: 18,
                         color: kPrimaryDarkColor.withOpacity(
@@ -146,7 +218,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                       );
                     },
                     child: Text(
-                      'Stories',
+                      'Album',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
@@ -160,9 +232,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                       ),
                     ),
                   ),
-
                   SizedBox(width: 20),
-
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
@@ -196,158 +266,516 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
               ),
             ),
 
-            const SizedBox(height: 5),
+            const SizedBox(height: 15),
 
             // Swipeable Shares & Stories
-            SizedBox(
-              height: 555,
-              child: NotificationListener<ScrollNotification>(
-                onNotification: (notification) {
-                  // 👇 Absorb scroll gestures here to prevent them from bubbling up
-                  return true;
+            Expanded( // Use Expanded to allow the PageView to take available height
+              child: PageView(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentPage = index;
+                  });
                 },
-                child: PageView(
-                  controller: _pageController,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentPage = index;
-                    });
-                  },
-                  children: [
-                    // Shares Widget
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 20),
-                      padding: const EdgeInsets.only(top: 12),
-                      decoration: BoxDecoration(
-                        color: kPrimaryDarkColor,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        children: [
-                          GestureDetector(
+                children: [
+                  // Shares Widget
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.only(top: 12),
+                    decoration: BoxDecoration(
+                      color: kPrimaryDarkColor,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder:
+                                  (context) => const UploadSharesDialog(),
+                            );
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 15,
+                            ),
+                            decoration: BoxDecoration(
+                              color: kAccentColor,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: const [
+                                Expanded(
+                                  child: Text(
+                                    "What's on your mind?",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                                Icon(Icons.add, color: Colors.white),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16), // Spacing below the "What's on your mind?"
+
+                        // Bulletin Section (Copied from Home.dart)
+                        Expanded( // Wrap the bulletin content in Expanded to fill remaining space
+                          child: RefreshIndicator( // Added RefreshIndicator
+                            onRefresh: _fetchFeed, // Refresh feed on pull
+                            child: CustomScrollView( // Use CustomScrollView for SliverPadding
+                              slivers: [
+                                // SliverPersistentHeader(
+                                //   pinned: true,
+                                //   delegate: _SliverAppBarDelegate(
+                                //     minHeight: 60.0,
+                                //     maxHeight: 60.0,
+                                //     // child: Container(
+                                //     //   color: const Color(0xFFE0F7FA),
+                                //     //   padding: const EdgeInsets.symmetric(
+                                //     //     horizontal: 20,
+                                //     //     vertical: 16,
+                                //     //   ),
+                                //     //   child: const Text(
+                                //     //     "Bulletin",
+                                //     //     style: TextStyle(
+                                //     //       fontSize: 20,
+                                //     //       fontWeight: FontWeight.w700,
+                                //     //       color: Color(0xFF00897B),
+                                //     //       letterSpacing: 0.5,
+                                //     //     ),
+                                //     //   ),
+                                //     // ),
+                                //   ),
+                                // ),
+                                SliverPadding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  sliver: SliverList(
+                                    delegate: SliverChildBuilderDelegate(
+                                      (context, index) {
+                                        if (isFeedLoading) {
+                                          return ShimmerLoadingPlaceholder(
+                                            height: MediaQuery.of(context).size.height * 0.3,
+                                            width: MediaQuery.of(context).size.width - 32,
+                                          );
+                                        }
+
+                                        if (feedErrorMessage != null) {
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 32.0),
+                                            child: Center(child: Text(feedErrorMessage!)),
+                                          );
+                                        }
+
+                                        if (feedItems!.isEmpty) {
+                                          return const Padding(
+                                            padding: EdgeInsets.symmetric(vertical: 32.0),
+                                            child: Center(child: Text('No feed items available.')),
+                                          );
+                                        }
+
+                                        final item = feedItems![index];
+                                        final String user =
+                                            item['teacherName']; // Replace with actual user
+                                        final String timeAgo = item['createdAt'] ?? '';
+                                        final String message = item['text'] ?? '';
+                                        final String? imageUrl =
+                                            (item['photoUrl'] != null && item['photoUrl'] != '')
+                                                ? '$baseUrl/${item['photoUrl']}'
+                                                : null;
+                                        // Count likes and comments from the response arrays
+                                        final int likeCount = (item['likes'] as List?)?.length ?? 0;
+                                        final int commentCount =
+                                            (item['comments'] as List?)?.length ?? 0;
+
+                                        return FutureBuilder<String?>(
+                                          future: TokenService.getUserName(),
+                                          builder: (context, snapshot) {
+                                            final List<String> likes = List<String>.from(
+                                              item['likes'] ?? [],
+                                            );
+                                            final userName = snapshot.data ?? '';
+                                            final bool isLikedByMe = likes.contains(userName);
+                                            return Padding(
+                                              padding: const EdgeInsets.only(bottom: 16.0),
+                                              child: _buildFeedCard(
+                                                user: user,
+                                                timeAgo: formatFacebookStyleTime(timeAgo),
+                                                message: message,
+                                                imageUrl: imageUrl,
+                                                likeCount: likeCount,
+                                                commentCount: commentCount,
+                                                comments: item['comments'] ?? [],
+                                                feedId: item['id'] ?? '',
+                                                isLiked: isLikedByMe,
+                                                userName: userName, // Pass userName here
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      },
+                                      childCount: () {
+                                        if (isFeedLoading ||
+                                            feedErrorMessage != null ||
+                                            feedItems!.isEmpty) {
+                                          return 1;
+                                        } else {
+                                          return feedItems?.length;
+                                        }
+                                      }(),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Stories Widget
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: GridView.builder(
+                      itemCount: 9,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 6,
+                            mainAxisSpacing: 6,
+                            childAspectRatio: 0.63,
+                          ),
+                      itemBuilder: (context, index) {
+                        if (index == 0) {
+                          return InkWell(
+                            borderRadius: BorderRadius.circular(5),
                             onTap: () {
                               showModalBottomSheet(
                                 context: context,
                                 isScrollControlled: true,
                                 backgroundColor: Colors.transparent,
                                 builder:
-                                    (context) => const UploadSharesDialog(),
+                                    (context) => const UploadStoryDialog(),
                               );
                             },
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 15,
-                              ),
-                              decoration: BoxDecoration(
-                                color: kAccentColor,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                children: const [
-                                  Expanded(
-                                    child: Text(
-                                      "What's on your mind?",
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ),
-                                  Icon(Icons.add, color: Colors.white),
-                                ],
-                              ),
-                            ),
-                          ),
-                          // Additional content like shared posts could go here
-                        ],
-                      ),
-                    ),
-                    // Stories Widget
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: GridView.builder(
-                        itemCount: 9,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              crossAxisSpacing: 6,
-                              mainAxisSpacing: 6,
-                              childAspectRatio: 0.63,
-                            ),
-                        itemBuilder: (context, index) {
-                          if (index == 0) {
-                            return InkWell(
-                              borderRadius: BorderRadius.circular(5),
-                              onTap: () {
-                                showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  backgroundColor: Colors.transparent,
-                                  builder:
-                                      (context) => const UploadStoryDialog(),
-                                );
-                              },
-                              child: SizedBox(
-                                width: 100,
-                                height: 120,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFC9D4D4),
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.add,
-                                      size: 30,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          } else {
-                            return SizedBox(
+                            child: SizedBox(
                               width: 100,
                               height: 120,
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF48C4BC),
+                                  color: const Color(0xFFC9D4D4),
                                   borderRadius: BorderRadius.circular(5),
                                 ),
-                                child: Stack(
-                                  children: const [
-                                    Positioned(
-                                      bottom: 4,
-                                      left: 4,
-                                      child: Icon(
-                                        Icons.play_arrow,
-                                        size: 16,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    Positioned(
-                                      bottom: 4,
-                                      left: 20,
-                                      child: Text(
-                                        '1:30',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.add,
+                                    size: 30,
+                                    color: Colors.grey,
+                                  ),
                                 ),
                               ),
-                            );
-                          }
-                        },
+                            ),
+                          );
+                        } else {
+                          return SizedBox(
+                            width: 100,
+                            height: 120,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF48C4BC),
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: Stack(
+                                children: const [
+                                  Positioned(
+                                    bottom: 4,
+                                    left: 4,
+                                    child: Icon(
+                                      Icons.play_arrow,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Positioned(
+                                    bottom: 4,
+                                    left: 20,
+                                    child: Text(
+                                      '1:30',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // New widget: _buildFeedCard, copied from Home.dart
+  Widget _buildFeedCard({
+    required String user,
+    required String timeAgo,
+    required String message,
+    required String? imageUrl,
+    required int? likeCount,
+    required int? commentCount,
+    required List<dynamic> comments,
+    required int? feedId,
+    required bool isLiked,
+    required String userName, // Added userName parameter
+  }) {
+    final bool hasImage = imageUrl != null && imageUrl.isNotEmpty;
+
+    return Card(
+      elevation: 2,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF4DB6AC), Color(0xFF26A69A)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // User Info Header
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/images/tpo.jpg',
+                        fit: BoxFit.cover,
+                        width: 40,
+                        height: 40,
                       ),
                     ),
-                  ],
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          timeAgo,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.more_vert_rounded,
+                      color: Colors.white70,
+                    ),
+                    onPressed: () {},
+                  ),
+                ],
+              ),
+            ),
+
+            // Message Text
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: CopyableText(
+                text: message,
+                style: const TextStyle(color: Colors.white, fontSize: 15),
+                highlightStyle: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
+              ),
+            ),
+
+            // Conditionally display the image section
+            if (hasImage) // Use widget.imageUrl to check for image existence
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ImageFullView(imageUrl: imageUrl),
+                      ),
+                    );
+                  },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: AuthorizedImage(
+                      imageUrl: imageUrl,
+                      height: 200,
+                      width: double.infinity,
+                      // Add this line
+                    ),
+                  ),
+                ),
+              )
+            else
+              const SizedBox.shrink(),
+
+            //if (!hasImage) const SizedBox(height: 12),
+
+            // Action Bar
+            Padding(
+              padding: const EdgeInsets.all(5),
+              child: Row(
+                children: [
+                  StatefulBuilder(
+                    builder: (context, setState) {
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              isLiked
+                                  ? Icons.favorite_rounded
+                                  : Icons.favorite_border_rounded,
+                              color: Colors.white70,
+                              size: 22,
+                            ),
+                            onPressed: () async {
+                              if (feedId == null) return; // Add null check for feedId
+                              if (isLiked) {
+                                print("is liked");
+                                final success = await ApiService.unlike(
+                                  feedId,
+                                );
+                                if (success) {
+                                  setState(() {
+                                    isLiked = false;
+                                    likeCount = likeCount! - 1;
+                                    final idx = feedItems?.indexWhere(
+                                      (item) => item['id'] == feedId,
+                                    );
+                                    if (idx != null && idx >= 0) {
+                                      final likes = feedItems![idx]['likes'];
+                                      if (likes is List && likes.isNotEmpty) {
+                                        likes.removeLast();
+                                        feedItems![idx]['likes'] = List.from(
+                                          likes,
+                                        );
+                                      }
+                                    }
+                                  });
+                                }
+                              } else {
+                                final success = await ApiService.like(feedId);
+                                if (success) {
+                                  setState(() {
+                                    final idx = feedItems?.indexWhere(
+                                      (item) => item['id'] == feedId,
+                                    );
+                                    if (idx != null && idx >= 0) {
+                                      feedItems![idx]['likes'] = List.from(
+                                        feedItems![idx]['likes'] ?? [],
+                                      )..add(userName); // Use userName parameter here
+                                    }
+                                    isLiked = true;
+                                    likeCount = likeCount! + 1;
+                                  });
+                                }
+                              }
+                            },
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            likeCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 16),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.chat_bubble_outline_rounded,
+                      color: Colors.white70,
+                      size: 22,
+                    ),
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder:
+                            (context) => FractionallySizedBox(
+                              heightFactor: 1.0,
+                              child: CommentSection(
+                                feedId: feedId,
+                                comments: comments,
+                                onCommentSuccess: () {
+                                  setState(() {
+                                    // Find the feed item by feedId and add a dummy comment to increment count
+                                    final idx = feedItems?.indexWhere(
+                                      (item) => item['id'] == feedId,
+                                    );
+                                    if (idx != null && idx >= 0) {
+                                      feedItems![idx]['comments'] = List.from(
+                                        feedItems![idx]['comments'] ?? [],
+                                      )..add({});
+                                    }
+                                  });
+                                },
+                              ),
+                            ),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    commentCount.toString(),
+                    style: const TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                  const Spacer(),
+                ],
               ),
             ),
           ],
@@ -356,6 +784,75 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     );
   }
 }
+
+// Helper widget for shimmer loading, copied from Home.dart
+class ShimmerLoadingPlaceholder extends StatelessWidget {
+  final double height;
+  final double width;
+
+  const ShimmerLoadingPlaceholder({
+    Key? key,
+    required this.height,
+    required this.width,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.grey[300],
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: LinearProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[200]!),
+          backgroundColor: Colors.grey[300],
+        ),
+      ),
+    );
+  }
+}
+
+
+// _SliverAppBarDelegate copied from Home.dart
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  _SliverAppBarDelegate({
+    required this.minHeight,
+    required this.maxHeight,
+    required this.child,
+  });
+
+  final double minHeight;
+  final double maxHeight;
+  final Widget child;
+
+  @override
+  double get minExtent => minHeight;
+
+  @override
+  double get maxExtent => maxHeight;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return maxHeight != oldDelegate.maxHeight ||
+        minHeight != oldDelegate.minHeight ||
+        child != oldDelegate.child;
+  }
+}
+
 
 //upload share widget
 
