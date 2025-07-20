@@ -1,23 +1,26 @@
-// import 'dart:io'; // Removed for web compatibility
-import 'dart:typed_data';
-import 'dart:convert'; // Added for JSON encoding/decoding
-import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart'; // Added for date formatting
+import 'package:intl/intl.dart';
+import 'dart:typed_data';
+import 'dart:convert';
+import 'package:dotted_border/dotted_border.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+// Assuming these imports are available in your project
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
+import 'package:shweeshaungdaily/services/authorize_image.dart';
+import 'package:shweeshaungdaily/services/token_service.dart';
+import 'package:shweeshaungdaily/utils/audio_timeformat.dart';
+import 'package:shweeshaungdaily/utils/image_cache.dart';
 import 'package:shweeshaungdaily/views/audio_post/audio_upload_page.dart';
-import 'package:shweeshaungdaily/services/authorize_image.dart'; // Added for AuthorizedImage
-import 'package:shweeshaungdaily/services/token_service.dart'; // Added for TokenService
-import 'package:shweeshaungdaily/utils/audio_timeformat.dart'; // Added for formatFacebookStyleTime
-import 'package:shweeshaungdaily/utils/image_cache.dart'; // Added for ImageCacheManager
-import 'package:shweeshaungdaily/views/comment_section.dart'; // Added for CommentSection
-import 'package:shweeshaungdaily/views/image_full_view.dart'; // Added for ImageFullView
-import 'package:shweeshaungdaily/widget/copyable_text.dart'; // Added for CopyableText
-import 'package:shared_preferences/shared_preferences.dart'; // Added for SharedPreferences
+import 'package:shweeshaungdaily/views/comment_section.dart';
+import 'package:shweeshaungdaily/views/image_full_view.dart';
+import 'package:shweeshaungdaily/widget/copyable_text.dart';
+import 'package:shweeshaungdaily/views/user_album_upload.dart';
+// import 'package:shweeshaungdaily/views/user_profile_update.dart'; // No longer needed for teacher profile
+import 'package:shweeshaungdaily/views/teacher_profile_update.dart'; // <--- NEW IMPORT
 
 final Map<String, String> audienceValueMap = {
   'Public': 'Public',
@@ -47,17 +50,29 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
   int _currentPage = 0;
   late final PageController _pageController;
 
-  // New state variables for feed management, copied from Home.dart
+  // State variables for feed management (from Home.dart)
   final String baseUrl = ApiService.base;
   List<Map<String, dynamic>>? feedItems = [];
   bool isFeedLoading = true;
   String? feedErrorMessage;
 
+  // New state variables for album/stories management (from UserProfile.dart)
+  List<dynamic> _stories = [];
+  bool _loadingStories = true; // Renamed to avoid conflict with `isFeedLoading`
+
+  // User Profile Data
+  String _userName = 'Loading...';
+  String _userEmail = 'Loading...';
+  String? _userPhotoUrl;
+  bool _isLoadingUser = true;
+
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _currentPage);
-    _fetchFeed(); // Fetch feed when the page initializes
+    _fetchFeed();
+    _fetchStories();
+    _fetchUserProfile(); // Fetch user profile data
   }
 
   @override
@@ -66,7 +81,35 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     super.dispose();
   }
 
-  // New method: loadCachedFeed, copied from Home.dart
+  // Method to fetch user profile data - FIXED
+  Future<void> _fetchUserProfile() async {
+    setState(() {
+      _isLoadingUser = true;
+    });
+    try {
+      final Map<String, dynamic>? profile = await ApiService.getProfile();
+      if (mounted) {
+        setState(() {
+          _userName = profile!['name'] ?? 'N/A';
+          _userEmail = profile['email'] ?? 'N/A';
+          _userPhotoUrl = profile['profileUrl']; // Assuming 'photoUrl' is the key
+          _isLoadingUser = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching user profile: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingUser = false;
+          _userName = 'Error';
+          _userEmail = 'Error loading profile';
+        });
+      }
+    }
+  }
+
+
+  // Method: loadCachedFeed, copied from Home.dart
   Future<List<Map<String, dynamic>>> loadCachedFeed() async {
     final prefs = await SharedPreferences.getInstance();
     final cachedFeed = prefs.getString('cached_feed');
@@ -85,7 +128,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     return [];
   }
 
-  // New method: _fetchFeed, copied from Home.dart
+  // Method: _fetchFeed, copied from Home.dart
   Future<void> _fetchFeed() async {
     setState(() {
       isFeedLoading = true;
@@ -124,6 +167,76 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     }
   }
 
+  // New method: loadStoryItems, copied from UserProfile.dart
+  Future<List<Map<String, dynamic>>> loadStoryItems() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString('cached_story');
+    if (jsonString == null) return [];
+
+    try {
+      final List<dynamic> decodedList = jsonDecode(jsonString);
+      return decodedList.cast<Map<String, dynamic>>();
+    } catch (e) {
+      debugPrint('Error decoding feed items: $e');
+      return [];
+    }
+  }
+
+  // New method: _fetchStories, copied from UserProfile.dart
+  Future<void> _fetchStories() async {
+    setState(() {
+      _loadingStories = true;
+    });
+    try {
+      final result = await ApiService.getStory();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('cached_story', jsonEncode(result));
+
+      final imageUrls =
+          result
+              .map((item) => item['url'] as String?)
+              .where((url) => url != null && url.isNotEmpty)
+              .map((url) => '$baseUrl/$url')
+              .toSet();
+
+      // Ensure ImageCacheManager.clearUnusedStoryImages is implemented to handle network images
+      await ImageCacheManager.clearUnusedStoryImages(imageUrls);
+
+      if (mounted) {
+        setState(() {
+          debugPrint('Stories before update: ${_stories.length}');
+          _stories = result; // Or _stories = cached;
+          debugPrint(
+            'Stories after update: ${_stories.length}, first item: ${_stories.isNotEmpty ? _stories.first : 'N/A'}',
+          );
+          _loadingStories = false;
+        });
+      }
+    } catch (e) {
+      final cached = await loadStoryItems();
+      if (mounted) {
+        setState(() {
+          _stories = cached;
+          _loadingStories = false;
+        });
+      }
+      debugPrint('Error fetching stories/album items: $e');
+    }
+  }
+
+  // New method: _onDeleteItem, copied from UserProfile.dart
+  void _onDeleteItem(int indexToDelete) {
+    if (indexToDelete >= 0 && indexToDelete < _stories.length) {
+      setState(() {
+        _stories.removeAt(indexToDelete);
+      });
+      // Optionally, you would also call an API to delete the item from the server
+      // and update the cached_story in SharedPreferences.
+      // ApiService.deleteStoryItem(_stories[indexToDelete]['id']);
+      // _saveStoriesToCache(_stories); // A helper function to re-save
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -132,51 +245,97 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
         child: Column(
           children: [
             SizedBox(height: 5),
-            // Profile Card
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: kPrimaryDarkColor,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 30,
-                    backgroundColor: Colors.white,
-                    child: Icon(
-                      Icons.person,
-                      size: 30,
-                      color: kPrimaryDarkColor,
+            // Profile Card (Updated)
+            Align(
+              alignment: Alignment.topCenter,
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: kPrimaryDarkColor,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'Daw Aye Myat Kyi',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      Text('( FCT )', style: TextStyle(color: Colors.white)),
-                      Text('Professor', style: TextStyle(color: Colors.white)),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
+                child: _isLoadingUser
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+  _userPhotoUrl != null
+      ? ClipOval(
+          child: AuthorizedImage(
+            imageUrl: '$baseUrl/$_userPhotoUrl',
+            height: 60, // 2 * radius (CircleAvatar radius = 30)
+            width: 60,
+            fit: BoxFit.cover,
+          ),
+        )
+      : CircleAvatar(
+          radius: 30,
+          backgroundColor: Colors.white,
+          child: Icon(
+            Icons.person,
+            size: 30,
+            color: kPrimaryDarkColor,
+          ),
+        ),
+  const SizedBox(width: 16),
+  Expanded(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _userName,
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+          overflow: TextOverflow.ellipsis,
+        ),
+        Text(
+          _userEmail,
+          style: GoogleFonts.poppins(
+              color: Colors.white70, fontSize: 13),
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    ),
+  ),
+  IconButton(
+    icon: const Icon(
+      Icons.edit,
+      color: Colors.white70,
+    ),
+    onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const TeacherProfileUpdateScreen(),
+        ),
+      ).then((value) {
+        if (value == true) {
+          _fetchUserProfile();
+        }
+      });
+    },
+  ),
+],
+
+                    ),
+                  ],
+                ),
               ),
             ),
+
 
             const SizedBox(height: 7),
 
@@ -331,38 +490,15 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                             onRefresh: _fetchFeed, // Refresh feed on pull
                             child: CustomScrollView( // Use CustomScrollView for SliverPadding
                               slivers: [
-                                // SliverPersistentHeader(
-                                //   pinned: true,
-                                //   delegate: _SliverAppBarDelegate(
-                                //     minHeight: 60.0,
-                                //     maxHeight: 60.0,
-                                //     // child: Container(
-                                //     //   color: const Color(0xFFE0F7FA),
-                                //     //   padding: const EdgeInsets.symmetric(
-                                //     //     horizontal: 20,
-                                //     //     vertical: 16,
-                                //     //   ),
-                                //     //   child: const Text(
-                                //     //     "Bulletin",
-                                //     //     style: TextStyle(
-                                //     //       fontSize: 20,
-                                //     //       fontWeight: FontWeight.w700,
-                                //     //       color: Color(0xFF00897B),
-                                //     //       letterSpacing: 0.5,
-                                //     //     ),
-                                //     //   ),
-                                //     // ),
-                                //   ),
-                                // ),
                                 SliverPadding(
                                   padding: const EdgeInsets.symmetric(horizontal: 16),
                                   sliver: SliverList(
                                     delegate: SliverChildBuilderDelegate(
                                       (context, index) {
                                         if (isFeedLoading) {
-                                          return ShimmerLoadingPlaceholder(
-                                            height: MediaQuery.of(context).size.height * 0.3,
-                                            width: MediaQuery.of(context).size.width - 32,
+                                          return const ShimmerLoadingPlaceholder( // Added const
+                                            height: 200, // Example height
+                                            width: double.infinity, // Example width
                                           );
                                         }
 
@@ -439,87 +575,55 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                       ],
                     ),
                   ),
-                  // Stories Widget
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: GridView.builder(
-                      itemCount: 9,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 6,
-                            mainAxisSpacing: 6,
-                            childAspectRatio: 0.63,
-                          ),
-                      itemBuilder: (context, index) {
-                        if (index == 0) {
-                          return InkWell(
-                            borderRadius: BorderRadius.circular(5),
-                            onTap: () {
-                              showModalBottomSheet(
-                                context: context,
-                                isScrollControlled: true,
-                                backgroundColor: Colors.transparent,
-                                builder:
-                                    (context) => const UploadStoryDialog(),
-                              );
-                            },
-                            child: SizedBox(
-                              width: 100,
-                              height: 120,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFC9D4D4),
-                                  borderRadius: BorderRadius.circular(5),
-                                ),
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.add,
-                                    size: 30,
-                                    color: Colors.grey,
+                  // Stories Widget (Album section from UserProfile.dart)
+                  RefreshIndicator( // Added RefreshIndicator for stories
+                    onRefresh: _fetchStories, // Refresh stories on pull
+                    child: SingleChildScrollView( // Added SingleChildScrollView
+                      physics: const AlwaysScrollableScrollPhysics(), // Ensure scrollable even if content is small
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Show a message if album is empty and not loading
+                            if (_stories.isEmpty && !_loadingStories)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 20.0),
+                                child: Text(
+                                  'Your album is empty. Add your first photo!',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey[600],
                                   ),
+                                  textAlign: TextAlign.center,
                                 ),
                               ),
-                            ),
-                          );
-                        } else {
-                          return SizedBox(
-                            width: 100,
-                            height: 120,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF48C4BC),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: Stack(
-                                children: const [
-                                  Positioned(
-                                    bottom: 4,
-                                    left: 4,
-                                    child: Icon(
-                                      Icons.play_arrow,
-                                      size: 16,
-                                      color: Colors.white,
-                                    ),
+                            _loadingStories
+                                ? const Center(
+                                    child: CircularProgressIndicator(color: kPrimaryDarkColor),
+                                  )
+                                : GridView.builder(
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    itemCount: _stories.length + 1,
+                                    gridDelegate:
+                                        const SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 3, // Changed to 3 for a tighter grid
+                                          crossAxisSpacing: 8.0, // Adjusted spacing
+                                          mainAxisSpacing: 8.0, // Adjusted spacing
+                                          childAspectRatio: 0.7, // Adjusted aspect ratio for better fit
+                                        ),
+                                    itemBuilder: (context, index) {
+                                      if (index == 0) {
+                                        return _buildAddNewCard();
+                                      } else {
+                                        return _buildPhotoCard(index - 1, context);
+                                      }
+                                    },
                                   ),
-                                  Positioned(
-                                    bottom: 4,
-                                    left: 20,
-                                    child: Text(
-                                      '1:30',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }
-                      },
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -530,8 +634,112 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
       ),
     );
   }
+  
+  // Modify the signature of _buildPhotoCard to accept a Key
+  Widget _buildPhotoCard(int index, BuildContext context) {
+    // Ensure the index is within bounds and the 'url' exists
+    if (index >= _stories.length || _stories[index]['url'] == null) {
+      return Container(
+        key: ValueKey('placeholder_$index'),
+      ); // Provide a key for placeholder too
+    }
 
-  // New widget: _buildFeedCard, copied from Home.dart
+    final Map<String, dynamic> storyItem = _stories[index];
+    final String imageUrl = '$baseUrl/${storyItem['url']}';
+    final String itemType = storyItem['type'] ?? 'image';
+
+    // Use the unique ID from your story data as the key
+    return GestureDetector(
+      key: ValueKey(storyItem['id']), // <--- Add this line! Use a unique ID
+      onTap: () {
+        Navigator.push(
+          context,
+          PageRouteBuilder(
+            pageBuilder:
+                (context, animation, secondaryAnimation) => GalleryViewerPage(
+                  images:
+                      _stories
+                          .map(
+                            (item) =>
+                                item['url'] != null
+                                    ? '$baseUrl/${item['url']}'
+                                    : '',
+                          )
+                          .where((url) => url.isNotEmpty)
+                          .toList(),
+                  initialIndex: index,
+                  onDeleteItem: _onDeleteItem,
+                ),
+            transitionDuration: Duration.zero,
+            transitionsBuilder: (
+              context,
+              animation,
+              secondaryAnimation,
+              child,
+            ) {
+              return child;
+            },
+          ),
+        );
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16.0),
+        child: Stack(
+          children: [
+            AuthorizedImage(
+              imageUrl: imageUrl,
+              height: double.infinity,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+            // ... rest of your stack content
+            if (itemType == 'video')
+              const Center(
+                child: Icon(
+                  Icons.play_circle_fill,
+                  color: Colors.white,
+                  size: 50,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddNewCard() {
+    return GestureDetector(
+      onTap: () async {
+        debugPrint('Add new item tapped!');
+        // Navigate to UploadScreen and wait for result
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const UploadScreen()),
+        );
+
+        // If result is true, it means upload was successful, so refresh stories
+        if (result == true) {
+          debugPrint('Upload successful, re-fetching stories...');
+          await _fetchStories(); // Re-fetch all stories to include the new one
+        }
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16.0),
+        child: Container(
+          color: Colors.grey[300], // Grey background color
+          child: const Center(
+            child: Icon(
+              Icons.add_a_photo, // Add photo icon
+              size: 50,
+              color: Colors.grey, // Icon color
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Widget: _buildFeedCard, copied from Home.dart
   Widget _buildFeedCard({
     required String user,
     required String timeAgo,
@@ -816,46 +1024,7 @@ class ShimmerLoadingPlaceholder extends StatelessWidget {
     );
   }
 }
-
-
-// _SliverAppBarDelegate copied from Home.dart
-class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
-  _SliverAppBarDelegate({
-    required this.minHeight,
-    required this.maxHeight,
-    required this.child,
-  });
-
-  final double minHeight;
-  final double maxHeight;
-  final Widget child;
-
-  @override
-  double get minExtent => minHeight;
-
-  @override
-  double get maxExtent => maxHeight;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return SizedBox.expand(child: child);
-  }
-
-  @override
-  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
-    return maxHeight != oldDelegate.maxHeight ||
-        minHeight != oldDelegate.minHeight ||
-        child != oldDelegate.child;
-  }
-}
-
-
-//upload share widget
-
+// New widget: _buildAddNewCard, copied from UserProfile.dart
 class UploadSharesDialog extends StatefulWidget {
   const UploadSharesDialog({super.key});
 
@@ -1846,30 +2015,178 @@ class _UploadStoryDialogState extends State<UploadStoryDialog> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Row(
-                  //   children: [
-                  //     Expanded(
-                  //       child: OutlinedButton(
-                  //         onPressed:
-                  //             _isUploading
-                  //                 ? null
-                  //                 : () => Navigator.pop(context),
-                  //         style: OutlinedButton.styleFrom(
-                  //           backgroundColor: kBackgroundColor,
-                  //           foregroundColor: kPrimaryDarkColor,
-                  //           side: const BorderSide(color: Color(0xFF317575)),
-                  //           padding: const EdgeInsets.symmetric(vertical: 14),
-                  //         ),
-                  //         child: const Text("Cancel"),
-                  //       ),
-                  //     ),
-                  //     const SizedBox(width: 16),
-                  //   ],
-                  // ),
                 ],
               ),
             ),
           ),
+    );
+  }
+}
+
+class GalleryViewerPage extends StatefulWidget {
+  final List<String> images;
+  final int initialIndex;
+  final Function(int)? onDeleteItem; // New callback for deletion
+
+  const GalleryViewerPage({
+    super.key,
+    required this.images,
+    required this.initialIndex,
+    this.onDeleteItem,
+  });
+
+  @override
+  State<GalleryViewerPage> createState() => _GalleryViewerPageState();
+}
+
+class _GalleryViewerPageState extends State<GalleryViewerPage> {
+  late PageController _pageController;
+  int currentIndex = 0;
+  Offset _offset = Offset.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: currentIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onVerticalDragUpdate(DragUpdateDetails details) {
+    setState(() {
+      _offset += Offset(0, details.delta.dy);
+    });
+  }
+
+  void _onVerticalDragEnd(DragEndDetails details) {
+    if (_offset.dy.abs() > 100) {
+      Navigator.pop(context);
+    } else {
+      setState(() {
+        _offset = Offset.zero;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black.withOpacity(
+        1 - (_offset.dy.abs() / 300).clamp(0, 1),
+      ),
+      body: GestureDetector(
+        onVerticalDragUpdate: _onVerticalDragUpdate,
+        onVerticalDragEnd: _onVerticalDragEnd,
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _pageController,
+              onPageChanged: (index) => setState(() => currentIndex = index),
+              itemCount: widget.images.length,
+              itemBuilder: (context, index) {
+                return Center(
+                  child: Transform.translate(
+                    offset: index == currentIndex ? _offset : Offset.zero,
+                    child: AuthorizedImage(
+                      imageUrl: widget.images[index],
+                      height: MediaQuery.of(context).size.height,
+                      width: MediaQuery.of(context).size.width,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                );
+              },
+            ),
+            Positioned(
+              top: 40,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.white),
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder:
+                            (context) => AlertDialog(
+                              title: const Text('Delete Story'),
+                              content: const Text(
+                                'Are you sure you want to delete this story? This action cannot be undone.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed:
+                                      () => Navigator.of(context).pop(false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed:
+                                      () => Navigator.of(context).pop(true),
+                                  child: const Text(
+                                    'Delete',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                              ],
+                            ),
+                      );
+
+                      if (confirm == true) {
+                        final success = await ApiService.deleteStory(
+                          widget.images[currentIndex].substring(
+                            widget.images[currentIndex].indexOf('tfeedphoto'),
+                          ),
+                        );
+
+                        if (success) {
+                          if (widget.onDeleteItem != null) {
+                            widget.onDeleteItem!(currentIndex);
+
+                            // Pop depending on remaining images
+                            if (widget.images.length <= 1) {
+                              Navigator.pop(context);
+                            } else {
+                              Navigator.pop(
+                                context,
+                              ); // You can also auto-navigate to next image here
+                            }
+                          }
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('Failed to delete story.'),
+                              backgroundColor: Colors.red,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
