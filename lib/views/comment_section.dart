@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shweeshaungdaily/views/view_router.dart';
 import 'package:shweeshaungdaily/widget/copyable_text.dart';
 
 import '../services/api_service.dart';
@@ -166,7 +167,9 @@ class _CommentSectionState extends State<CommentSection> {
                           controller: scrollController,
                           itemCount: _comments!.length,
                           itemBuilder: (context, index) {
+                        
                             final comment = _comments![index];
+                            final email = comment['email'];
                             final userName = comment['userName'] ?? 'User';
                             final text = comment['text'] ?? '';
                             final createdAt = comment['createdAt'] ?? '';
@@ -184,7 +187,16 @@ class _CommentSectionState extends State<CommentSection> {
                                         ? const Icon(Icons.person)
                                         : null,
                               ),
-                              title: Text(userName),
+                              title: GestureDetector(
+                                onTap: () {
+      // Your onTap logic
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => ViewRouter(email: email,)),
+      );
+    },
+                                
+                                child: Text(userName)),
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [

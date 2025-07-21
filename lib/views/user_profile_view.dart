@@ -42,6 +42,7 @@ class _UserProfileViewState extends State<UserProfileView> {
   Future<void> _fetchProfile() async {
     try {
       final profile = await ApiService.getProfileForViewing(widget.email);
+      print(profile);
       if (mounted) {
         setState(() {
           _profile = profile;
@@ -185,7 +186,7 @@ class _UserProfileViewState extends State<UserProfileView> {
                                 },
                                 child: CircleAvatar(
                                   radius: 60,
-                                  backgroundColor: kAccentColor,
+                                  backgroundColor: kWhite,
                                   child: ClipOval(
                                     // Added ClipOval here
                                     child: SizedBox(
@@ -222,9 +223,9 @@ class _UserProfileViewState extends State<UserProfileView> {
                                     Text(
                                       userNickname,
                                       style: const TextStyle(
-                                        fontSize: 25,
+                                        fontSize: 15,
                                         fontWeight: FontWeight.w800,
-                                        color: kPrimaryColor,
+                                        color: kPrimaryDarkColor,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
@@ -234,10 +235,9 @@ class _UserProfileViewState extends State<UserProfileView> {
                                           '@$userName',
                                           style: const TextStyle(
                                             fontSize: 15,
-                                            color: kPrimaryColor,
+                                            color: kPrimaryDarkColor,
                                           ),
                                         ),
-                                        const SizedBox(width: 8),
                                       ],
                                     ),
                                   ],
@@ -257,7 +257,7 @@ class _UserProfileViewState extends State<UserProfileView> {
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: kPrimaryColor,
+                            color: kPrimaryDarkColor,
                           ),
                         ),
                       ),
@@ -593,70 +593,6 @@ class _GalleryViewerPageState extends State<GalleryViewerPage> {
                       size: 30,
                     ),
                     onPressed: () => Navigator.pop(context),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.white),
-                    onPressed: () async {
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder:
-                            (context) => AlertDialog(
-                              title: const Text('Delete Story'),
-                              content: const Text(
-                                'Are you sure you want to delete this story? This action cannot be undone.',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed:
-                                      () => Navigator.of(context).pop(false),
-                                  child: const Text('Cancel'),
-                                ),
-                                TextButton(
-                                  onPressed:
-                                      () => Navigator.of(context).pop(true),
-                                  child: const Text(
-                                    'Delete',
-                                    style: TextStyle(color: Colors.red),
-                                  ),
-                                ),
-                              ],
-                            ),
-                      );
-
-                      if (confirm == true) {
-                        final success = await ApiService.deleteStory(
-                          widget.images[currentIndex].substring(
-                            widget.images[currentIndex].indexOf('tfeedphoto'),
-                          ),
-                        );
-
-                        if (success) {
-                          if (widget.onDeleteItem != null) {
-                            widget.onDeleteItem!(currentIndex);
-
-                            // Pop depending on remaining images
-                            if (widget.images.length <= 1) {
-                              Navigator.pop(context);
-                            } else {
-                              Navigator.pop(
-                                context,
-                              ); // You can also auto-navigate to next image here
-                            }
-                          }
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('Failed to delete story.'),
-                              backgroundColor: Colors.red,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          );
-                        }
-                      }
-                    },
                   ),
                 ],
               ),

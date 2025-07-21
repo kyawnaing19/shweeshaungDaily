@@ -341,7 +341,7 @@ class _UserProfileViewState extends State<UserProfile> {
 
   Widget _buildInfoCard(String bio) {
     return SizedBox(
-      width: MediaQuery.of(context).size.width * 1,
+      width: MediaQuery.of(context).size.width * 0.9,
       child: Card(
         elevation: kCardElevation,
         shadowColor: Colors.black.withOpacity(0.3),
@@ -350,7 +350,7 @@ class _UserProfileViewState extends State<UserProfile> {
         ),
         color: kAccentColor,
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(18.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -362,7 +362,7 @@ class _UserProfileViewState extends State<UserProfile> {
                   color: Colors.white,
                 ),
               ),
-              Divider(height: 20, color: Colors.white),
+              Divider(height: 25, color: Colors.white),
               Text(
                 bio,
                 style: const TextStyle(

@@ -79,17 +79,20 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
       _isLoadingUser = true;
     });
     try {
-      final Map<String, dynamic>? profile = await ApiService.getProfileForViewing(widget.email);
+      final Map<String, dynamic>? profile =
+          await ApiService.getProfileForViewing(widget.email);
       if (mounted) {
         setState(() {
           _nickName = profile!['nickName'] ?? 'N/A';
           _department = profile['department'] ?? 'N/A';
           _role = profile['role'] ?? 'N/A';
-          final String? rawProfileImageUrl = profile['profilePictureUrl'];
-          final String? finalProfileImage =
-              (rawProfileImageUrl != null && rawProfileImageUrl.isNotEmpty)
-                  ? '$baseUrl/$rawProfileImageUrl'
-                  : null;
+          final String profileImageUrl =
+              (profile['profileUrl'] != null &&
+                      profile['profileUrl'].isNotEmpty)
+                  ? profile['profileUrl']
+                  : profile['profileProfileUrl'];
+          finalProfileImage =
+              (profileImageUrl.isNotEmpty) ? '$baseUrl/$profileImageUrl' : null;
           _userBio =
               (profile['bio']?.toString().trim().isNotEmpty ?? false)
                   ? profile!['bio'].toString()
@@ -125,7 +128,9 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
     });
 
     try {
-      final result = await ApiService.getTeacherProfileFeedForViewing(widget.email);
+      final result = await ApiService.getTeacherProfileFeedForViewing(
+        widget.email,
+      );
 
       // Save feed to local cache
       // final prefs = await SharedPreferences.getInstance();
@@ -169,7 +174,6 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
     });
     try {
       final result = await ApiService.getStoryForViewing(widget.email);
-    
 
       if (mounted) {
         setState(() {
@@ -213,169 +217,120 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
       body: SafeArea(
         child: Column(
           children: [
-            SizedBox(height: 5),
-            // Profile Card (Updated)
-            Container(
-              width: double.infinity, // Makes the container full-width
-              padding: const EdgeInsets.all(16), // 🔹 Inner spacing
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(
-                  255,
-                  193,
-                  242,
-                  249,
-                ), // 🔹 Background color
-                borderRadius: BorderRadius.circular(12), // 🔹 Rounded corners
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: kHorizontalPadding,
               ),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment
-                          .start, // This aligns children to the start horizontally
-                  children: [
-                    Container(
-                      width: double.infinity, // Makes the container full-width
-                      padding: const EdgeInsets.all(16), // 🔹 Inner spacing
-                      decoration: BoxDecoration(
-                        color: const Color.fromARGB(
-                          255,
-                          193,
-                          242,
-                          249,
-                        ), // 🔹 Background color
-                        borderRadius: BorderRadius.circular(
-                          12,
-                        ), // 🔹 Rounded corners
-                      ),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment
-                                  .start, // This aligns children to the start horizontally
-                          children: [
-                            GestureDetector(
-                              onTap: () {
-                                if (finalProfileImage != null) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (_) => FullscreenImageView(
+              child: Column(
+                children: [
+                  const SizedBox(height: kHorizontalPadding),
+                  Container(
+                    width: double.infinity, // Makes the container full-width
+                    padding: const EdgeInsets.all(16), // 🔹 Inner spacing
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(
+                        255,
+                        193,
+                        242,
+                        249,
+                      ), // 🔹 Background color
+                      borderRadius: BorderRadius.circular(
+                        12,
+                      ), // 🔹 Rounded corners
+                    ),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment
+                                .start, // This aligns children to the start horizontally
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              if (finalProfileImage != null) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (_) => FullscreenImageView(
+                                          imageUrl:
+                                              finalProfileImage.toString(),
+                                          isAsset:
+                                              false, // It's a network image
+                                        ),
+                                  ),
+                                );
+                              }
+                            },
+                            child: CircleAvatar(
+                              radius: 60,
+                              backgroundColor: kAccentColor,
+                              child: ClipOval(
+                                // Added ClipOval here
+                                child: SizedBox(
+                                  // Sized box to ensure proper sizing for ClipOval
+                                  width: 112, // Corresponds to radius * 2
+                                  height: 112, // Corresponds to radius * 2
+                                  child:
+                                      finalProfileImage != null
+                                          ? AuthorizedNetworkImage(
+                                            // Add a Key here based on the image URL
+                                            key: ValueKey(finalProfileImage),
                                             imageUrl:
                                                 finalProfileImage.toString(),
-                                            isAsset:
-                                                false, // It's a network image
+                                            width: 112,
+                                            height: 112,
+                                            fit: BoxFit.cover,
+                                          )
+                                          : const Icon(
+                                            Icons.person,
+                                            size: 60,
+                                            color: kPrimaryColor,
                                           ),
-                                    ),
-                                  );
-                                }
-                              },
-                              child: CircleAvatar(
-                                radius: 60,
-                                backgroundColor: kAccentColor,
-                                child: ClipOval(
-                                  // Added ClipOval here
-                                  child: SizedBox(
-                                    // Sized box to ensure proper sizing for ClipOval
-                                    width: 112, // Corresponds to radius * 2
-                                    height: 112, // Corresponds to radius * 2
-                                    child:
-                                        finalProfileImage != null
-                                            ? AuthorizedNetworkImage(
-                                              // Add a Key here based on the image URL
-                                              key: ValueKey(finalProfileImage),
-                                              imageUrl:
-                                                  finalProfileImage.toString(),
-                                              width: 112,
-                                              height: 112,
-                                              fit: BoxFit.cover,
-                                            )
-                                            : const Icon(
-                                              Icons.person,
-                                              size: 60,
-                                              color: kPrimaryColor,
-                                            ),
-                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: kVerticalSpacing),
-                            Padding(
-                              padding: EdgeInsets.only(left: 10),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _nickName,
-                                    style: const TextStyle(
-                                      fontSize: 25,
-                                      fontWeight: FontWeight.w800,
-                                      color: kPrimaryColor,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        _department,
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          color: kPrimaryColor,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: kVerticalSpacing),
-                    Padding(
-                      padding: EdgeInsets.only(left: 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _nickName,
-                            style: const TextStyle(
-                              fontSize: 25,
-                              fontWeight: FontWeight.w800,
-                              color: kPrimaryColor,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Text(
-                                _department,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  color: kPrimaryColor,
+                          const SizedBox(height: kVerticalSpacing),
+                          Padding(
+                            padding: EdgeInsets.only(left: 10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _nickName,
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w800,
+                                    color: kPrimaryDarkColor,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                            ],
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Text(
+                                      _department,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        color: kPrimaryDarkColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 18),
-            _buildInfoCard(_role, _userBio!),
-            const SizedBox(height: 18),
-
+            _buildInfoCard(_role, _userBio ?? 'No bio yet!'),
             const SizedBox(height: 15),
-
-            // Tabs: Shares & Stories
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
@@ -447,23 +402,6 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
                   // Shares Widget
                   Column(
                     children: [
-                      // In _TeacherProfilePageState, inside the build method, where UploadSharesDialog is called:
-                      // GestureDetector(
-                      //   onTap: () {
-                      //     showModalBottomSheet(
-                      //       context: context,
-                      //       isScrollControlled: true,
-                      //       backgroundColor: Colors.transparent,
-                      //       builder: (context) => const UploadSharesDialog(),
-                      //     ).then((value) {
-                      //       // <--- Add .then() here
-                      //       if (value == true) {
-                      //         // Check if the result is true (indicating success)
-                      //         _fetchFeed(); // Call _fetchFeed() to refresh the feed
-                      //       }
-                      //     });
-                      //   },
-                      // ),
                       const SizedBox(
                         height: 16,
                       ), // Spacing below the "What's on your mind?"
@@ -674,6 +612,16 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text(
+                role,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
+              ),
+              Divider(color: Colors.white, height: 25),
               const Text(
                 'Bio',
                 style: TextStyle(

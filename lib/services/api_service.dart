@@ -51,12 +51,12 @@ class ApiService {
 
   static Future<Map<String, dynamic>?> getProfileForViewing(String email) async {
     try {
-      final url = Uri.parse('$baseUrl/profile?$email');
+      final url = Uri.parse('$baseUrl/profile/view?email=$email');
       final response = await AuthorizedHttpService.sendAuthorizedRequest(
         url,
         method: 'GET',
       );
-
+      print(response!.body);
       if (response!.statusCode == 200) {
         return jsonDecode(response.body);
       }
@@ -303,7 +303,7 @@ class ApiService {
 
 
   static Future<List<Map<String, dynamic>>?> getTeacherProfileFeedForViewing(String email) async {
-    final url = Uri.parse('$feedBaseUrl/teacherprofilefeed?email=$email');
+    final url = Uri.parse('$feedBaseUrl/teacherprofilefeed/view?email=$email');
 
     try {
       final response = await AuthorizedHttpService.sendAuthorizedRequest(
@@ -653,7 +653,7 @@ class ApiService {
 
 
   static Future<List<dynamic>> getStoryForViewing(String email) async {
-    final uri = Uri.parse('$storyUrl?email=$email');
+    final uri = Uri.parse('$storyUrl/view?email=$email');
     
     try{
     final response = await AuthorizedHttpService.sendAuthorizedRequest(

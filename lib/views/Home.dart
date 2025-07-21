@@ -19,6 +19,7 @@ import 'package:shweeshaungdaily/views/comment_section.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shweeshaungdaily/views/teacher_profile_view.dart';
 import 'package:shweeshaungdaily/views/user_profile_view.dart';
+import 'package:shweeshaungdaily/views/view_router.dart';
 import 'package:shweeshaungdaily/views/widget_loading.dart';
 import 'package:shweeshaungdaily/widget/copyable_text.dart';
 
@@ -657,6 +658,7 @@ class _HomePageState extends State<HomeScreenPage>
 
                     // 4. Display Actual Feed Item if data is loaded and available
                     final item = feedItems![index];
+                    final String email = item['email'];
                     final String user =
                         item['teacherName'] as String? ?? 'Unknown Teacher';
                     final String timeAgo = item['createdAt'] as String? ?? '';
@@ -688,6 +690,7 @@ class _HomePageState extends State<HomeScreenPage>
                           ), // Use item ID for unique key if available
                           padding: const EdgeInsets.only(bottom: 16.0),
                           child: _buildFeedCard(
+                            email: email,
                             profileUrl: profileUrl,
                             // Your existing _buildFeedCard function
                             user: user,
@@ -1333,6 +1336,7 @@ class _HomePageState extends State<HomeScreenPage>
   }
 
   Widget _buildFeedCard({
+    required String email,
     required String? profileUrl,
     required String user,
     required String timeAgo,
@@ -1374,20 +1378,31 @@ class _HomePageState extends State<HomeScreenPage>
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                     ),
-                    child: ClipOval(
-                      child:
-                          (profileUrl != null && profileUrl.isNotEmpty)
-                              ? AuthorizedImage(
-                                imageUrl: profileUrl,
-                                width: 40,
-                                height: 40,
-                                fit: BoxFit.cover,
-                              )
-                              : const Icon(
-                                Icons.person,
-                                size: 35,
-                                color: Colors.white,
-                              ),
+                    child: GestureDetector(
+                      onTap: () {
+                        // Handle tap — navigate, show modal, etc.
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ViewRouter(email: email),
+                          ),
+                        );
+                      },
+                      child: ClipOval(
+                        child:
+                            (profileUrl != null && profileUrl.isNotEmpty)
+                                ? AuthorizedImage(
+                                  imageUrl: profileUrl,
+                                  width: 40,
+                                  height: 40,
+                                  fit: BoxFit.cover,
+                                )
+                                : const Icon(
+                                  Icons.person,
+                                  size: 35,
+                                  color: Colors.white,
+                                ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1395,13 +1410,24 @@ class _HomePageState extends State<HomeScreenPage>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          user,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ViewRouter(email: email),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            user,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
+
                         Text(
                           timeAgo,
                           style: const TextStyle(
