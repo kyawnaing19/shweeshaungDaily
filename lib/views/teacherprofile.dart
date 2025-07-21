@@ -17,6 +17,7 @@ import 'package:shweeshaungdaily/utils/image_cache.dart';
 import 'package:shweeshaungdaily/views/audio_post/audio_upload_page.dart';
 import 'package:shweeshaungdaily/views/comment_section.dart';
 import 'package:shweeshaungdaily/views/image_full_view.dart';
+import 'package:shweeshaungdaily/views/profile_album_upload.dart';
 import 'package:shweeshaungdaily/widget/copyable_text.dart';
 import 'package:shweeshaungdaily/views/user_album_upload.dart';
 // import 'package:shweeshaungdaily/views/user_profile_update.dart'; // No longer needed for teacher profile
@@ -836,7 +837,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
         // Navigate to UploadScreen and wait for result
         final result = await Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const UploadScreen()),
+          MaterialPageRoute(builder: (context) => const TeacherUploadScreen()),
         );
 
         // If result is true, it means upload was successful, so refresh stories
