@@ -730,30 +730,191 @@ class _HomePageState extends State<HomeScreenPage>
 
   // New generic custom message card widget
   Widget _buildCustomMessageCard(String title, String message, Color color) {
-    return Card(
-      color: color,
-      margin: const EdgeInsets.only(left: 20, top: 8, bottom: 8, right: 20),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+    final Size screenSize = MediaQuery.of(context).size;
+    final double screenWidth = screenSize.width;
+
+    // Responsive values for layout and text
+    final double iconSectionWidth =
+        screenWidth * 0.2 < 80
+            ? screenWidth * 0.2
+            : 80; // Adjust icon section width
+    final double cardHorizontalMargin = screenWidth > 600 ? 30 : 8;
+    final double cardVerticalMargin = screenWidth > 600 ? 20 : 12;
+    final double contentPadding = screenWidth > 600 ? 24 : 16;
+
+    final double titleFontSize = screenWidth > 600 ? 26 : 22;
+    final double messageFontSize = screenWidth > 600 ? 15 : 13;
+    final double dateFontSize = screenWidth > 600 ? 14 : 12;
+    final double timeFontSize = screenWidth > 600 ? 16 : 14;
+    final double iconSize = screenWidth > 600 ? 45 : 40;
+    final double smallIconSize = screenWidth > 600 ? 18 : 16;
+    return Container(
+      margin: EdgeInsets.symmetric(
+        horizontal: cardHorizontalMargin,
+        vertical: cardVerticalMargin,
+      ),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          // Dark, deep gradient for the card background
+          colors: [Color(0xFF212121), Color(0xFF000000)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.white.withOpacity(
+              0.05,
+            ), // Subtle light glow for neumorphic effect
+            blurRadius: 15,
+            offset: const Offset(-4, -4),
+            spreadRadius: 0.5,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(
+              0.4,
+            ), // Deeper dark shadow for neumorphic effect
+            blurRadius: 15,
+            offset: const Offset(4, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: IntrinsicHeight(
+          child: Row(
+            children: [
+              // Icon Section with dynamic color
+              Container(
+                width: iconSectionWidth, // Responsive width
+                decoration: BoxDecoration(
+                  color: color, // Use the passed color for the icon section
+                  border: Border(
+                    right: BorderSide(
+                      color: Colors.white.withOpacity(
+                        0.2,
+                      ), // Brighter border for separation
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.restaurant_menu, // A clear food-related icon
+                    size: iconSize, // Responsive icon size
+                    color:
+                        Colors
+                            .black87, // Darker icon for good contrast on the warm background
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 6,
+                        offset: const Offset(1, 1),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              message,
-              style: const TextStyle(fontSize: 16, color: Colors.white70),
-              textAlign: TextAlign.center,
-            ),
-          ],
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(contentPadding), // Responsive padding
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Date (subtle white)
+                      // Text(
+                      //   //DateFormat('MMM dd EEE').format(date).toUpperCase(),
+                      //   style: TextStyle(
+                      //     color: Colors.white.withOpacity(0.6),
+                      //     fontSize: dateFontSize, // Responsive date font size
+                      //     fontWeight: FontWeight.w600,
+                      //     letterSpacing: 1.5,
+                      //   ),
+                      //),
+                      SizedBox(
+                        height: screenWidth > 600 ? 12 : 8,
+                      ), // Responsive spacing
+                      // Title with a gradient, potentially incorporating a "hungry mood" color
+                      ShaderMask(
+                        blendMode: BlendMode.srcIn,
+                        shaderCallback:
+                            (bounds) => LinearGradient(
+                              colors: [
+                                Colors.white,
+                                Colors.white.withOpacity(
+                                  0.7,
+                                ), // Blend with a slightly transparent white
+                              ],
+                            ).createShader(bounds),
+                        child: Text(
+                          title, // Use the passed title
+                          style: TextStyle(
+                            fontSize:
+                                titleFontSize, // Responsive title font size
+                            fontWeight: FontWeight.w800,
+                            height: 1.1,
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: screenWidth > 600 ? 16 : 12,
+                      ), // Responsive spacing
+                      // Time & additional icon
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.schedule,
+                            size: smallIconSize,
+                            color: Colors.white70,
+                          ), // Responsive icon size
+                          SizedBox(
+                            width: screenWidth > 600 ? 12 : 8,
+                          ), // Responsive spacing
+                          // Text(
+                          //   time, // Use the passed time
+                          //   style: TextStyle(
+                          //     color: Colors.white,
+                          //     fontSize: timeFontSize, // Responsive time font size
+                          //     fontWeight: FontWeight.w500,
+                          //   ),
+                          // ),
+                          const Spacer(),
+                          Container(
+                            height: 20,
+                            width: 1,
+                            color: Colors.white.withOpacity(0.15),
+                            margin: EdgeInsets.symmetric(
+                              horizontal: screenWidth > 600 ? 12 : 8,
+                            ), // Responsive spacing
+                          ),
+                          Icon(
+                            Icons
+                                .directions_run, // Another food-related icon for subtle theming
+                            size: smallIconSize + 2, // Slightly larger
+                            color: Colors.white70,
+                          ),
+                        ],
+                      ),
+                      SizedBox(
+                        height: screenWidth > 600 ? 12 : 8,
+                      ), // Responsive spacing
+                      // Message (italic white)
+                      Text(
+                        message, // Use the passed message
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize:
+                              messageFontSize, // Responsive message font size
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -764,7 +925,7 @@ class _HomePageState extends State<HomeScreenPage>
     final now = DateTime.now();
     final currentHour = now.hour;
     final currentMinute = now.minute;
-    final currentWeekday = now.weekday; // 1 for Monday, 7 for Sunday
+    //final currentWeekday = now.weekday; // 1 for Monday, 7 for Sunday
 
     // Weekday specific logic (Monday to Friday, when not in class/lunch)
     if (_isWeekday()) {
