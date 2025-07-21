@@ -76,18 +76,21 @@ class _TimeTablePageState extends State<TimeTablePage> {
   Widget buildClassCard(dynamic periodData) {
     if (periodData == null) {
       return SizedBox(
-        width: 280, // Set your desired width here
+        width: MediaQuery.of(context).size.width * 0.9,
         child: Card(
           elevation: 2,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Text('No Class', style: TextStyle(color: kPrimaryDarkColor)),
+            child: Text(
+              'Self Study',
+              style: TextStyle(color: kPrimaryDarkColor),
+            ),
           ),
         ),
       );
     }
     return SizedBox(
-      width: 280, // Set your desired width here
+      width: MediaQuery.of(context).size.width * 0.9,
       child: Card(
         elevation: 4,
         shadowColor: kShadowColor,
@@ -166,7 +169,7 @@ class _TimeTablePageState extends State<TimeTablePage> {
                 color: kPrimaryDarkColor,
               ),
             ),
-            Container(width: 4, height: 113, color: kPrimaryDarkColor),
+            Container(width: 4, height: 100, color: kPrimaryDarkColor),
           ],
         ),
         const SizedBox(width: 12),

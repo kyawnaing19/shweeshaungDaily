@@ -155,114 +155,138 @@ class _UserProfileViewState extends State<UserProfile> {
                   child: Column(
                     children: [
                       const SizedBox(height: kHorizontalPadding),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment
-                                  .start, // This aligns children to the start horizontally
-                          children: [
-                            GestureDetector(
-                              onTap: () {
-                                if (finalProfileImageUrl != null) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (_) => FullscreenImageView(
-                                            imageUrl: finalProfileImageUrl,
-                                            isAsset:
-                                                false, // It's a network image
-                                          ),
-                                    ),
-                                  );
-                                }
-                              },
-                              child: CircleAvatar(
-                                radius: 60,
-                                backgroundColor: kWhite,
-                                child: ClipOval(
-                                  // Added ClipOval here
-                                  child: SizedBox(
-                                    // Sized box to ensure proper sizing for ClipOval
-                                    width: 112, // Corresponds to radius * 2
-                                    height: 112, // Corresponds to radius * 2
-                                    child:
-                                        finalProfileImageUrl != null
-                                            ? AuthorizedImage(
-                                              // Add a Key here based on the image URL
-                                              key: ValueKey(
-                                                finalProfileImageUrl,
-                                              ),
-                                              imageUrl: finalProfileImageUrl,
-                                              width: 112,
-                                              height: 112,
-                                              fit: BoxFit.cover,
-                                            )
-                                            : const Icon(
-                                              Icons.person,
-                                              size: 60,
-                                              color: kPrimaryColor,
-                                            ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: kVerticalSpacing),
-                            Text(
-                              userNickname,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: kPrimaryColor,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Text(
-                                  '@$userName',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    color: kPrimaryColor,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                GestureDetector(
-                                  onTap: () async {
-                                    // Navigate to ProfileUpdateScreen and wait for a result
-                                    final result = await Navigator.push(
+                      Container(
+                        width:
+                            double.infinity, // Makes the container full-width
+                        padding: const EdgeInsets.all(16), // 🔹 Inner spacing
+                        decoration: BoxDecoration(
+                          color: const Color.fromARGB(
+                            255,
+                            193,
+                            242,
+                            249,
+                          ), // 🔹 Background color
+                          borderRadius: BorderRadius.circular(
+                            12,
+                          ), // 🔹 Rounded corners
+                        ),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Column(
+                            crossAxisAlignment:
+                                CrossAxisAlignment
+                                    .start, // This aligns children to the start horizontally
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  if (finalProfileImageUrl != null) {
+                                    Navigator.push(
                                       context,
                                       MaterialPageRoute(
                                         builder:
-                                            (context) =>
-                                                const ProfileUpdateScreen(),
+                                            (_) => FullscreenImageView(
+                                              imageUrl: finalProfileImageUrl,
+                                              isAsset:
+                                                  false, // It's a network image
+                                            ),
                                       ),
                                     );
-
-                                    // If the result indicates a successful update (e.g., true), refresh the profile
-                                    if (result == true) {
-                                      debugPrint(
-                                        'Profile updated, re-fetching profile data...',
-                                      );
-                                      await _fetchProfile();
-                                      // No need to re-fetch stories unless profile changes affect story display logic
-                                    }
-                                  },
-                                  child: const Icon(
-                                    Icons.edit,
-                                    color: kPrimaryColor,
-                                    size: 30,
+                                  }
+                                },
+                                child: CircleAvatar(
+                                  radius: 60,
+                                  backgroundColor: kWhite,
+                                  child: ClipOval(
+                                    // Added ClipOval here
+                                    child: SizedBox(
+                                      // Sized box to ensure proper sizing for ClipOval
+                                      width: 112, // Corresponds to radius * 2
+                                      height: 112, // Corresponds to radius * 2
+                                      child:
+                                          finalProfileImageUrl != null
+                                              ? AuthorizedImage(
+                                                // Add a Key here based on the image URL
+                                                key: ValueKey(
+                                                  finalProfileImageUrl,
+                                                ),
+                                                imageUrl: finalProfileImageUrl,
+                                                width: 112,
+                                                height: 112,
+                                                fit: BoxFit.cover,
+                                              )
+                                              : const Icon(
+                                                Icons.person,
+                                                size: 60,
+                                                color: kPrimaryColor,
+                                              ),
+                                    ),
                                   ),
                                 ),
-                              ],
-                            ),
-                          ],
+                              ),
+                              const SizedBox(height: kVerticalSpacing),
+                              Padding(
+                                padding: EdgeInsets.only(left: 10),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      userNickname,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        color: kPrimaryColor,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          '@$userName',
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            color: kPrimaryColor,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        GestureDetector(
+                                          onTap: () async {
+                                            // Navigate to ProfileUpdateScreen and wait for a result
+                                            final result = await Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder:
+                                                    (context) =>
+                                                        const ProfileUpdateScreen(),
+                                              ),
+                                            );
+
+                                            // If the result indicates a successful update (e.g., true), refresh the profile
+                                            if (result == true) {
+                                              debugPrint(
+                                                'Profile updated, re-fetching profile data...',
+                                              );
+                                              await _fetchProfile();
+                                              // No need to re-fetch stories unless profile changes affect story display logic
+                                            }
+                                          },
+                                          child: const Icon(
+                                            Icons.edit,
+                                            color: kPrimaryColor,
+                                            size: 25,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 5),
                       _buildInfoCard(userBio),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 15),
                       const Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
@@ -317,7 +341,7 @@ class _UserProfileViewState extends State<UserProfile> {
 
   Widget _buildInfoCard(String bio) {
     return SizedBox(
-      width: MediaQuery.of(context).size.width * 0.9,
+      width: MediaQuery.of(context).size.width * 1,
       child: Card(
         elevation: kCardElevation,
         shadowColor: Colors.black.withOpacity(0.3),
@@ -338,7 +362,7 @@ class _UserProfileViewState extends State<UserProfile> {
                   color: Colors.white,
                 ),
               ),
-              const SizedBox(height: 8),
+              Divider(height: 20, color: Colors.white),
               Text(
                 bio,
                 style: const TextStyle(

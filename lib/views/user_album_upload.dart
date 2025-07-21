@@ -58,7 +58,9 @@ class _UploadScreenState extends State<UploadScreen> {
       // photo: File(_selectedMedia!.path),
       await ApiService.uploadStory(
         caption: _captionController.text,
-        photo: XFile(_selectedMedia!.path), // Pass the XFile object directly or convert to File
+        photo: XFile(
+          _selectedMedia!.path,
+        ), // Pass the XFile object directly or convert to File
       );
 
       if (mounted) {
@@ -93,11 +95,13 @@ class _UploadScreenState extends State<UploadScreen> {
     return Scaffold(
       backgroundColor: Colors.white, // A clean background
       appBar: AppBar(
-        title: const Text('New Story', style: TextStyle(color: Colors.black87)),
+        title: const Text('New Album', style: TextStyle(color: Colors.black87)),
         backgroundColor: Colors.white,
         elevation: 0, // No shadow for a flat, modern look
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black87), // Darker icon for contrast
+        iconTheme: const IconThemeData(
+          color: Colors.black87,
+        ), // Darker icon for contrast
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
@@ -151,33 +155,40 @@ class _UploadScreenState extends State<UploadScreen> {
                     ),
                   ],
                 ),
-                child: _selectedMedia == null
-                    ? const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.add_photo_alternate, size: 60, color: Colors.grey),
-                            SizedBox(height: 10),
-                            Text(
-                              'Tap to select image or video',
-                              style: TextStyle(color: Colors.grey, fontSize: 16),
-                            ),
-                          ],
+                child:
+                    _selectedMedia == null
+                        ? const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add_photo_alternate,
+                                size: 60,
+                                color: Colors.grey,
+                              ),
+                              SizedBox(height: 10),
+                              Text(
+                                'Tap to select image or video',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                        : ClipRRect(
+                          borderRadius: BorderRadius.circular(15),
+                          child: Image.file(
+                            File(_selectedMedia!.path),
+                            fit: BoxFit.cover, // Cover the container
+                            width: double.infinity,
+                            height: double.infinity,
+                          ),
                         ),
-                      )
-                    : ClipRRect(
-                        borderRadius: BorderRadius.circular(15),
-                        child: Image.file(
-                          File(_selectedMedia!.path),
-                          fit: BoxFit.cover, // Cover the container
-                          width: double.infinity,
-                          height: double.infinity,
-                        ),
-                      ),
               ),
             ),
             const SizedBox(height: 30), // Increased spacing
-
             // Caption Input
             TextField(
               controller: _captionController,
@@ -191,7 +202,10 @@ class _UploadScreenState extends State<UploadScreen> {
                 ),
                 filled: true,
                 fillColor: Colors.grey[100],
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 15,
+                ),
               ),
               maxLines: 4, // Allow more lines for longer captions
               keyboardType: TextInputType.multiline,
@@ -204,7 +218,11 @@ class _UploadScreenState extends State<UploadScreen> {
                 padding: const EdgeInsets.only(bottom: 20.0),
                 child: Text(
                   _errorMessage!,
-                  style: const TextStyle(color: Colors.redAccent, fontSize: 14, fontWeight: FontWeight.w500),
+                  style: const TextStyle(
+                    color: Colors.redAccent,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -215,7 +233,10 @@ class _UploadScreenState extends State<UploadScreen> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF00897B), Color(0xFF00695C)], // Subtle gradient
+                  colors: [
+                    Color(0xFF00897B),
+                    Color(0xFF00695C),
+                  ], // Subtle gradient
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -234,16 +255,20 @@ class _UploadScreenState extends State<UploadScreen> {
                   onTap: _isUploading ? null : _uploadStory,
                   borderRadius: BorderRadius.circular(10),
                   child: Center(
-                    child: _isUploading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                            'Upload Story',
-                            style: TextStyle(
+                    child:
+                        _isUploading
+                            ? const CircularProgressIndicator(
+                              color: Colors.white,
+                            )
+                            : const Text(
+                              'Upload Story',
+                              style: TextStyle(
                                 fontSize: 18,
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                letterSpacing: 0.8),
-                          ),
+                                letterSpacing: 0.8,
+                              ),
+                            ),
                   ),
                 ),
               ),

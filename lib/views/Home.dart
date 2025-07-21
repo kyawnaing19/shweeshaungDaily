@@ -260,22 +260,39 @@ class _HomePageState extends State<HomeScreenPage>
     super.dispose();
   }
 
-  // ...existing code...
-  bool isOutsideClassTime() {
-    final now = TimeOfDay.now();
-    final start = const TimeOfDay(hour: 8, minute: 30);
-    final end = const TimeOfDay(hour: 15, minute: 30);
-
-    final afterStart =
-        now.hour > start.hour ||
-        (now.hour == start.hour && now.minute >= start.minute);
-    final beforeEnd =
-        now.hour < end.hour ||
-        (now.hour == end.hour && now.minute <= end.minute);
-
-    return !(afterStart && beforeEnd);
+  // Helper function to check if it's a weekday
+  bool _isWeekday() {
+    final now = DateTime.now();
+    return now.weekday >= DateTime.monday && now.weekday <= DateTime.friday;
   }
-  // ...existing code...
+
+  // Check if current time is within any defined class period (including lunch)
+  // This function now explicitly returns true if it's *during* class/lunch.
+  bool isDuringClassOrLunchTime() {
+    final now = TimeOfDay.now();
+    for (int i = 0; i < periodTimes.length; i++) {
+      final start = periodTimes[i]["start"] as TimeOfDay;
+      final end = periodTimes[i]["end"] as TimeOfDay;
+
+      // Convert TimeOfDay to comparable minutes from midnight
+      final nowInMinutes = now.hour * 60 + now.minute;
+      final startInMinutes = start.hour * 60 + start.minute;
+      final endInMinutes = end.hour * 60 + end.minute;
+
+      // Handle cases where the end time is on the next day (e.g., 23:00 to 01:00)
+      if (startInMinutes <= endInMinutes) {
+        if (nowInMinutes >= startInMinutes && nowInMinutes <= endInMinutes) {
+          return true; // It's currently within a class or lunch period
+        }
+      } else {
+        // Period crosses midnight (e.g., 22:00 to 05:59)
+        if (nowInMinutes >= startInMinutes || nowInMinutes <= endInMinutes) {
+          return true;
+        }
+      }
+    }
+    return false; // Not in any defined class or lunch period
+  }
 
   int _getCurrentPeriodIndex() {
     final now = TimeOfDay.now();
@@ -473,82 +490,87 @@ class _HomePageState extends State<HomeScreenPage>
                         0.3, // 30% of screen height for responsiveness
                     child: Builder(
                       builder: (context) {
-                        if (isOutsideClassTime()) {
-                          return _buildCustomMessageCards();
-                        }
-                        final currentPeriod = _getCurrentPeriodIndex();
-                        final periodType = periodTimes[currentPeriod]["type"];
-                        if (periodType == "lunch") {
-                          final now = DateTime.now();
-                          final periodTime =
-                              periodTimes[currentPeriod]["start"] as TimeOfDay;
-                          final periodDateTime = DateTime(
-                            now.year,
-                            now.month,
-                            now.day,
-                            periodTime.hour,
-                            periodTime.minute,
-                          );
-                          final periodTimeStr = DateFormat(
-                            'hh:mm a',
-                          ).format(periodDateTime);
-                          return _buildLunchBreakCard(
-                            periodDateTime,
-                            periodTimeStr,
-                          );
+                        // Check if it's a weekday AND during class/lunch time
+                        if (_isWeekday() && isDuringClassOrLunchTime()) {
+                          final currentPeriod = _getCurrentPeriodIndex();
+                          final periodType = periodTimes[currentPeriod]["type"];
+                          if (periodType == "lunch") {
+                            final now = DateTime.now();
+                            final periodTime =
+                                periodTimes[currentPeriod]["start"]
+                                    as TimeOfDay;
+                            final periodDateTime = DateTime(
+                              now.year,
+                              now.month,
+                              now.day,
+                              periodTime.hour,
+                              periodTime.minute,
+                            );
+                            final periodTimeStr = DateFormat(
+                              'hh:mm a',
+                            ).format(periodDateTime);
+                            return _buildLunchBreakCard(
+                              periodDateTime,
+                              periodTimeStr,
+                            );
+                          } else {
+                            final classPeriodIndices =
+                                List.generate(periodTimes.length, (i) => i)
+                                    .where(
+                                      (i) => periodTimes[i]["type"] == "class",
+                                    )
+                                    .toList();
+                            final initialPage = classPeriodIndices.indexOf(
+                              currentPeriod,
+                            );
+                            return PageView.builder(
+                              controller: PageController(
+                                viewportFraction: 0.92,
+                                initialPage: initialPage < 0 ? 0 : initialPage,
+                              ),
+                              itemCount: classPeriodIndices.length,
+                              itemBuilder: (context, idx) {
+                                final index = classPeriodIndices[idx];
+                                final now = DateTime.now();
+                                final periodTime =
+                                    periodTimes[index]["start"] as TimeOfDay;
+                                final periodDateTime = DateTime(
+                                  now.year,
+                                  now.month,
+                                  now.day,
+                                  periodTime.hour,
+                                  periodTime.minute,
+                                );
+                                final periodTimeStr = DateFormat(
+                                  'hh:mm a',
+                                ).format(periodDateTime);
+                                final period = index < 3 ? index + 1 : index;
+                                final current = classes[period];
+                                final next = classes[period + 1];
+                                return _buildClassCard(
+                                  number: "$period",
+                                  date: DateFormat(
+                                    'MMM dd EEE',
+                                  ).format(periodDateTime),
+                                  code:
+                                      current != null
+                                          ? current['subjectName']
+                                          : "No Class",
+                                  teacher:
+                                      current != null
+                                          ? current['teacherName']
+                                          : "-",
+                                  time: periodTimeStr,
+                                  upcoming:
+                                      next != null ? next['subjectCode'] : "-",
+                                );
+                              },
+                            );
+                          }
                         } else {
-                          final classPeriodIndices =
-                              List.generate(periodTimes.length, (i) => i)
-                                  .where(
-                                    (i) => periodTimes[i]["type"] == "class",
-                                  )
-                                  .toList();
-                          final initialPage = classPeriodIndices.indexOf(
-                            currentPeriod,
-                          );
-                          return PageView.builder(
-                            controller: PageController(
-                              viewportFraction: 0.92,
-                              initialPage: initialPage < 0 ? 0 : initialPage,
-                            ),
-                            itemCount: classPeriodIndices.length,
-                            itemBuilder: (context, idx) {
-                              final index = classPeriodIndices[idx];
-                              final now = DateTime.now();
-                              final periodTime =
-                                  periodTimes[index]["start"] as TimeOfDay;
-                              final periodDateTime = DateTime(
-                                now.year,
-                                now.month,
-                                now.day,
-                                periodTime.hour,
-                                periodTime.minute,
-                              );
-                              final periodTimeStr = DateFormat(
-                                'hh:mm a',
-                              ).format(periodDateTime);
-                              final period = index < 3 ? index + 1 : index;
-                              final current = classes[period];
-                              final next = classes[period + 1];
-                              return _buildClassCard(
-                                number: "$period",
-                                date: DateFormat(
-                                  'MMM dd EEE',
-                                ).format(periodDateTime),
-                                code:
-                                    current != null
-                                        ? current['subjectName']
-                                        : "No Class",
-                                teacher:
-                                    current != null
-                                        ? current['teacherName']
-                                        : "-",
-                                time: periodTimeStr,
-                                upcoming:
-                                    next != null ? next['subjectCode'] : "-",
-                              );
-                            },
-                          );
+                          // If not during class/lunch time on a weekday, or if it's a weekend,
+                          // show the custom "outside class" cards.
+                          return _buildOutsideClassCards();
                         }
                       },
                     ),
@@ -706,28 +728,168 @@ class _HomePageState extends State<HomeScreenPage>
     );
   }
 
-  // ...existing code...
-  Widget _buildCustomMessageCards() {
-    return PageView.builder(
-      controller: PageController(viewportFraction: 0.96),
-      itemCount: customMessageImages.length,
-      itemBuilder: (context, idx) {
-        final double maxWidth = MediaQuery.of(context).size.width * 0.96;
-        return Center(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Image.asset(
-              customMessageImages[idx],
-              width: maxWidth > 350 ? 350 : maxWidth,
-              height: 220,
-              fit: BoxFit.cover,
+  // New generic custom message card widget
+  Widget _buildCustomMessageCard(String title, String message, Color color) {
+    return Card(
+      color: color,
+      margin: const EdgeInsets.only(left: 20, top: 8, bottom: 8, right: 20),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
             ),
-          ),
-        );
-      },
+            const SizedBox(height: 10),
+            Text(
+              message,
+              style: const TextStyle(fontSize: 16, color: Colors.white70),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
     );
   }
-  // ...existing code...
+
+  // New function to build different cards based on outside class time and day
+  Widget _buildOutsideClassCards() {
+    final now = DateTime.now();
+    final currentHour = now.hour;
+    final currentMinute = now.minute;
+    final currentWeekday = now.weekday; // 1 for Monday, 7 for Sunday
+
+    // Weekday specific logic (Monday to Friday, when not in class/lunch)
+    if (_isWeekday()) {
+      // Type 1 (Weekday After School): 15:30 to 21:59
+      if ((currentHour == 15 && currentMinute >= 30) ||
+          (currentHour > 15 && currentHour < 22)) {
+        return _buildCustomMessageCard(
+          "After Classes! 📚",
+          "School's out for the day. Time to relax or get some homework done!",
+          Colors.indigo.shade600,
+        );
+      }
+      // Type 2 (Weekday Bed Time, including Friday 22:00 onwards): 22:00 to 05:59
+      // This will catch Friday night 22:00 onwards.
+      else if ((currentHour >= 22) || (currentHour >= 0 && currentHour < 6)) {
+        return _buildCustomMessageCard(
+          "Bed Time! 😴",
+          "It's late. Get some rest for a fresh start tomorrow!",
+          Colors.purple.shade800,
+        );
+      }
+      // Type 3 (Weekday Morning): 06:00 to 08:29
+      else if ((currentHour >= 6 && currentHour < 8) ||
+          (currentHour == 8 && currentMinute < 30)) {
+        return _buildCustomMessageCard(
+          "Good Morning! ☀️",
+          "Time to get ready for school. Have a great day!",
+          Colors.orange.shade600,
+        );
+      }
+      // Fallback for any other weekday time not explicitly covered (e.g., very early morning before 6:00)
+      return _buildCustomMessageCard(
+        "Weekday Break! ☕",
+        "Enjoy your time outside of class!",
+        Colors.blueGrey.shade400,
+      );
+    }
+    // Weekend specific logic (Saturday and Sunday)
+    else {
+      // It's Saturday or Sunday
+      // Weekend Type 2 (Bed Time - Saturday 00:00 to 05:59) - only for Saturday morning after Friday night
+      // The Friday 22:00-23:59 part is covered by the weekday bed time if it's Friday.
+      // So here we only care about Sat/Sun early morning.
+      if (currentHour >= 0 && currentHour < 6) {
+        // This covers 00:00 to 05:59 on Saturday and Sunday
+        return _buildCustomMessageCard(
+          "Bed Time! 😴",
+          "Late night or early morning on the weekend. Get some rest!",
+          Colors.purple.shade800,
+        );
+      }
+      // Weekend Type 3 (Morning - Saturday/Sunday 06:00 to 08:29)
+      else if ((currentHour >= 6 && currentHour < 8) ||
+          (currentHour == 8 && currentMinute < 30)) {
+        return _buildCustomMessageCard(
+          "Good Morning, Weekend! ☀️",
+          "Enjoy your relaxing morning!",
+          Colors.lightBlue.shade600,
+        );
+      }
+      // Weekend Type 4 (Mid-morning - Saturday/Sunday 08:30 to 11:29)
+      else if ((currentHour == 8 && currentMinute >= 30) ||
+          (currentHour > 8 && currentHour < 12)) {
+        return _buildCustomMessageCard(
+          "Weekend Vibes! 🥳",
+          "Plenty of time for weekend activities!",
+          Colors.teal.shade500,
+        );
+      }
+      // Weekend Lunch Time (Saturday/Sunday 11:30 to 12:29)
+      else if ((currentHour == 11 && currentMinute >= 30) ||
+          (currentHour == 12 && currentMinute < 30)) {
+        return _buildCustomMessageCard(
+          "Weekend Lunch! 🍔",
+          "Time to grab a bite and recharge!",
+          Colors.deepOrange.shade400,
+        );
+      }
+      // Weekend Type 5 (Afternoon - Saturday/Sunday 12:30 to 15:30)
+      else if ((currentHour == 12 && currentMinute >= 30) ||
+          (currentHour > 12 && currentHour <= 15)) {
+        return _buildCustomMessageCard(
+          "Weekend Afternoon! 🚶‍♀️",
+          "What are your plans for the rest of the day?",
+          Colors.green.shade500,
+        );
+      }
+      // NEW: Weekend Late Afternoon/Early Evening: 15:31 to 18:59
+      else if ((currentHour == 15 && currentMinute > 30) ||
+          (currentHour > 15 && currentHour < 19)) {
+        return _buildCustomMessageCard(
+          "Evening Plans! 🌆",
+          "The weekend is still going strong. What's next?",
+          Colors.blueGrey.shade800,
+        );
+      }
+      // NEW: Weekend Evening/Night: 19:00 to 21:59
+      else if (currentHour >= 19 && currentHour < 22) {
+        return _buildCustomMessageCard(
+          "Weekend Night! 🌙",
+          "Enjoy your evening entertainment!",
+          Colors.deepPurple.shade700,
+        );
+      }
+      // NEW: Weekend Late Night: 22:00 to 23:59
+      else if (currentHour >= 22 && currentHour <= 23) {
+        // Covers 22:00 to 23:59
+        return _buildCustomMessageCard(
+          "Winding Down! ✨",
+          "Almost time to wrap up the weekend. Prepare for the week ahead!",
+          Colors.blueGrey.shade900,
+        );
+      }
+      // Fallback for any other Saturday/Sunday time not explicitly covered (should be minimal now)
+      else {
+        return _buildCustomMessageCard(
+          "Relaxing Weekend! ✨",
+          "Enjoy your free time!",
+          Colors
+              .grey
+              .shade700, // Changed to a more neutral grey for general fallback
+        );
+      }
+    }
+  }
 
   Widget _buildClassCard({
     required String number,
