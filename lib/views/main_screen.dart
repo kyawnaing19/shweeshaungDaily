@@ -70,14 +70,11 @@ class _HomePageState extends State<HomePage> {
           backgroundColor: kAccentColor,
           elevation: 0,
           automaticallyImplyLeading: false,
-          title: const Text(
-            'Home',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
+          title: Image.asset('assets/icons/45.png', height: 180),
+          titleSpacing:
+              -15.0, // Example of a negative value to pull it further left
+          centerTitle: false,
+
           actions: [
             NotificationIcon(
               context: context, // Make sure to pass the context
@@ -92,28 +89,56 @@ class _HomePageState extends State<HomePage> {
           backgroundColor: kAccentColor,
           elevation: 0,
           automaticallyImplyLeading: false,
-          title: const Text(
-            'Note',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          title: Image.asset('assets/icons/45.png', height: 180),
+          titleSpacing:
+              -15.0, // Example of a negative value to pull it further left
+          centerTitle: false,
+
+          actions: [
+            // Replaced NotificationIcon with Text 'Note'
+            const Padding(
+              // Use Padding to give the text some space if needed
+              padding: EdgeInsets.only(
+                right: 25.0,
+              ), // Adjust padding as desired
+              child: Text(
+                'Note',
+                style: TextStyle(
+                  fontSize: 22, // Adjust font size as needed
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ),
-          ),
+          ],
         );
       case 2:
         return AppBar(
           backgroundColor: kAccentColor,
           elevation: 0,
           automaticallyImplyLeading: false,
-          title: const Text(
-            'Timetable',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          title: Image.asset('assets/icons/45.png', height: 180),
+          titleSpacing:
+              -15.0, // Example of a negative value to pull it further left
+          centerTitle: false,
+
+          actions: [
+            // Replaced NotificationIcon with Text 'Note'
+            const Padding(
+              // Use Padding to give the text some space if needed
+              padding: EdgeInsets.only(
+                right: 25.0,
+              ), // Adjust padding as desired
+              child: Text(
+                'Timetable',
+                style: TextStyle(
+                  fontSize: 22, // Adjust font size as needed
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ),
-          ),
+          ],
         );
       case 3:
         return AppBar(
@@ -158,7 +183,7 @@ class _HomePageState extends State<HomePage> {
                 // If user confirmed
                 if (shouldLogout == true) {
                   final success = await ApiService.logout();
-                  if (success==true) {
+                  if (success == true) {
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(builder: (context) => LandingPage()),

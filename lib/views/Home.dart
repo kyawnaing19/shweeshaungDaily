@@ -980,9 +980,7 @@ class _HomePageState extends State<HomeScreenPage>
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => UserProfileView(),
-                        ),
+                        MaterialPageRoute(builder: (context) => MailBoxHome()),
                       );
                     },
                     child: SizedBox(
