@@ -49,6 +49,25 @@ class ApiService {
   }
 
 
+  static Future<Map<String, dynamic>?> getProfileForViewing(String email) async {
+    try {
+      final url = Uri.parse('$baseUrl/profile?$email');
+      final response = await AuthorizedHttpService.sendAuthorizedRequest(
+        url,
+        method: 'GET',
+      );
+
+      if (response!.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return {};
+    } catch (e) {
+      print('❌ Comment failed: $e');
+      return {};
+    }
+  }
+
+
 
   static Future<String> getUserName() async {
     try {
@@ -256,6 +275,35 @@ class ApiService {
 
    static Future<List<Map<String, dynamic>>?> getTeacherProfileFeed() async {
     final url = Uri.parse('$feedBaseUrl/teacherprofilefeed');
+
+    try {
+      final response = await AuthorizedHttpService.sendAuthorizedRequest(
+        url,
+        method: 'GET',
+      );
+
+      if (response != null && response.statusCode == 200) {
+        final body = response.body;
+        final decoded = jsonDecode(body);
+
+        if (decoded is List) {
+          return decoded.cast<Map<String, dynamic>>();
+        } else {
+          print('Unexpected response format: $decoded');
+        }
+      } else {
+        print('Failed to fetch feed. Status code: ${response?.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching feed: $e');
+    }
+
+    return null;
+  }
+
+
+  static Future<List<Map<String, dynamic>>?> getTeacherProfileFeedForViewing(String email) async {
+    final url = Uri.parse('$feedBaseUrl/teacherprofilefeed?email=$email');
 
     try {
       final response = await AuthorizedHttpService.sendAuthorizedRequest(
@@ -585,6 +633,28 @@ class ApiService {
 
   static Future<List<dynamic>> getStory() async {
     final uri = Uri.parse(storyUrl);
+    try{
+    final response = await AuthorizedHttpService.sendAuthorizedRequest(
+      uri,
+      method: 'GET',
+    );
+
+    if (response != null && response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data;
+    } else {
+      return [];
+    }
+  
+  } catch (e) {
+      throw Exception('Error fetching audio files: $e');
+    }
+  }
+
+
+  static Future<List<dynamic>> getStoryForViewing(String email) async {
+    final uri = Uri.parse('$storyUrl?email=$email');
+    
     try{
     final response = await AuthorizedHttpService.sendAuthorizedRequest(
       uri,

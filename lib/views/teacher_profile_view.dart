@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/services/authorize_image.dart';
+import 'package:shweeshaungdaily/services/authorized_network_image.dart';
 import 'package:shweeshaungdaily/services/token_service.dart';
 import 'package:shweeshaungdaily/utils/audio_timeformat.dart';
 import 'package:shweeshaungdaily/utils/image_cache.dart';
@@ -27,8 +28,9 @@ const double kCardBorderRadius = 12.0;
 
 class TeacherProfileViewPage extends StatefulWidget {
   final VoidCallback? onBack;
+  final String email;
 
-  const TeacherProfileViewPage({super.key, this.onBack});
+  const TeacherProfileViewPage({super.key, this.onBack, required this.email});
 
   @override
   State<TeacherProfileViewPage> createState() => _TeacherProfileViewPageState();
@@ -77,7 +79,7 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
       _isLoadingUser = true;
     });
     try {
-      final Map<String, dynamic>? profile = await ApiService.getProfile();
+      final Map<String, dynamic>? profile = await ApiService.getProfileForViewing(widget.email);
       if (mounted) {
         setState(() {
           _nickName = profile!['nickName'] ?? 'N/A';
@@ -112,20 +114,6 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
 
   // Method: loadCachedFeed, copied from Home.dart
   Future<List<Map<String, dynamic>>> loadCachedFeed() async {
-    final prefs = await SharedPreferences.getInstance();
-    final cachedFeed = prefs.getString('cached_feed');
-    if (cachedFeed != null) {
-      try {
-        final decoded = jsonDecode(cachedFeed);
-        if (decoded is List) {
-          return decoded
-              .map((item) => Map<String, dynamic>.from(item as Map))
-              .toList();
-        }
-      } catch (e) {
-        debugPrint('Error decoding cached feed: $e');
-      }
-    }
     return [];
   }
 
@@ -137,7 +125,7 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
     });
 
     try {
-      final result = await ApiService.getTeacherProfileFeed();
+      final result = await ApiService.getTeacherProfileFeedForViewing(widget.email);
 
       // Save feed to local cache
       // final prefs = await SharedPreferences.getInstance();
@@ -171,17 +159,7 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
 
   // New method: loadStoryItems, copied from UserProfile.dart
   Future<List<Map<String, dynamic>>> loadStoryItems() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString('cached_story');
-    if (jsonString == null) return [];
-
-    try {
-      final List<dynamic> decodedList = jsonDecode(jsonString);
-      return decodedList.cast<Map<String, dynamic>>();
-    } catch (e) {
-      debugPrint('Error decoding feed items: $e');
-      return [];
-    }
+    return [];
   }
 
   // New method: _fetchStories, copied from UserProfile.dart
@@ -190,19 +168,8 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
       _loadingStories = true;
     });
     try {
-      final result = await ApiService.getStory();
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('cached_story', jsonEncode(result));
-
-      final imageUrls =
-          result
-              .map((item) => item['url'] as String?)
-              .where((url) => url != null && url.isNotEmpty)
-              .map((url) => '$baseUrl/$url')
-              .toSet();
-
-      // Ensure ImageCacheManager.clearUnusedStoryImages is implemented to handle network images
-      await ImageCacheManager.clearUnusedStoryImages(imageUrls);
+      final result = await ApiService.getStoryForViewing(widget.email);
+    
 
       if (mounted) {
         setState(() {
@@ -316,7 +283,7 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
                                     height: 112, // Corresponds to radius * 2
                                     child:
                                         finalProfileImage != null
-                                            ? AuthorizedImage(
+                                            ? AuthorizedNetworkImage(
                                               // Add a Key here based on the image URL
                                               key: ValueKey(finalProfileImage),
                                               imageUrl:
@@ -782,7 +749,7 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
         borderRadius: BorderRadius.circular(16.0),
         child: Stack(
           children: [
-            AuthorizedImage(
+            AuthorizedNetworkImage(
               imageUrl: imageUrl,
               height: double.infinity,
               width: double.infinity,
@@ -850,7 +817,7 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
                     child: ClipOval(
                       child:
                           profileUrl != null && profileUrl.isNotEmpty
-                              ? AuthorizedImage(
+                              ? AuthorizedNetworkImage(
                                 imageUrl: profileUrl,
                                 height: 40,
                                 width: 40,
@@ -921,7 +888,7 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
                   },
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
-                    child: AuthorizedImage(
+                    child: AuthorizedNetworkImage(
                       imageUrl: imageUrl,
                       height: 200,
                       width: double.infinity,
@@ -1119,7 +1086,7 @@ class _FullscreenImageViewerState extends State<FullscreenImageView>
                           height: MediaQuery.of(context).size.height * 0.7,
                           fit: BoxFit.contain,
                         )
-                        : AuthorizedImage(
+                        : AuthorizedNetworkImage(
                           imageUrl: widget.imageUrl,
                           width: MediaQuery.of(context).size.width * 0.9,
                           height: MediaQuery.of(context).size.height * 0.7,
@@ -1243,7 +1210,7 @@ class _GalleryViewerPageState extends State<GalleryViewerPage> {
                 return Center(
                   child: Transform.translate(
                     offset: index == currentIndex ? _offset : Offset.zero,
-                    child: AuthorizedImage(
+                    child: AuthorizedNetworkImage(
                       imageUrl: widget.images[index],
                       height: MediaQuery.of(context).size.height,
                       width: MediaQuery.of(context).size.width,
