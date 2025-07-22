@@ -286,7 +286,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                           children: [
                             Row(
                               children: [
-                                _userPhotoUrl != null
+                                _userPhotoUrl != null && _userPhotoUrl!.isNotEmpty
                                     ? ClipOval(
                                       child: AuthorizedImage(
                                         imageUrl: '$baseUrl/$_userPhotoUrl',

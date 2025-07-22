@@ -53,6 +53,7 @@ class _RegisterPageState extends State<RegisterPage> {
     try {
       // 2. Attempt to register. We assume `registerEmail` throws an
       // exception on failure, which we can catch.
+      
       await authViewModel.registerEmail(email, name);
 
       // 3. On success, navigate to the verification page.

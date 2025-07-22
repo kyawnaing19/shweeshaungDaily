@@ -4,6 +4,7 @@ import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/view_models/auth_viewmodel.dart';
 import 'package:shweeshaungdaily/view_models/reg_viewmodel.dart';
 import 'package:shweeshaungdaily/views/Home.dart';
+import 'package:shweeshaungdaily/views/main_screen.dart';
 import 'package:shweeshaungdaily/views/signReg/StudentInfo.dart';
 import 'package:shweeshaungdaily/views/signReg/login.dart';
 
@@ -161,7 +162,7 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
           Navigator.pushAndRemoveUntil(
             context,
-            _createSlideRoute(HomeScreenPage()), // Use custom route
+            _createSlideRoute(HomePage()), // Use custom route
             (Route<dynamic> route) => false,
           );
           return;

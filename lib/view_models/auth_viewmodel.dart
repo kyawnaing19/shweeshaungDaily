@@ -84,6 +84,7 @@ class AuthViewModel extends ChangeNotifier {
     final success = await ApiService.registerEmail(
       UserModel(email: email, nickName: nickName),
     );
+    if(!success) throw Exception("EMAIL_ALREADY_IN_USE");
 
     isLoading = false;
     notifyListeners();

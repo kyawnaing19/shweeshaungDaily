@@ -111,6 +111,7 @@ class ApiService {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(user.toJson()),
     );
+    print(response.statusCode);
     return response.statusCode == 201;
   }
 
