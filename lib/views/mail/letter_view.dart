@@ -36,18 +36,18 @@ class LoveLetterScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         iconTheme: const IconThemeData(color: Colors.black87),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.favorite_border, size: 24),
-            onPressed: () {
-              // Implement favorite logic
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.share, size: 24),
-            onPressed: () {
-              // Implement share logic
-            },
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.favorite_border, size: 24),
+          //   onPressed: () {
+          //     // Implement favorite logic
+          //   },
+          // ),
+          // IconButton(
+          //   icon: const Icon(Icons.share, size: 24),
+          //   onPressed: () {
+          //     // Implement share logic
+          //   },
+          // ),
         ],
       ),
       body: SingleChildScrollView(
