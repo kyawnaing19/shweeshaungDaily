@@ -1208,7 +1208,6 @@ class ShimmerLoadingPlaceholder extends StatelessWidget {
   }
 }
 
-// New widget: _buildAddNewCard, copied from UserProfile.dart
 class UploadSharesDialog extends StatefulWidget {
   const UploadSharesDialog({super.key});
 
@@ -1244,16 +1243,15 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
     try {
       await ApiService.uploadFeed(
         text: _controller.text,
-        audience:
-            _selectedAudience == 'Public'
-                ? 'public'
-                : _selectedAudience == 'Majors' &&
+        audience: _selectedAudience == 'Public'
+            ? 'public'
+            : _selectedAudience == 'Majors' &&
                     _selectedMajor != null &&
                     _selectedSemester != null
                 ? '${_selectedSemester?.replaceAll('Sem ', '') ?? ''} ${_selectedMajor ?? ''}'
                 : _selectedAudience.startsWith('Sem ')
-                ? '${_selectedAudience.replaceAll('Sem ', '')} CST'
-                : _selectedAudience,
+                    ? '${_selectedAudience.replaceAll('Sem ', '')} CST'
+                    : _selectedAudience,
         // On web, pass the XFile or its bytes instead of File
         photo: _selectedImage,
       );
@@ -1290,52 +1288,50 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.82,
-      minChildSize: 0.5,
-      maxChildSize: 0.92,
-      snap: true,
-      snapSizes: const [0.5, 0.7, 0.92],
-      builder:
-          (context, scrollController) => Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 25,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: CustomScrollView(
-              controller: scrollController,
-              physics: const ClampingScrollPhysics(),
-              slivers: [
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildDragHandle(),
-                        const SizedBox(height: 12),
-                        _buildHeader(),
-                        const SizedBox(height: 28),
-                        _buildCaptionField(),
-                        const SizedBox(height: 28),
-                        _buildMediaSection(),
-                        const SizedBox(height: 32),
-                        _buildShareButton(),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+      initialChildSize: 1.0,
+      minChildSize: 1.0,
+      maxChildSize: 1.0,
+      expand: true, // This ensures it truly expands to fill available space
+      builder: (context, scrollController) => Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(28),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 25,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: CustomScrollView(
+          controller: scrollController,
+          physics: const ClampingScrollPhysics(),
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildDragHandle(),
+                    const SizedBox(height: 12),
+                    _buildHeader(),
+                    const SizedBox(height: 28),
+                    _buildCaptionField(),
+                    const SizedBox(height: 28),
+                    _buildMediaSection(),
+                    const SizedBox(height: 32),
+                    _buildShareButton(),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1603,17 +1599,15 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed:
-            _controller.text.isEmpty && _selectedImage == null
-                ? null
-                : !_isUploading
+        onPressed: _controller.text.isEmpty && _selectedImage == null
+            ? null
+            : !_isUploading
                 ? _uploadPost
                 : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor:
-              _controller.text.isEmpty && _selectedImage == null
-                  ? const Color(0xFF48C4BC).withOpacity(0.4)
-                  : const Color(0xFF317575),
+          backgroundColor: _controller.text.isEmpty && _selectedImage == null
+              ? const Color(0xFF48C4BC).withOpacity(0.4)
+              : const Color(0xFF317575),
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
@@ -1621,25 +1615,24 @@ class _UploadSharesDialogState extends State<UploadSharesDialog> {
           elevation: 0,
           shadowColor: Colors.transparent,
         ),
-        child:
-            _isUploading
-                ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 3,
-                  ),
-                )
-                : Text(
-                  "Share Now",
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                    color: Colors.white,
-                  ),
+        child: _isUploading
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 3,
                 ),
+              )
+            : Text(
+                "Share Now",
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                  color: Colors.white,
+                ),
+              ),
       ),
     );
   }
@@ -2028,7 +2021,7 @@ class _UploadStoryDialogState extends State<UploadStoryDialog> {
     return DraggableScrollableSheet(
       initialChildSize: 0.55,
       minChildSize: 0.4,
-      maxChildSize: 0.85,
+      maxChildSize: 0.95,
       expand: false,
       builder:
           (context, scrollController) => Container(

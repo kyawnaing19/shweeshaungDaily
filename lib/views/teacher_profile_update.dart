@@ -62,6 +62,7 @@ class _TeacherProfileUpdateScreenState extends State<TeacherProfileUpdateScreen>
             profileData['profileUrl'] != null // Assuming 'photoUrl' for teacher
                 ? '$baseUrl/${profileData['profileUrl']}'
                 : null;
+                
 
         _newlyPickedImage = null; // Clear any previously picked images when loading new profile data
       }
@@ -385,7 +386,7 @@ class _TeacherProfileUpdateScreenState extends State<TeacherProfileUpdateScreen>
                               height: 120,
                               fit: BoxFit.cover,
                             ))
-                      : (_initialProfileImageUrl != null && !_isLoading)
+                      : (_initialProfileImageUrl != null && !_isLoading && _initialProfileImageUrl!.isNotEmpty)
                           ? AuthorizedImage(
                               imageUrl: _initialProfileImageUrl!,
                               width: 120,
@@ -395,7 +396,7 @@ class _TeacherProfileUpdateScreenState extends State<TeacherProfileUpdateScreen>
                           : const Icon(
                               Icons.person,
                               size: 60,
-                              color: Colors.white,
+                              color: kWhite,
                             ),
                 ),
               ),
