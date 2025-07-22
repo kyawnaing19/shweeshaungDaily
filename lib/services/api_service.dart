@@ -57,7 +57,7 @@ class ApiService {
         method: 'GET',
       );
       print(response!.body);
-      if (response!.statusCode == 200) {
+      if (response.statusCode == 200) {
         return jsonDecode(response.body);
       }
       return {};

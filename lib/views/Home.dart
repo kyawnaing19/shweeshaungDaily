@@ -17,8 +17,6 @@ import 'package:shweeshaungdaily/views/mail/mail_view.dart';
 
 import 'package:shweeshaungdaily/views/comment_section.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:shweeshaungdaily/views/teacher_profile_view.dart';
-import 'package:shweeshaungdaily/views/user_profile_view.dart';
 import 'package:shweeshaungdaily/views/view_router.dart';
 import 'package:shweeshaungdaily/views/widget_loading.dart';
 import 'package:shweeshaungdaily/widget/copyable_text.dart';

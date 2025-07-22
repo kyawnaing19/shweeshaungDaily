@@ -51,9 +51,9 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
   bool _loadingStories = true; // Renamed to avoid conflict with `isFeedLoading`
 
   // User Profile Data
-  String _nickName = 'Loading...';
-  String _department = 'Loading...';
-  String _role = 'Loading...';
+  String? _nickName = 'Loading...';
+  String? _department = 'Loading...';
+  String? _role = 'Loading...';
   bool _isLoadingUser = true;
   String? _userBio;
   String? finalProfileImage;
@@ -86,17 +86,22 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
           _nickName = profile!['nickName'] ?? 'N/A';
           _department = profile['department'] ?? 'N/A';
           _role = profile['role'] ?? 'N/A';
-          final String profileImageUrl =
+          final String? profileImageUrl =
               (profile['profileUrl'] != null &&
                       profile['profileUrl'].isNotEmpty)
                   ? profile['profileUrl']
                   : profile['profileProfileUrl'];
-          finalProfileImage =
-              (profileImageUrl.isNotEmpty) ? '$baseUrl/$profileImageUrl' : null;
+          if (profileImageUrl != null) {
+            finalProfileImage =
+                (profileImageUrl.isNotEmpty)
+                    ? '$baseUrl/$profileImageUrl'
+                    : null;
+          }
+
           _userBio =
               (profile['bio']?.toString().trim().isNotEmpty ?? false)
-                  ? profile!['bio'].toString()
-                  : 'Add a few words about yourself...';
+                  ? profile['bio'].toString()
+                  : 'No bio yet';
 
           _isLoadingUser = false;
         });
@@ -298,7 +303,7 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  _nickName,
+                                  _nickName!,
                                   style: const TextStyle(
                                     fontSize: 17,
                                     fontWeight: FontWeight.w800,
@@ -309,7 +314,7 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
                                 Row(
                                   children: [
                                     Text(
-                                      _department,
+                                      _department!,
                                       style: const TextStyle(
                                         fontSize: 15,
                                         color: kPrimaryDarkColor,
@@ -329,7 +334,7 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
               ),
             ),
             const SizedBox(height: 18),
-            _buildInfoCard(_role, _userBio ?? 'No bio yet!'),
+            _buildInfoCard(_role!, _userBio ?? 'No bio yet!'),
             const SizedBox(height: 15),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -869,8 +874,9 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
                               size: 22,
                             ),
                             onPressed: () async {
-                              if (feedId == null)
+                              if (feedId == null) {
                                 return; // Add null check for feedId
+                              }
                               if (isLiked) {
                                 print("is liked");
                                 final success = await ApiService.unlike(feedId);
@@ -1063,10 +1069,10 @@ class ShimmerLoadingPlaceholder extends StatelessWidget {
   final double width;
 
   const ShimmerLoadingPlaceholder({
-    Key? key,
+    super.key,
     required this.height,
     required this.width,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

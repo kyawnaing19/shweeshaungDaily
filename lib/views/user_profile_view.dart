@@ -1,14 +1,8 @@
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
-import 'package:shweeshaungdaily/services/authorize_image.dart';
 import 'package:shweeshaungdaily/services/authorized_network_image.dart';
-import 'package:shweeshaungdaily/utils/image_cache.dart';
-import 'package:shweeshaungdaily/views/user_album_upload.dart';
-import 'package:shweeshaungdaily/views/user_profile_update.dart';
 
 // Consider defining constants for common sizes/paddings
 const double kHorizontalPadding = 20.0;
@@ -109,7 +103,7 @@ class _UserProfileViewState extends State<UserProfileView> {
     final String userBio =
         (_profile?['bio']?.toString().trim().isNotEmpty ?? false)
             ? _profile!['bio'].toString()
-            : 'Add a few words about yourself...';
+            : 'No bio yet';
 
     // Directly use _profile?['profilePictureUrl'] to determine image source
     final String? rawProfileImageUrl = _profile?['profilePictureUrl'];

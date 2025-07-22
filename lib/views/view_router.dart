@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/views/teacher_profile_view.dart';
-import 'package:shweeshaungdaily/views/teacherprofile.dart';
 import 'package:shweeshaungdaily/views/user_profile_view.dart';
 
 class ViewRouter extends StatelessWidget {
