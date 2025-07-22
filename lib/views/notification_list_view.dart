@@ -1,8 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
-import 'package:shweeshaungdaily/colors.dart'; // Import your colors
-import 'package:shweeshaungdaily/views/notification_detail_page.dart'; // Import the detail pages
+import 'package:shweeshaungdaily/colors.dart';
+import 'package:shweeshaungdaily/services/api_service.dart';
+import 'package:shweeshaungdaily/views/notification_detail_page.dart';
+
+class NotificationItem {
+  final String id;
+  final String title;
+  final String message;
+  final DateTime createdAt;
+  bool isRead;
+  final String type;
+  final String? imageUrl;
+
+  NotificationItem({
+    required this.id,
+    required this.title,
+    required this.message,
+    required this.createdAt,
+    this.isRead = false,
+    required this.type,
+    this.imageUrl,
+  });
+
+  factory NotificationItem.fromJson(Map<String, dynamic> json) {
+    return NotificationItem(
+      id: json['id'].toString(),
+      title: json['title'] ?? '',
+      message: json['message'] ?? '',
+      createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
+      isRead: json['seen'] ?? false,
+      type: json['type'] ?? 'general',
+      imageUrl: json['imageUrl'],
+    );
+  }
+}
 
 class NotificationList extends StatefulWidget {
   const NotificationList({super.key});
@@ -12,101 +45,42 @@ class NotificationList extends StatefulWidget {
 }
 
 class _NotificationListState extends State<NotificationList> {
-  // List of notification items
-  final List<NotificationItem> notifications = [
-    // General type - App Maintenance with image
-    NotificationItem(
-      id: '1',
-      title: 'Scheduled Maintenance',
-      description:
-          'Our services will be briefly unavailable tonight from 2 AM to 4 AM EST for essential updates.',
-      time: DateTime.now().subtract(const Duration(hours: 3)),
-      isRead: false,
-      icon: Icons.build,
-      color: kPrimaryDarkColor, // Using a color from your palette
-      type: 'general',
-      imageUrl:
-          'https://placehold.co/600x400/FF5733/FFFFFF?text=Maintenance', // Placeholder image
-    ),
-    // General type - General Knowledge with image
-    NotificationItem(
-      id: '2',
-      title: 'Did You Know?',
-      description:
-          'The human brain weighs about 3 pounds but uses 20% of the body\'s oxygen and calories.',
-      time: DateTime.now().subtract(const Duration(days: 1)),
-      isRead: false,
-      icon: Icons.lightbulb_outline,
-      color: kLunchIconBg, // Using a color from your palette
-      type: 'general',
-      imageUrl:
-          'https://placehold.co/600x400/33FF57/000000?text=Brain+Fact', // Placeholder image
-    ),
-    // General type - Quote (no image)
-    NotificationItem(
-      id: '3',
-      title: 'Daily Inspiration',
-      description:
-          '"The only way to do great work is to love what you do." - Steve Jobs',
-      time: DateTime.now().subtract(const Duration(days: 0, hours: 8)),
-      isRead: true,
-      icon: Icons.format_quote,
-      color: kPrimaryColor, // Using a color from your palette
-      type: 'general',
-    ),
-    // General type - Sweet Message (no image)
-    NotificationItem(
-      id: '4',
-      title: 'Good Morning!',
-      description: 'Wishing you a day filled with joy, laughter, and success!',
-      time: DateTime.now().subtract(const Duration(minutes: 30)),
-      isRead: false,
-      icon: Icons.sentiment_very_satisfied,
-      color: kAccentColor, // Using a color from your palette
-      type: 'general',
-    ),
-    // Voicemail type (no image)
-    NotificationItem(
-      id: '5',
-      title: 'New Voicemail',
-      description:
-          'You have a new voicemail from (555) 123-4567. Duration: 0:45.',
-      time: DateTime.now().subtract(const Duration(hours: 1)),
-      isRead: false,
-      icon: Icons.voicemail,
-      color: kLunchText, // Using kLunchText
-      type: 'voicemail',
-    ),
-    // A 'general' type without a specific subType, will use default general UI (no image)
-    NotificationItem(
-      id: '7',
-      title: 'Account Verification',
-      description:
-          'Please verify your email address to ensure account security.',
-      time: DateTime.now().subtract(const Duration(days: 5)),
-      isRead: true,
-      icon: Icons.verified_user,
-      color: kPrimaryDarkColor, // Using a color from your palette
-      type: 'general',
-    ),
-  ];
+  List<NotificationItem> notifications = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchNotifications();
+  }
+
+  Future<void> _fetchNotifications() async {
+    try {
+      final data = await ApiService.getAllNotifications();
+      setState(() {
+        notifications = data.map((json) => NotificationItem.fromJson(json)).toList();
+      });
+    } catch (e) {
+      debugPrint('Error fetching notifications: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to load notifications')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    
     return Scaffold(
-      backgroundColor: kBackgroundColor, // Using kBackgroundColor
+      backgroundColor: kBackgroundColor,
       appBar: AppBar(
-        backgroundColor: kAccentColor, // Using kAccentColor
+        backgroundColor: kAccentColor,
         title: const Text('Notifications'),
         actions: [
           IconButton(
             icon: SvgPicture.asset(
-              'assets/icons/mark-all-read.svg', // Ensure this SVG asset exists or remove/replace
+              'assets/icons/mark-all-read.svg',
               width: 24,
-              colorFilter: const ColorFilter.mode(
-                kWhite, // Using kWhite
-                BlendMode.srcIn,
-              ), // For SVG color
+              colorFilter: const ColorFilter.mode(kWhite, BlendMode.srcIn),
             ),
             onPressed: _markAllAsRead,
           ),
@@ -121,10 +95,13 @@ class _NotificationListState extends State<NotificationList> {
               child: CustomScrollView(
                 slivers: [
                   SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final notification = notifications[index];
-                      return _buildNotificationItem(notification);
-                    }, childCount: notifications.length),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final notification = notifications[index];
+                        return _buildNotificationItem(notification);
+                      },
+                      childCount: notifications.length,
+                    ),
                   ),
                 ],
               ),
@@ -136,13 +113,16 @@ class _NotificationListState extends State<NotificationList> {
   }
 
   Widget _buildNotificationItem(NotificationItem notification) {
+    const defaultIcon = Icons.notifications;
+    const defaultColor = Colors.blue;
+
     return Dismissible(
       key: Key(notification.id),
       background: Container(
-        color: kErrorColor, // Using kErrorColor for dismiss background
+        color: kErrorColor,
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        child: const Icon(Icons.delete, color: kWhite), // Using kWhite
+        child: const Icon(Icons.delete, color: kWhite),
       ),
       direction: DismissDirection.endToStart,
       onDismissed: (direction) {
@@ -156,11 +136,11 @@ class _NotificationListState extends State<NotificationList> {
       child: Container(
         margin: const EdgeInsets.only(top: 10, left: 16, right: 16),
         decoration: BoxDecoration(
-          color: kWhite, // Using kWhite
+          color: kWhite,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: kShadowColor.withOpacity(0.05), // Using kShadowColor
+              color: kShadowColor.withOpacity(0.05),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -169,7 +149,6 @@ class _NotificationListState extends State<NotificationList> {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () {
-            // Mark as read and navigate to detail page based on type
             setState(() {
               notification.isRead = true;
             });
@@ -183,13 +162,13 @@ class _NotificationListState extends State<NotificationList> {
                 Container(
                   width: 40,
                   height: 40,
-                  decoration: BoxDecoration(
-                    color: notification.color.withOpacity(0.1),
+                  decoration: const BoxDecoration(
+                    color: defaultColor,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    notification.icon,
-                    color: notification.color,
+                  child: const Icon(
+                    defaultIcon,
+                    color: kWhite,
                     size: 20,
                   ),
                 ),
@@ -203,14 +182,9 @@ class _NotificationListState extends State<NotificationList> {
                           Expanded(
                             child: Text(
                               notification.title,
-                              style: Theme.of(
-                                context,
-                              ).textTheme.bodyLarge?.copyWith(
-                                fontWeight:
-                                    notification.isRead
-                                        ? FontWeight.normal
-                                        : FontWeight.bold,
-                              ),
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
+                                  ),
                             ),
                           ),
                           if (!notification.isRead)
@@ -218,9 +192,7 @@ class _NotificationListState extends State<NotificationList> {
                               width: 8,
                               height: 8,
                               decoration: const BoxDecoration(
-                                color:
-                                    Colors
-                                        .blue, // Keeping blue dot for unread indicator
+                                color: Colors.blue,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -228,19 +200,19 @@ class _NotificationListState extends State<NotificationList> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        notification.description,
+                        notification.message,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: kAccentColor, // Using kLightTextColor
-                        ),
-                        maxLines: 2, // Limit description to 2 lines
+                              color: kAccentColor,
+                            ),
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        _formatTime(notification.time),
+                        _formatTime(notification.createdAt),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: kGrey, // Using kGrey
-                        ),
+                              color: kGrey,
+                            ),
                       ),
                     ],
                   ),
@@ -253,25 +225,32 @@ class _NotificationListState extends State<NotificationList> {
     );
   }
 
-  // Navigate to the detail page based on notification type
-  void _navigateToNotificationDetail(
-    BuildContext context,
-    NotificationItem notification,
-  ) {
+  Future<void> _navigateToNotificationDetail(BuildContext context, NotificationItem notification) async {
     Widget detailPage;
+
     switch (notification.type) {
-      case 'voicemail':
+      case 'VOICE_MAIL':
         detailPage = VoicemailDetailPage(notification: notification);
         break;
-      case 'general': // Explicitly handle 'general'
-      default: // All other types will also fall back to General
+      default:
         detailPage = GeneralNotificationDetailPage(notification: notification);
     }
 
-    Navigator.push(
+
+    final bool = await ApiService.markNotificationAsSeen(notification.id);
+    if(bool==true){
+      Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => detailPage),
     );
+    }else{
+      ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('check network or something wrong')),
+    );
+    
+    }
+
+    
   }
 
   String _formatTime(DateTime time) {
@@ -292,47 +271,24 @@ class _NotificationListState extends State<NotificationList> {
   }
 
   Future<void> _refreshNotifications() async {
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() {
-      // Re-sort or fetch new notifications here
-      notifications.sort((a, b) => b.time.compareTo(a.time));
-    });
+    await _fetchNotifications();
   }
 
-  void _markAllAsRead() {
-    setState(() {
+  Future<void> _markAllAsRead() async {
+    final bool = await ApiService.markNotificationsAsSeen();
+    if(bool==true){
+        setState(() {
       for (var notification in notifications) {
         notification.isRead = true;
       }
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('All notifications marked as read')),
     );
+    });
+    }else{
+
+    }
+    
+    
   }
-}
-
-// Notification Item Model
-class NotificationItem {
-  final String id;
-  final String title;
-  final String description;
-  final DateTime time;
-  bool isRead;
-  final IconData icon;
-  final Color color;
-  final String type;
-  final String? imageUrl; // Added imageUrl property
-
-  NotificationItem({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.time,
-    this.isRead = false,
-    required this.icon,
-    required this.color,
-    required this.type,
-    this.imageUrl, // Added to constructor
-  });
 }

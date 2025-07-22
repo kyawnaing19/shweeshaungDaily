@@ -18,6 +18,7 @@ class ApiService {
   static const storyUrl = '$base/story';
   static const mailbaseUrl = '$base/mailbox';
   static const userbaseUrl = '$base/user';
+  static const notibaseUrl = '$base/notifications';
 
   static Future<Map<String, dynamic>?> login(UserModel user) async {
     final response = await http.post(
@@ -951,6 +952,74 @@ static Future<bool> deleteFeedbyId(String id)async {
   }
   return false;
 }
+
+
+static Future<int> getUnreadNotificationCount() async {
+  final uri = Uri.parse('$notibaseUrl/unread-count');
+  final response = await AuthorizedHttpService.sendAuthorizedRequest(
+    uri,
+    method: 'GET',
+  );
+
+  if (response != null && response.statusCode == 200) {
+    final int count = int.parse(response.body);
+    return count;
+  } else {
+    throw Exception('Failed to load unread notification count');
+  }
+}
+
+static Future<List<Map<String, dynamic>>> getAllNotifications() async {
+  final uri = Uri.parse('$notibaseUrl/all');
+  final response = await AuthorizedHttpService.sendAuthorizedRequest(
+    uri,
+    method: 'GET',
+  );
+
+  if (response != null && response.statusCode == 200) {
+    final List<dynamic> data = jsonDecode(response.body);
+    return List<Map<String, dynamic>>.from(data);
+  } else {
+    throw Exception('Failed to load notifications');
+  }
+}
+
+
+static Future<bool> markNotificationsAsSeen() async {
+  final uri = Uri.parse('$notibaseUrl/mark-seen');
+
+  final response = await AuthorizedHttpService.sendAuthorizedRequest(
+    uri,
+    method: 'PUT',
+  );
+
+  if (response != null && response.statusCode == 200) {
+    return true;
+  } else {
+    print('Failed to mark notifications as seen. Status: ${response?.statusCode}');
+    return false;
+  }
+}
+
+
+static Future<bool> markNotificationAsSeen(String id) async {
+    final uri = Uri.parse('$notibaseUrl/seen?id=$id');
+
+    final response = await AuthorizedHttpService.sendAuthorizedRequest(
+      uri,
+      method: 'PUT',
+    );
+
+    if (response != null && response.statusCode == 200) {
+      return true;
+    } else {
+      // Optional: print or log error
+      print('Failed to mark notification as seen. Status: ${response?.statusCode}');
+      return false;
+    }
+  }
+
+
 
 
 }

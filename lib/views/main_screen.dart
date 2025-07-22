@@ -5,7 +5,6 @@ import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/views/bottomNavBar.dart';
 import 'package:shweeshaungdaily/views/person_search.dart';
 import 'package:shweeshaungdaily/views/signReg/landing.dart';
-
 import 'Home.dart';
 import 'note/note_list_view.dart';
 import 'profile_router.dart';
@@ -22,6 +21,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final PageController _pageController = PageController();
   int _selectedIndex = 0;
+  int _unreadCount = 0; // 👈 store notification count
 
   @override
   void initState() {
@@ -34,6 +34,19 @@ class _HomePageState extends State<HomePage> {
         });
       }
     });
+
+    _fetchUnreadCount(); // 👈 fetch unread notifications
+  }
+
+  Future<void> _fetchUnreadCount() async {
+    try {
+      final count = await ApiService.getUnreadNotificationCount();
+      setState(() {
+        _unreadCount = count;
+      });
+    } catch (e) {
+      print('Error fetching unread notification count: $e');
+    }
   }
 
   @override
@@ -46,6 +59,11 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _selectedIndex = index;
     });
+
+    if (index == 0) {
+      _fetchUnreadCount(); // 👈 refresh when returning to Home tab
+    }
+
     _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 300),
@@ -64,7 +82,6 @@ class _HomePageState extends State<HomePage> {
     return true;
   }
 
-  /// 👇 Dynamic AppBar based on selectedIndex
   AppBar? _buildAppBar() {
     switch (_selectedIndex) {
       case 0:
@@ -73,43 +90,23 @@ class _HomePageState extends State<HomePage> {
           elevation: 0,
           automaticallyImplyLeading: false,
           title: Image.asset('assets/icons/45.png', height: 180),
-          titleSpacing:
-              -15.0, // Example of a negative value to pull it further left
+          titleSpacing: -15.0,
           centerTitle: false,
-
           actions: [
             IconButton(
-              icon: const Icon(
-                Icons.search_rounded,
-                color: Colors.white,
-                size: 33,
-              ),
+              icon: const Icon(Icons.search_rounded),
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const FacebookSearchPage(),
-                  ),
+                      builder: (context) => const FacebookSearchPage()),
                 );
               },
             ),
-            IconButton(
-              icon: const Icon(
-                Icons.app_shortcut_outlined,
-                color: Colors.white,
-                size: 30,
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MiniAppScreen(),
-                  ),
-                );
-              },
+            NotificationIcon(
+              context: context,
+              unreadCount: _unreadCount, // 👈 dynamic count
             ),
-            SizedBox(width: 3),
-            NotificationIcon(context: context, unreadCount: 3),
           ],
         );
       case 1:
@@ -118,21 +115,15 @@ class _HomePageState extends State<HomePage> {
           elevation: 0,
           automaticallyImplyLeading: false,
           title: Image.asset('assets/icons/45.png', height: 180),
-          titleSpacing:
-              -15.0, // Example of a negative value to pull it further left
+          titleSpacing: -15.0,
           centerTitle: false,
-
-          actions: [
-            // Replaced NotificationIcon with Text 'Note'
-            const Padding(
-              // Use Padding to give the text some space if needed
-              padding: EdgeInsets.only(
-                right: 25.0,
-              ), // Adjust padding as desired
+          actions: const [
+            Padding(
+              padding: EdgeInsets.only(right: 25.0),
               child: Text(
                 'Note',
                 style: TextStyle(
-                  fontSize: 22, // Adjust font size as needed
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
@@ -146,21 +137,15 @@ class _HomePageState extends State<HomePage> {
           elevation: 0,
           automaticallyImplyLeading: false,
           title: Image.asset('assets/icons/45.png', height: 180),
-          titleSpacing:
-              -15.0, // Example of a negative value to pull it further left
+          titleSpacing: -15.0,
           centerTitle: false,
-
-          actions: [
-            // Replaced NotificationIcon with Text 'Note'
-            const Padding(
-              // Use Padding to give the text some space if needed
-              padding: EdgeInsets.only(
-                right: 25.0,
-              ), // Adjust padding as desired
+          actions: const [
+            Padding(
+              padding: EdgeInsets.only(right: 25.0),
               child: Text(
                 'Timetable',
                 style: TextStyle(
-                  fontSize: 22, // Adjust font size as needed
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
@@ -186,31 +171,25 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.only(right: 20),
               icon: const Icon(Icons.logout_outlined, color: Colors.white),
               onPressed: () async {
-                // Show confirmation dialog
                 final shouldLogout = await showDialog<bool>(
                   context: context,
-                  builder:
-                      (context) => AlertDialog(
-                        title: Text('Confirm Logout'),
-                        content: Text(
-                          'Are you sure you want to log out?\n Please backup your notes  !!!',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed:
-                                () => Navigator.pop(context, false), // Cancel
-                            child: Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed:
-                                () => Navigator.pop(context, true), // Confirm
-                            child: Text('Logout'),
-                          ),
-                        ],
+                  builder: (context) => AlertDialog(
+                    title: const Text('Confirm Logout'),
+                    content: const Text(
+                        'Are you sure you want to log out?\nPlease backup your notes!'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
                       ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Logout'),
+                      ),
+                    ],
+                  ),
                 );
 
-                // If user confirmed
                 if (shouldLogout == true) {
                   final success = await ApiService.logout();
                   if (success == true) {
@@ -220,9 +199,9 @@ class _HomePageState extends State<HomePage> {
                       (Route<dynamic> route) => false,
                     );
                   } else {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('Logout Failed')));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Logout Failed')),
+                    );
                   }
                 }
               },
@@ -239,7 +218,7 @@ class _HomePageState extends State<HomePage> {
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
-        appBar: _buildAppBar(), // 👈 Dynamic AppBar inserted here
+        appBar: _buildAppBar(),
         body: PageView(
           controller: _pageController,
           children: [
@@ -257,7 +236,7 @@ class _HomePageState extends State<HomePage> {
             ProfileRouterPage(
               onBack: () => _onItemTapped(2),
               onGoToProfileTab: () {
-                _pageController.jumpToPage(3); // Jump to ProfileRouterPage tab
+                _pageController.jumpToPage(3);
               },
             ),
           ],
