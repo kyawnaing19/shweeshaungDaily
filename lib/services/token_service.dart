@@ -64,4 +64,9 @@ class TokenService {
     await prefs.remove(_accessTokenKey);
     await prefs.remove(_refreshTokenKey);
   }
+
+  static Future<void> clearAllData() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.clear();  // This removes all keys and values
+}
 }

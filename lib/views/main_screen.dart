@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/views/bottomNavBar.dart';
+import 'package:shweeshaungdaily/views/person_search.dart';
 import 'package:shweeshaungdaily/views/signReg/landing.dart';
 
 import 'Home.dart';
@@ -77,12 +78,14 @@ class _HomePageState extends State<HomePage> {
 
           actions: [
   IconButton(
-    icon: Icon(Icons.search_rounded),
-    onPressed: () {
-      // Handle search action
-      print('Search icon pressed');
-    },
-  ),
+  icon: const Icon(Icons.search_rounded),
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const FacebookSearchPage()),
+    );
+  },
+),
 
   NotificationIcon(
     context: context,
@@ -171,7 +174,7 @@ class _HomePageState extends State<HomePage> {
                   builder:
                       (context) => AlertDialog(
                         title: Text('Confirm Logout'),
-                        content: Text('Are you sure you want to log out?'),
+                        content: Text('Are you sure you want to log out?\n Please backup your notes  !!!'),
                         actions: [
                           TextButton(
                             onPressed:

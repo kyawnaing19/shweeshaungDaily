@@ -182,19 +182,27 @@ final profilePath = comment['authorProfileUrl'] ?? '';
 final profileUrl = profilePath.isNotEmpty ? '$baseUrl$profilePath' : '';
 
                             return ListTile(
-                              leading: CircleAvatar(
-                                child:
-                                    (profileUrl != null &&
-                                            profileUrl.isNotEmpty)
-                                        ? ClipOval(
-                                          child: AuthorizedNetworkImage(
-                                            imageUrl: profileUrl,
-                                            height: double.infinity,
-                                            width: double.infinity,
-                                            fit: BoxFit.cover,
-                                          ),
-                                        )
-                                        : const Icon(Icons.person, color: kPrimaryColor,),
+                              leading: InkWell(
+                                onTap: () {
+                                  Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ViewRouter(email: email,)),
+    );
+                                },
+                                child: CircleAvatar(
+                                  child:
+                                      (profileUrl != null &&
+                                              profileUrl.isNotEmpty)
+                                          ? ClipOval(
+                                            child: AuthorizedNetworkImage(
+                                              imageUrl: profileUrl,
+                                              height: double.infinity,
+                                              width: double.infinity,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          )
+                                          : const Icon(Icons.person, color: kPrimaryColor,),
+                                ),
                               ),
 
                               title: GestureDetector(

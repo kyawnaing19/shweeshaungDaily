@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
+import 'package:shweeshaungdaily/views/signReg/login.dart';
 class ForgetPassword extends StatefulWidget {
   const ForgetPassword({super.key});
 
@@ -36,7 +37,7 @@ class _ForgetPasswordPageState extends State<ForgetPassword> {
         if (mounted) { // Check if the widget is still in the tree before navigating
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const SignInPage()), // Navigate to SignInPage
+            MaterialPageRoute(builder: (context) => SignInPage()), // Navigate to SignInPage
           );
         }
       } else {
@@ -206,30 +207,30 @@ class _ForgetPasswordPageState extends State<ForgetPassword> {
   }
 }
 
-// Placeholder for a simple SignIn Page (assuming login.dart contains SignInPage)
-class SignInPage extends StatelessWidget {
-  const SignInPage({super.key});
+// // Placeholder for a simple SignIn Page (assuming login.dart contains SignInPage)
+// class SignInPage extends StatelessWidget {
+//   const SignInPage({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFD4F7F5),
-      appBar: AppBar(
-        title: const Text('Sign In Page'),
-        backgroundColor: const Color(0xFF317575),
-        foregroundColor: Colors.white,
-      ),
-      body: const Center(
-        child: Text(
-          'You have been redirected to the Sign In Page!',
-          style: TextStyle(
-            color: Color(0xFF317575),
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       backgroundColor: const Color(0xFFD4F7F5),
+//       appBar: AppBar(
+//         title: const Text('Sign In Page'),
+//         backgroundColor: const Color(0xFF317575),
+//         foregroundColor: Colors.white,
+//       ),
+//       body: const Center(
+//         child: Text(
+//           'You have been redirected to the Sign In Page!',
+//           style: TextStyle(
+//             color: Color(0xFF317575),
+//             fontSize: 20,
+//             fontWeight: FontWeight.bold,
+//           ),
+//           textAlign: TextAlign.center,
+//         ),
+//       ),
+//     );
+//   }
+// }

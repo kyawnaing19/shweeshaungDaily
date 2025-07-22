@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shweeshaungdaily/models/user_reg_model.dart';
 import 'package:shweeshaungdaily/services/authorized_http_service.dart';
 import 'package:shweeshaungdaily/services/token_service.dart';
+import 'package:shweeshaungdaily/utils/note_database/note_database.dart';
 import '../models/user_model.dart';
 
 class ApiService {
@@ -124,6 +125,9 @@ class ApiService {
       );
 
       await TokenService.clearTokens();
+      await TokenService.clearAllData();
+      await NoteDatabase().deleteDatabaseFile();
+
 
       return true;
     } catch (e) {
@@ -773,6 +777,24 @@ static Future<List<Map<String, dynamic>>?> getSentMails() async {
 
 static Future<List<Map<String, dynamic>>> searchUserNames(String query) async {
   final url = Uri.parse('$userbaseUrl/search/usernames?q=$query');
+
+  final response = await AuthorizedHttpService.sendAuthorizedRequest(
+    url,
+    method: 'GET',
+  );
+
+  if (response != null && response.statusCode == 200) {
+    final List<dynamic> data = jsonDecode(response.body);
+
+    // Convert each item to Map<String, dynamic>
+    return data.map((item) => item as Map<String, dynamic>).toList();
+  } else {
+    throw Exception('Failed to load search results');
+  }
+  }
+
+  static Future<List<Map<String, dynamic>>> searchNames(String query) async {
+  final url = Uri.parse('$userbaseUrl/search/names?q=$query');
 
   final response = await AuthorizedHttpService.sendAuthorizedRequest(
     url,

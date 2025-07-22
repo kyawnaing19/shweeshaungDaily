@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'dart:convert';
@@ -46,6 +48,24 @@ class NoteDatabase {
 );
 
   }
+
+Future<void> deleteDatabaseFile() async {
+    // Close the DB connection if open
+    if (_db != null) {
+      await _db!.close();
+      _db = null;
+    }
+
+    final dbPath = await getDatabasesPath();
+    final path = join(dbPath, 'notes.db');
+
+    // Delete the actual database file
+    final file = File(path);
+    if (await file.exists()) {
+      await file.delete();
+    }
+  }
+
 
   Future<void> insertNote(
     String subject,
