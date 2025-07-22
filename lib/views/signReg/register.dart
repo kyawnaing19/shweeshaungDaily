@@ -1,9 +1,13 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/view_models/auth_viewmodel.dart';
 import 'package:shweeshaungdaily/view_models/reg_viewmodel.dart';
+import 'package:shweeshaungdaily/views/signReg/policy.dart';
 import 'package:shweeshaungdaily/views/signReg/verifyemail.dart';
 import 'package:shweeshaungdaily/views/signReg/login.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -53,7 +57,7 @@ class _RegisterPageState extends State<RegisterPage> {
     try {
       // 2. Attempt to register. We assume `registerEmail` throws an
       // exception on failure, which we can catch.
-      
+
       await authViewModel.registerEmail(email, name);
 
       // 3. On success, navigate to the verification page.
@@ -147,53 +151,51 @@ class _RegisterPageState extends State<RegisterPage> {
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 25.0,
-                  vertical: 40.0,
+                  horizontal: 30.0, // Increased horizontal padding
+                  vertical: 50.0, // Increased top padding
                 ),
-                // The Form widget now wraps the input fields
                 child: Form(
                   key: _formKey,
-                  // This enables validation as the user types
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 20), // Reduced spacing
                       const Text(
                         'Create Account',
                         style: TextStyle(
                           color: Color(0xFF317575),
-                          fontSize: 38,
+                          fontSize: 42, // Slightly larger font size
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8), // Reduced spacing
                       const Text(
                         'Sign up to start your journey with us!',
                         style: TextStyle(
                           color: Color(0xFF317575),
-                          fontSize: 18,
+                          fontSize: 19, // Slightly larger font size
                         ),
                         textAlign: TextAlign.start,
                       ),
-                      const SizedBox(height: 60),
+                      const SizedBox(
+                        height: 70,
+                      ), // Increased spacing before inputs
 
-                      /// Name Input Field with validator
                       _buildModernInputField(
                         controller: _nameController,
-                        hintText: 'Full Name',
+                        hintText: 'Nick Name',
                         icon: Icons.person_outline,
                         keyboardType: TextInputType.name,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Name is required!';
+                            return 'Nick Name is required!';
                           }
                           return null;
                         },
                       ),
-                      const SizedBox(height: 25),
+                      const SizedBox(height: 15), // Increased spacing
 
-                      /// Email Input Field with validator
                       _buildModernInputField(
                         controller: _emailController,
                         hintText: 'Email',
@@ -203,7 +205,6 @@ class _RegisterPageState extends State<RegisterPage> {
                           if (value == null || value.isEmpty) {
                             return 'Email is required!';
                           }
-                          // Regex for edu mail
                           if (!RegExp(
                             r'^[\w-\.]+@[\w-]+\.edu\.mm$',
                           ).hasMatch(value)) {
@@ -212,9 +213,65 @@ class _RegisterPageState extends State<RegisterPage> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 40),
 
-                      /// Create Account Button
+                      const SizedBox(height: 25), // Adjusted spacing
+
+                      RichText(
+                        text: TextSpan(
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.black,
+                          ), // Slightly smaller for dense legal text
+                          children: [
+                            TextSpan(text: 'By continuing, you agree to our '),
+                            TextSpan(
+                              text: 'User Agreement',
+                              style: TextStyle(
+                                color: kPrimaryColor,
+                                decoration: TextDecoration.underline,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              recognizer:
+                                  TapGestureRecognizer()
+                                    ..onTap = () async {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (context) => PrivacyPolicyPage(),
+                                        ),
+                                      );
+                                    },
+                            ),
+                            TextSpan(
+                              text: ' and acknowledge that you understand the ',
+                            ),
+                            TextSpan(
+                              text: 'Privacy Policy',
+                              style: TextStyle(
+                                color: kPrimaryColor,
+                                decoration: TextDecoration.underline,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              recognizer:
+                                  TapGestureRecognizer()
+                                    ..onTap = () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (context) => PrivacyPolicyPage(),
+                                        ),
+                                      );
+                                    },
+                            ),
+                            TextSpan(text: '.'),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 15), // Increased spacing
+
                       _buildModernRegisterButton(
                         onPressed: _isRegistering ? null : _onSignUp,
                         isRegistering: _isRegistering,
@@ -225,20 +282,19 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
             ),
 
-            /// Already have an account text
             Padding(
-              padding: const EdgeInsets.only(bottom: 20.0),
+              padding: const EdgeInsets.only(
+                bottom: 25.0,
+              ), // Increased bottom padding
               child: TextButton(
                 onPressed:
                     _isRegistering
                         ? null
                         : () {
-                         Navigator.push(
-                    context,
-                    _createSigninSlideRoute(
-                      const SignInPage(),
-                    ), // Use the custom route
-                  );
+                          Navigator.push(
+                            context,
+                            _createSigninSlideRoute(const SignInPage()),
+                          );
                         },
                 style: TextButton.styleFrom(
                   splashFactory: NoSplash.splashFactory,
@@ -247,7 +303,10 @@ class _RegisterPageState extends State<RegisterPage> {
                 child: const Text.rich(
                   TextSpan(
                     text: 'Already have an account? ',
-                    style: TextStyle(color: Colors.black87, fontSize: 16),
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: 17,
+                    ), // Slightly larger font size
                     children: <TextSpan>[
                       TextSpan(
                         text: 'Sign in',

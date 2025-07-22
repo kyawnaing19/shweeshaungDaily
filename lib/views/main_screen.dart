@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shweeshaungdaily/colors.dart';
+import 'package:shweeshaungdaily/miniApp/mini_app_widget.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/views/bottomNavBar.dart';
 import 'package:shweeshaungdaily/views/person_search.dart';
@@ -77,22 +78,39 @@ class _HomePageState extends State<HomePage> {
           centerTitle: false,
 
           actions: [
-  IconButton(
-  icon: const Icon(Icons.search_rounded),
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const FacebookSearchPage()),
-    );
-  },
-),
-
-  NotificationIcon(
-    context: context,
-    unreadCount: 3,
-  ),
-]
-,
+            IconButton(
+              icon: const Icon(
+                Icons.search_rounded,
+                color: Colors.white,
+                size: 33,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const FacebookSearchPage(),
+                  ),
+                );
+              },
+            ),
+            IconButton(
+              icon: const Icon(
+                Icons.app_shortcut_outlined,
+                color: Colors.white,
+                size: 30,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MiniAppScreen(),
+                  ),
+                );
+              },
+            ),
+            SizedBox(width: 3),
+            NotificationIcon(context: context, unreadCount: 3),
+          ],
         );
       case 1:
         return AppBar(
@@ -174,7 +192,9 @@ class _HomePageState extends State<HomePage> {
                   builder:
                       (context) => AlertDialog(
                         title: Text('Confirm Logout'),
-                        content: Text('Are you sure you want to log out?\n Please backup your notes  !!!'),
+                        content: Text(
+                          'Are you sure you want to log out?\n Please backup your notes  !!!',
+                        ),
                         actions: [
                           TextButton(
                             onPressed:

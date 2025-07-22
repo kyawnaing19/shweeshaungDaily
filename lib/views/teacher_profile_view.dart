@@ -1,25 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:typed_data';
-import 'dart:convert';
-import 'package:dotted_border/dotted_border.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 // Assuming these imports are available in your project
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
-import 'package:shweeshaungdaily/services/authorize_image.dart';
+
 import 'package:shweeshaungdaily/services/authorized_network_image.dart';
 import 'package:shweeshaungdaily/services/token_service.dart';
 import 'package:shweeshaungdaily/utils/audio_timeformat.dart';
-import 'package:shweeshaungdaily/utils/image_cache.dart';
-import 'package:shweeshaungdaily/views/audio_post/audio_upload_page.dart';
+
 import 'package:shweeshaungdaily/views/comment_section.dart';
 import 'package:shweeshaungdaily/views/image_full_view.dart';
 import 'package:shweeshaungdaily/widget/copyable_text.dart';
-import 'package:shweeshaungdaily/views/user_album_upload.dart';
+
 // import 'package:shweeshaungdaily/views/user_profile_update.dart'; // No longer needed for teacher profile
-import 'package:shweeshaungdaily/views/teacher_profile_update.dart'; // <--- NEW IMPORT
+// <--- NEW IMPORT
 
 const double kHorizontalPadding = 20.0;
 const double kVerticalSpacing = 15.0;
@@ -218,6 +212,11 @@ class _TeacherProfileViewPageState extends State<TeacherProfileViewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: kAccentColor,
+        elevation: 0,
+        automaticallyImplyLeading: true, // Set to true to show the back arrow
+      ),
       backgroundColor: kBackgroundColor,
       body: SafeArea(
         child: Column(

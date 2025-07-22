@@ -78,12 +78,25 @@ class _TimeTablePageState extends State<TimeTablePage> {
       return SizedBox(
         width: MediaQuery.of(context).size.width * 0.9,
         child: Card(
-          elevation: 2,
+          shadowColor: kShadowColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          color: kWhite,
+          margin: const EdgeInsets.symmetric(vertical: 10),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Self Study',
-              style: TextStyle(color: kPrimaryDarkColor),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Self Study',
+                  style: TextStyle(
+                    color: kPrimaryDarkColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -158,20 +171,6 @@ class _TimeTablePageState extends State<TimeTablePage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Timeline
-        Column(
-          children: [
-            Container(
-              width: 20,
-              height: 20,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: kPrimaryDarkColor,
-              ),
-            ),
-            Container(width: 4, height: 100, color: kPrimaryDarkColor),
-          ],
-        ),
         const SizedBox(width: 12),
         // Card
         Expanded(

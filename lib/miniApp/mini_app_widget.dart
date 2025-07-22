@@ -1,14 +1,12 @@
 // main.dart
 import 'package:flutter/material.dart';
+import 'package:shweeshaungdaily/views/mail/compose_mail.dart';
+import 'package:shweeshaungdaily/views/teacherprofile.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart'; // For Android specific settings
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart'; // For iOS specific settings
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
-
-
-
 
 class MiniAppScreen extends StatefulWidget {
   const MiniAppScreen({super.key});
@@ -21,7 +19,8 @@ class _MiniAppScreenState extends State<MiniAppScreen> {
   // Replace with your actual raw GitHub Gist URL or other remote config URL
   // Example: 'https://gist.githubusercontent.com/yourusername/yourgistid/raw/config.json'
   // For demonstration, we'll use a placeholder.
-  final String _configUrl = 'https://raw.githubusercontent.com/amk-35/apiUrl/refs/heads/main/apiUrl.json'; // Placeholder, replace with your own!
+  final String _configUrl =
+      'https://raw.githubusercontent.com/amk-35/apiUrl/refs/heads/main/apiUrl.json'; // Placeholder, replace with your own!
 
   bool _isLoading = true;
   bool _showMiniApp = false;
@@ -105,7 +104,6 @@ class _MiniAppScreenState extends State<MiniAppScreen> {
       // DOM storage is generally enabled by default when JavaScript is unrestricted.
     }
 
-
     _controller
       ..setJavaScriptMode(JavaScriptMode.unrestricted) // Enable JavaScript
       ..setBackgroundColor(const Color(0x00000000))
@@ -148,12 +146,15 @@ class _MiniAppScreenState extends State<MiniAppScreen> {
       ..loadRequest(Uri.parse(_miniAppUrl));
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dynamic Mini-App'),
+        backgroundColor: kAccentColor,
+        title: const Text(
+          'Dynamic Mini-App',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -162,60 +163,59 @@ class _MiniAppScreenState extends State<MiniAppScreen> {
         ],
       ),
       body: Center(
-        child: _isLoading
-            ? const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Loading mini-app configuration...'),
-                ],
-              )
-            : _errorMessage.isNotEmpty
+        child:
+            _isLoading
+                ? const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Loading mini-app configuration...'),
+                  ],
+                )
+                : _errorMessage.isNotEmpty
                 ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error, color: Colors.red, size: 48),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Error: $_errorMessage',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _fetchConfig,
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  )
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error, color: Colors.red, size: 48),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Error: $_errorMessage',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _fetchConfig,
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                )
                 : _showMiniApp
-                    ? Column(
-                        children: [
-                          // Padding(
-                          //   padding: const EdgeInsets.all(1.0),
-                          //   child: Text(
-                          //     'Mini-App Version: $_version',
-                          //     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                          //   ),
-                          // ),
-                          Expanded(
-                            child: WebViewWidget(controller: _controller),
-                          ),
-                        ],
-                      )
-                    : const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.web, size: 48, color: Colors.grey),
-                          SizedBox(height: 16),
-                          Text(
-                            'Mini-app is currently disabled by remote configuration.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 18, color: Colors.grey),
-                          ),
-                        ],
-                      ),
+                ? Column(
+                  children: [
+                    // Padding(
+                    //   padding: const EdgeInsets.all(1.0),
+                    //   child: Text(
+                    //     'Mini-App Version: $_version',
+                    //     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    //   ),
+                    // ),
+                    Expanded(child: WebViewWidget(controller: _controller)),
+                  ],
+                )
+                : const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.web, size: 48, color: Colors.grey),
+                    SizedBox(height: 16),
+                    Text(
+                      'Mini-app is currently disabled by remote configuration.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    ),
+                  ],
+                ),
       ),
     );
   }

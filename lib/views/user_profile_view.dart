@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
@@ -14,7 +13,7 @@ class UserProfileView extends StatefulWidget {
   final VoidCallback? onBack;
   final String email;
 
-  const UserProfileView({super.key, this.onBack,required this.email});
+  const UserProfileView({super.key, this.onBack, required this.email});
 
   @override
   State<UserProfileView> createState() => _UserProfileViewState();
@@ -116,15 +115,7 @@ class _UserProfileViewState extends State<UserProfileView> {
       appBar: AppBar(
         backgroundColor: kAccentColor,
         elevation: 0,
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'Profile',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
+        automaticallyImplyLeading: true, // Set to true to show the back arrow
       ),
       backgroundColor: kBackgroundColor,
       body:

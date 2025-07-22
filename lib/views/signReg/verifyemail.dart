@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shweeshaungdaily/colors.dart';
 import 'package:shweeshaungdaily/services/api_service.dart';
 import 'package:shweeshaungdaily/view_models/reg_viewmodel.dart';
 import 'package:shweeshaungdaily/views/signReg/createpassword.dart';
@@ -149,24 +150,21 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                     child: Column(
                       children: [
                         const Text(
-                          'If email don\'t receive!',
-                          style: TextStyle(
-                            color: Color(0xFF317575),
-                            fontSize: 14,
-                          ),
+                          "If you haven't received the email, please check your Junk or Spam folder in Outlook.",
+                          style: TextStyle(color: kLunchText, fontSize: 13),
                           textAlign: TextAlign.center,
                         ),
-                        TextButton(
-                          onPressed: _resendEmail,
-                          child: const Text(
-                            'Resend Email',
-                            style: TextStyle(
-                              color: Color.fromARGB(255, 28, 95, 95),
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+                        // TextButton(
+                        //   onPressed: _resendEmail,
+                        //   child: const Text(
+                        //     'Resend Email',
+                        //     style: TextStyle(
+                        //       color: Color.fromARGB(255, 28, 95, 95),
+                        //       fontSize: 13,
+                        //       fontWeight: FontWeight.bold,
+                        //     ),
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),

@@ -63,17 +63,10 @@ class _SignInPageState extends State<SignInPage> {
     if (email.isEmpty) {
       _setEmailError('Email is required!');
       hasError = true;
-    } else if (!RegExp(r'^[\w-\.]+@[\w-]+\.edu\.mm$').hasMatch(email)) {
-      _setEmailError('Edu mail only!');
-      hasError = true;
     }
 
     if (password.isEmpty) {
       _setPasswordError('Password is required!');
-      hasError = true;
-    } else if (password.length < 8) {
-      // Added a basic length check for consistency
-      _setPasswordError('Password must be at least 8 characters.');
       hasError = true;
     }
 
@@ -232,10 +225,6 @@ class _SignInPageState extends State<SignInPage> {
                         onChanged: (value) {
                           if (value.isEmpty) {
                             _setPasswordError('Password is required!');
-                          } else if (value.length < 8) {
-                            _setPasswordError(
-                              'Password must be at least 8 characters.',
-                            );
                           } else {
                             _setPasswordError(null);
                           }
@@ -412,10 +401,11 @@ class _SignInPageState extends State<SignInPage> {
               ? const SizedBox(
                 height: 24,
                 width: 24,
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  strokeWidth: 2.5,
-                ),
+
+                // child: CircularProgressIndicator(
+                //   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                //   strokeWidth: 2.5,
+                // ),
               )
               : const Text(
                 'Sign In',

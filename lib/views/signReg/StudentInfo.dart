@@ -52,11 +52,11 @@ class _StudentInfoPageState extends State<StudentInfoPage> {
     final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
 
     bool success = false;
-    String message='';
+    String message = '';
     try {
       success = await authViewModel.register(regViewModel.user);
     } catch (e) {
-      message=e.toString();
+      message = e.toString();
       success = false;
     }
 
@@ -66,9 +66,9 @@ class _StudentInfoPageState extends State<StudentInfoPage> {
     print('Major: $major');
 
     if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-         SnackBar(content: Text(message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
       return;
     }
     await authViewModel.login(regViewModel.email, regViewModel.password);
@@ -141,11 +141,17 @@ class _StudentInfoPageState extends State<StudentInfoPage> {
                         ),
                         const SizedBox(height: 8),
                         const Text(
-                          'Get ready for learning - enter your details to begin',
+                          'Get ready for learning. \n Enter your details to begin',
                           style: TextStyle(
                             color: kPrimaryDarkColor,
                             fontSize: 16,
                           ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          "Select the correct class section you attend. \n If your class is not divided into sections, \n Choose class A.",
+                          style: TextStyle(color: kLunchText, fontSize: 16),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 50),
@@ -396,7 +402,7 @@ class _StudentInfoPageState extends State<StudentInfoPage> {
                                   ],
                                 ),
                                 selectedItemBuilder: (context) {
-                                  return ['A', 'B', 'C', 'D'].map((value) {
+                                  return ['A', 'B', 'C'].map((value) {
                                     return Row(
                                       children: [
                                         const Icon(
@@ -451,7 +457,7 @@ class _StudentInfoPageState extends State<StudentInfoPage> {
                                   color: Colors.white,
                                 ),
                                 items:
-                                    ['A', 'B', 'C', 'D'].asMap().entries.map((
+                                    ['A', 'B', 'C'].asMap().entries.map((
                                       entry,
                                     ) {
                                       final index = entry.key;

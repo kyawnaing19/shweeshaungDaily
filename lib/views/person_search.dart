@@ -19,7 +19,11 @@ class Person {
   final String profileImageUrl;
   final String email;
 
-  Person({required this.name, required this.profileImageUrl,required this.email});
+  Person({
+    required this.name,
+    required this.profileImageUrl,
+    required this.email,
+  });
 }
 
 class FacebookSearchPage extends StatefulWidget {
@@ -102,9 +106,9 @@ class _FacebookSearchPageState extends State<FacebookSearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[700], // Facebook blue
+        backgroundColor: kAccentColor, // Facebook blue
         title: Container(
-          height: 40,
+          height: 45,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
@@ -118,7 +122,7 @@ class _FacebookSearchPageState extends State<FacebookSearchPage> {
               contentPadding: const EdgeInsets.symmetric(vertical: 8.0),
             ),
             style: TextStyle(color: Colors.grey[800]),
-            cursorColor: Colors.blue[700],
+            cursorColor: Color(0xFF00897B),
           ),
         ),
         // Adding a back button for navigation
@@ -153,33 +157,45 @@ class _FacebookSearchPageState extends State<FacebookSearchPage> {
                       horizontal: 16.0,
                     ),
                     child: InkWell(
-                      onTap: (){
+                      onTap: () {
                         Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => ViewRouter(email: person.email,)),
-    );
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => ViewRouter(email: person.email),
+                          ),
+                        );
                       },
                       child: Row(
                         children: [
                           CircleAvatar(
-                                  child:
-                                      (person.profileImageUrl != null &&
-                                              person.profileImageUrl.isNotEmpty)
-                                          ? ClipOval(
-                                            child: AuthorizedNetworkImage(
-                                              imageUrl: person.profileImageUrl,
-                                              height: double.infinity,
-                                              width: double.infinity,
-                                              fit: BoxFit.cover,
-                                            ),
-                                          )
-                                          : const Icon(Icons.person, color: kPrimaryColor,),
-                                ),
+                            backgroundColor: const Color.fromARGB(
+                              255,
+                              218,
+                              216,
+                              216,
+                            ),
+                            child:
+                                (person.profileImageUrl != null &&
+                                        person.profileImageUrl.isNotEmpty)
+                                    ? ClipOval(
+                                      child: AuthorizedNetworkImage(
+                                        imageUrl: person.profileImageUrl,
+                                        height: double.infinity,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                    : const Icon(
+                                      Icons.person,
+                                      color: kPrimaryColor,
+                                    ),
+                          ),
                           const SizedBox(width: 16),
                           Text(
                             person.name,
                             style: const TextStyle(
-                              fontSize: 18,
+                              fontSize: 17,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
