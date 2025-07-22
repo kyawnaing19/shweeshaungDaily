@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shweeshaungdaily/colors.dart';
+import 'package:shweeshaungdaily/services/authorized_network_image.dart';
+import 'package:shweeshaungdaily/utils/audio_timeformat.dart';
 import 'package:shweeshaungdaily/views/view_router.dart';
 import 'package:shweeshaungdaily/widget/copyable_text.dart';
 
@@ -84,6 +87,7 @@ class _CommentSectionState extends State<CommentSection> {
       }
     } catch (e) {
       setState(() {
+        if (mounted) return;
         _comments = widget.comments;
         _loading = false;
       });
@@ -167,43 +171,53 @@ class _CommentSectionState extends State<CommentSection> {
                           controller: scrollController,
                           itemCount: _comments!.length,
                           itemBuilder: (context, index) {
-                        
                             final comment = _comments![index];
                             final email = comment['email'];
                             final userName = comment['userName'] ?? 'User';
                             final text = comment['text'] ?? '';
                             final createdAt = comment['createdAt'] ?? '';
-                            final profileUrl =
-                                comment['authorProfileUrl'] ?? '';
+                           const baseUrl = 'https://shweeshaung.mooo.com/'; // Replace with your actual base URL
+
+final profilePath = comment['authorProfileUrl'] ?? '';
+final profileUrl = profilePath.isNotEmpty ? '$baseUrl$profilePath' : '';
+
                             return ListTile(
                               leading: CircleAvatar(
-                                backgroundImage:
+                                child:
                                     (profileUrl != null &&
                                             profileUrl.isNotEmpty)
-                                        ? NetworkImage(profileUrl)
-                                        : null,
-                                child:
-                                    (profileUrl == null || profileUrl.isEmpty)
-                                        ? const Icon(Icons.person)
-                                        : null,
+                                        ? ClipOval(
+                                          child: AuthorizedNetworkImage(
+                                            imageUrl: profileUrl,
+                                            height: double.infinity,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        )
+                                        : const Icon(Icons.person, color: kPrimaryColor,),
                               ),
+
                               title: GestureDetector(
                                 onTap: () {
-      // Your onTap logic
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => ViewRouter(email: email,)),
-      );
-    },
-                                
-                                child: Text(userName)),
+                                  // Your onTap logic
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (context) => ViewRouter(email: email),
+                                    ),
+                                  );
+                                },
+
+                                child: Text(userName),
+                              ),
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   CopyableText(text: text),
                                   if (createdAt.isNotEmpty)
                                     Text(
-                                      _formatDate(createdAt),
+                                      formatFacebookStyleTime(createdAt),
                                       style: const TextStyle(
                                         fontSize: 12,
                                         color: Colors.grey,
@@ -284,13 +298,17 @@ class _CommentSectionState extends State<CommentSection> {
                               bottom: 10,
                             ),
                             child: CircleAvatar(
+                              backgroundColor: Colors.grey[200],
                               backgroundImage:
                                   widget.profileUrl?.isNotEmpty ?? false
                                       ? NetworkImage(widget.profileUrl!)
                                       : null,
                               child:
                                   widget.profileUrl?.isEmpty ?? true
-                                      ? const Icon(Icons.person)
+                                      ? const Icon(
+                                        Icons.person,
+                                        color: kPrimaryColor,
+                                      )
                                       : null,
                             ),
                           ),
@@ -330,15 +348,7 @@ class _CommentSectionState extends State<CommentSection> {
                             child: IconButton(
                               icon: Icon(
                                 Icons.send_rounded,
-                                color:
-                                    _hasText
-                                        ? Colors.blue
-                                        : const Color.fromARGB(
-                                          255,
-                                          230,
-                                          159,
-                                          159,
-                                        ),
+                                color: _hasText ? kPrimaryColor : kLunchText,
                               ),
                               onPressed:
                                   _hasText

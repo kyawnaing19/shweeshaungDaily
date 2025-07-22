@@ -27,27 +27,21 @@ class FullScreenShimmerSkeleton extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 60),
-              // AppBar placeholder
-              // Container(
-              //   height: 60,
-              //   width: double.infinity,
-              //   color: kBackgroundColor,
-              //   margin: const EdgeInsets.only(bottom: 30),
-              // ),
               // Profile image placeholder
-              Container(
-                width: double.infinity, // Makes the container full-width
-                padding: const EdgeInsets.all(16), // 🔹 Inner spacing
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(
-                    255,
-                    193,
-                    242,
-                    249,
-                  ), // 🔹 Background color
-                  borderRadius: BorderRadius.circular(12), // 🔹 Rounded corners
-                ),
-                child: Align(
+              // Container(
+              //   width: double.infinity, // Makes the container full-width
+              //   padding: const EdgeInsets.all(16), // 🔹 Inner spacing
+              //   decoration: BoxDecoration(
+              //     color: const Color.fromARGB(
+              //       255,
+              //       193,
+              //       242,
+              //       249,
+              //     ), // 🔹 Background color
+              //     borderRadius: BorderRadius.circular(12), // 🔹 Rounded corners
+              //   ),
+              //   child: 
+              Align(
                   alignment: Alignment.centerLeft,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,7 +51,7 @@ class FullScreenShimmerSkeleton extends StatelessWidget {
                         height: 120,
                         margin: const EdgeInsets.only(bottom: 20),
                         decoration: const BoxDecoration(
-                          color: kAccentColor,
+                          color: kBackgroundColor,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -65,7 +59,7 @@ class FullScreenShimmerSkeleton extends StatelessWidget {
                     ],
                   ),
                 ),
-              ),
+              // ),
               SizedBox(height: 10),
               // User details placeholders
               Container(
