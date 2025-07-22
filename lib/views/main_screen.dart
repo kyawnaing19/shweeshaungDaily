@@ -76,13 +76,20 @@ class _HomePageState extends State<HomePage> {
           centerTitle: false,
 
           actions: [
-            NotificationIcon(
-              context: context, // Make sure to pass the context
-              unreadCount: 3, // Your actual notification count
-            ),
+  IconButton(
+    icon: Icon(Icons.search_rounded),
+    onPressed: () {
+      // Handle search action
+      print('Search icon pressed');
+    },
+  ),
 
-            // Notification icon with badge
-          ],
+  NotificationIcon(
+    context: context,
+    unreadCount: 3,
+  ),
+]
+,
         );
       case 1:
         return AppBar(

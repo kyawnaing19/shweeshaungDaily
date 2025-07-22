@@ -110,7 +110,7 @@ class LoveLetterScreen extends StatelessWidget {
                       alignment: Alignment.centerRight,
                       child: Text(
                         isSent
-                            ? 'Sent by you,'
+                            ? 'Sent by $privacy'
                             : 'Forever yours,', // Adjust closing based on sent/received
                         style: GoogleFonts.dancingScript(
                           fontSize: 28,
@@ -130,19 +130,19 @@ class LoveLetterScreen extends StatelessWidget {
                     horizontal: 20,
                     vertical: 10,
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.pink[600],
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Text(
-                    privacy, // Use the extracted date
-                    style: GoogleFonts.roboto(
-                      fontSize: 14,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
+                  // decoration: BoxDecoration(
+                  //   color: Colors.pink[600],
+                  //   borderRadius: BorderRadius.circular(24),
+                  // ),
+                  // child: Text(
+                  //   privacy, // Use the extracted date
+                  //   style: GoogleFonts.roboto(
+                  //     fontSize: 14,
+                  //     color: Colors.white,
+                  //     fontWeight: FontWeight.w500,
+                  //     letterSpacing: 0.5,
+                  //   ),
+                  // ),
                 ),
               ),
               const SizedBox(height: 20),

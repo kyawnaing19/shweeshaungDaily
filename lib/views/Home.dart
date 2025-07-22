@@ -422,6 +422,11 @@ class _HomePageState extends State<HomeScreenPage>
     }
   }
 
+  Future<bool> _checkIfTeacher() async {
+    final role = await TokenService.getRole();
+    return role == 'teacher';
+  }
+
   Future<void> _fetchTimetable() async {
     setState(() {
       isLoading = true;
@@ -1287,45 +1292,58 @@ class _HomePageState extends State<HomeScreenPage>
                 side: BorderSide.none,
                 borderRadius: BorderRadius.circular(0),
               ),
-              child: Stack(
-                children: [
-                  // Background Image (fills the Card's rounded shape)
-                  Positioned.fill(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.asset(
-                        'assets/images/noinfomail.png',
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  // Foreground content (tappable)
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => MailBoxHome()),
-                      );
-                    },
-                    child: SizedBox(
-                      height: 100,
-                      width: double.infinity,
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 65, left: 20),
+              child: GestureDetector(
+  onTap: () async {
+    final boole = await _checkIfTeacher();
+    if (boole == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Mail Box is only for students'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MailBoxHome(),
+        ),
+      );
+    }
+  },
+  child: Stack(
+    children: [
+      // Background Image (fills the Card's rounded shape)
+      Positioned.fill(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Image.asset(
+            'assets/images/noinfomail.png',
+            fit: BoxFit.cover,
+          ),
+        ),
+      ),
 
-                        child: const Text(
-                          "Mail Box",
-                          style: TextStyle(
-                            color: kPrimaryDarkColor,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+      // Foreground content
+      SizedBox(
+        height: 100,
+        width: double.infinity,
+        child: Padding(
+          padding: const EdgeInsets.only(top: 65, left: 20),
+          child: const Text(
+            "Mail Box",
+            style: TextStyle(
+              color: kPrimaryDarkColor,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    ],
+  ),
+)
+
             ),
           ),
         ],
