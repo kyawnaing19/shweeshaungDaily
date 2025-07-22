@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:shweeshaungdaily/colors.dart'; // Import your colors
-import 'package:shweeshaungdaily/views/notification_detail_page.dart'; // Ensure this import is correct and points to notification_detail_pages.dart
+import 'package:shweeshaungdaily/views/notification_detail_page.dart'; // Import the detail pages
 
 class NotificationList extends StatefulWidget {
   const NotificationList({super.key});
@@ -12,9 +12,9 @@ class NotificationList extends StatefulWidget {
 }
 
 class _NotificationListState extends State<NotificationList> {
-  // List of notification items with an added 'type' and 'subType' property
+  // List of notification items
   final List<NotificationItem> notifications = [
-    // General type - App Maintenance
+    // General type - App Maintenance with image
     NotificationItem(
       id: '1',
       title: 'Scheduled Maintenance',
@@ -25,9 +25,10 @@ class _NotificationListState extends State<NotificationList> {
       icon: Icons.build,
       color: kPrimaryDarkColor, // Using a color from your palette
       type: 'general',
-      subType: 'app_maintenance',
+      imageUrl:
+          'https://placehold.co/600x400/FF5733/FFFFFF?text=Maintenance', // Placeholder image
     ),
-    // General type - General Knowledge
+    // General type - General Knowledge with image
     NotificationItem(
       id: '2',
       title: 'Did You Know?',
@@ -38,9 +39,10 @@ class _NotificationListState extends State<NotificationList> {
       icon: Icons.lightbulb_outline,
       color: kLunchIconBg, // Using a color from your palette
       type: 'general',
-      subType: 'general_knowledge',
+      imageUrl:
+          'https://placehold.co/600x400/33FF57/000000?text=Brain+Fact', // Placeholder image
     ),
-    // General type - Quote
+    // General type - Quote (no image)
     NotificationItem(
       id: '3',
       title: 'Daily Inspiration',
@@ -51,9 +53,8 @@ class _NotificationListState extends State<NotificationList> {
       icon: Icons.format_quote,
       color: kPrimaryColor, // Using a color from your palette
       type: 'general',
-      subType: 'quote',
     ),
-    // General type - Sweet Message
+    // General type - Sweet Message (no image)
     NotificationItem(
       id: '4',
       title: 'Good Morning!',
@@ -63,9 +64,8 @@ class _NotificationListState extends State<NotificationList> {
       icon: Icons.sentiment_very_satisfied,
       color: kAccentColor, // Using a color from your palette
       type: 'general',
-      subType: 'sweet_message',
     ),
-    // Voicemail type
+    // Voicemail type (no image)
     NotificationItem(
       id: '5',
       title: 'New Voicemail',
@@ -76,22 +76,8 @@ class _NotificationListState extends State<NotificationList> {
       icon: Icons.voicemail,
       color: kLunchText, // Using kLunchText
       type: 'voicemail',
-      subType: null, // No subType for voicemail
     ),
-    // Bulletin type
-    NotificationItem(
-      id: '6',
-      title: 'Company Bulletin: Holiday Schedule',
-      description:
-          'Please review the updated holiday schedule for Q4. Details inside.',
-      time: DateTime.now().subtract(const Duration(days: 2)),
-      isRead: true,
-      icon: Icons.campaign,
-      color: kPrimaryColor, // Using kPrimaryColor
-      type: 'bulletin',
-      subType: null, // No subType for bulletin
-    ),
-    // A 'general' type without a specific subType, will use default general UI
+    // A 'general' type without a specific subType, will use default general UI (no image)
     NotificationItem(
       id: '7',
       title: 'Account Verification',
@@ -102,7 +88,6 @@ class _NotificationListState extends State<NotificationList> {
       icon: Icons.verified_user,
       color: kPrimaryDarkColor, // Using a color from your palette
       type: 'general',
-      subType: null,
     ),
   ];
 
@@ -278,9 +263,6 @@ class _NotificationListState extends State<NotificationList> {
       case 'voicemail':
         detailPage = VoicemailDetailPage(notification: notification);
         break;
-      case 'bulletin':
-        detailPage = BulletinDetailPage(notification: notification);
-        break;
       case 'general': // Explicitly handle 'general'
       default: // All other types will also fall back to General
         detailPage = GeneralNotificationDetailPage(notification: notification);
@@ -340,7 +322,7 @@ class NotificationItem {
   final IconData icon;
   final Color color;
   final String type;
-  final String? subType; // Added subType property, now nullable
+  final String? imageUrl; // Added imageUrl property
 
   NotificationItem({
     required this.id,
@@ -351,6 +333,6 @@ class NotificationItem {
     required this.icon,
     required this.color,
     required this.type,
-    this.subType, // Made optional
+    this.imageUrl, // Added to constructor
   });
 }
